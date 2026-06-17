@@ -1,0 +1,107 @@
+import { Flag, Heart, MessageSquare, Pencil, ShieldCheck } from "lucide-react";
+import type { Metadata } from "next";
+
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { apiFetch, ListingDetail } from "@/lib/api";
+import { conditionLabels, formatDate, formatPrice } from "@/lib/format";
+
+type PageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const listing = await apiFetch<ListingDetail>(`/listings/${slug}`).catch(() => null);
+  if (!listing) return { title: "Oglas nije pronađen | Sve Za Pecanje" };
+  return {
+    title: `${listing.data.title} — ${listing.data.category.name_sr} | Sve Za Pecanje`,
+    description: `${listing.data.title}, ${conditionLabels[listing.data.condition]}, ${listing.data.city}, ${formatPrice(listing.data.price_amount, listing.data.currency)}.`
+  };
+}
+
+export default async function ListingDetailPage({ params }: PageProps) {
+  const { slug } = await params;
+  const response = await apiFetch<ListingDetail>(`/listings/${slug}`);
+  const listing = response.data;
+  return (
+    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_360px]">
+      <section>
+        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+          <div className="aspect-[4/3] bg-gradient-to-br from-river-100 via-white to-reed/30">
+            {listing.images[0] ? (
+              <img src={listing.images[0].url} alt={listing.title} className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center text-river-700">Fotografija opreme</div>
+            )}
+          </div>
+        </div>
+        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <div className="flex flex-wrap gap-2">
+            <Badge tone={listing.status === "sold" ? "sold" : "accent"}>{listing.status === "sold" ? "Prodato" : "Aktivan oglas"}</Badge>
+            {listing.is_featured ? <Badge tone="accent">Istaknuto</Badge> : null}
+            <Badge>{listing.category.name_sr}</Badge>
+          </div>
+          <h1 className="mt-4 text-3xl font-black">{listing.title}</h1>
+          <p className="mt-3 text-3xl font-black text-river-700">{formatPrice(listing.price_amount, listing.currency)}</p>
+          <dl className="mt-6 grid gap-3 sm:grid-cols-2">
+            {[
+              ["Stanje", conditionLabels[listing.condition] ?? listing.condition],
+              ["Lokacija", listing.municipality ? `${listing.city}, ${listing.municipality}` : listing.city],
+              ["Brend", listing.brand?.name ?? listing.brand_name_custom ?? "Nije navedeno"],
+              ["Model", listing.model ?? "Nije navedeno"],
+              ["Objavljeno", formatDate(listing.created_at)],
+              ["Pregledi", String(listing.view_count)]
+            ].map(([label, value]) => (
+              <div key={label} className="rounded-md bg-slate-50 p-3">
+                <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
+                <dd className="mt-1 font-semibold">{value}</dd>
+              </div>
+            ))}
+          </dl>
+          {Object.keys(listing.attributes).length ? (
+            <div className="mt-6">
+              <h2 className="font-black">Detalji opreme</h2>
+              <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+                {Object.entries(listing.attributes).map(([key, value]) => (
+                  <div key={key} className="flex justify-between gap-4 border-b border-slate-100 py-2 text-sm">
+                    <dt className="font-semibold text-slate-600">{key}</dt>
+                    <dd>{String(value)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
+          <div className="mt-6">
+            <h2 className="font-black">Opis</h2>
+            <p className="mt-3 whitespace-pre-line text-slate-700">{listing.description}</p>
+          </div>
+        </div>
+      </section>
+      <aside className="space-y-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <h2 className="font-black">Prodavac</h2>
+          <a href={`/prodavci/${listing.seller.username}`} className="mt-2 block text-lg font-black text-river-700">
+            {listing.seller.display_name ?? listing.seller.username}
+          </a>
+          <p className="mt-1 text-sm text-slate-600">{listing.city}</p>
+          <div className="mt-4 grid gap-2">
+            {listing.status === "sold" ? (
+              <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
+            ) : (
+              <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageSquare size={18} /> Pošalji poruku</Button>
+            )}
+            <Button variant="secondary"><Heart size={18} /> Dodaj u omiljene</Button>
+            <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
+            <Button variant="ghost"><Flag size={18} /> Prijavi oglas</Button>
+          </div>
+        </div>
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+          <ShieldCheck size={20} />
+          <p className="mt-2 font-semibold">Proverite opremu uživo i ne šaljite novac unapred nepoznatim prodavcima.</p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+

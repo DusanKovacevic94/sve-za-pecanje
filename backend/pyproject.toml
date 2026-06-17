@@ -1,0 +1,36 @@
+[project]
+name = "fishing-marketplace-rs-backend"
+version = "0.1.0"
+description = "FastAPI backend for Sve Za Pecanje"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic>=1.16.2",
+  "bcrypt>=4.2.0",
+  "email-validator>=2.2.0",
+  "fastapi>=0.115.13",
+  "gunicorn>=23.0.0",
+  "passlib[bcrypt]>=1.7.4",
+  "pillow>=11.2.1",
+  "psycopg[binary]>=3.2.9",
+  "pydantic-settings>=2.9.1",
+  "pyjwt>=2.10.1",
+  "python-multipart>=0.0.20",
+  "sqlalchemy>=2.0.41",
+  "uvicorn[standard]>=0.34.3",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx>=0.28.1",
+  "pytest>=8.4.1",
+  "ruff>=0.11.13",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["app/tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+

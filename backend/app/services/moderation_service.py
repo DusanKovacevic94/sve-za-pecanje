@@ -1,0 +1,124 @@
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.core.responses import api_error
+from app.models.audit import AuditLog
+from app.models.listing import Listing
+from app.models.message import Message
+from app.models.report import Report
+from app.models.user import User
+from app.services.email_service import EmailService
+
+
+class ModerationService:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def dashboard(self) -> dict:
+        seven_days_ago = datetime.now(UTC) - timedelta(days=7)
+        return {
+            "pending_listings": self.db.scalar(
+                select(func.count(Listing.id)).where(Listing.status == "pending_review")
+            )
+            or 0,
+            "active_listings": self.db.scalar(
+                select(func.count(Listing.id)).where(Listing.status == "active")
+            )
+            or 0,
+            "new_users_last_7_days": self.db.scalar(
+                select(func.count(User.id)).where(User.created_at >= seven_days_ago)
+            )
+            or 0,
+            "unresolved_reports": self.db.scalar(
+                select(func.count(Report.id)).where(Report.status.in_(["open", "reviewing"]))
+            )
+            or 0,
+            "messages_last_7_days": self.db.scalar(
+                select(func.count(Message.id)).where(Message.created_at >= seven_days_ago)
+            )
+            or 0,
+            "listings_last_7_days": self.db.scalar(
+                select(func.count(Listing.id)).where(Listing.created_at >= seven_days_ago)
+            )
+            or 0,
+        }
+
+    def approve_listing(self, listing_id: str, admin: User) -> Listing:
+        listing = self._get_listing(listing_id)
+        listing.status = "active"
+        listing.approved_at = datetime.now(UTC)
+        listing.approved_by_admin_id = admin.id
+        listing.rejection_reason = None
+        self.audit(admin, "listing.approved", "listing", listing.id)
+        EmailService().send_listing_approved(listing.seller.email, listing.title)
+        self.db.commit()
+        self.db.refresh(listing)
+        return listing
+
+    def reject_listing(self, listing_id: str, admin: User, reason: str) -> Listing:
+        listing = self._get_listing(listing_id)
+        listing.status = "rejected"
+        listing.rejection_reason = reason
+        self.audit(admin, "listing.rejected", "listing", listing.id, {"reason": reason})
+        EmailService().send_listing_rejected(listing.seller.email, listing.title, reason)
+        self.db.commit()
+        self.db.refresh(listing)
+        return listing
+
+    def feature_listing(self, listing_id: str, admin: User, featured_until: datetime) -> Listing:
+        listing = self._get_listing(listing_id)
+        listing.is_featured = True
+        listing.featured_until = featured_until
+        self.audit(admin, "listing.featured", "listing", listing.id)
+        self.db.commit()
+        self.db.refresh(listing)
+        return listing
+
+    def suspend_user(self, user_id: str, admin: User, reason: str) -> User:
+        user = self.db.get(User, user_id)
+        if not user:
+            raise api_error("NOT_FOUND", "Korisnik nije pronađen.", 404)
+        user.status = "suspended"
+        self.audit(admin, "user.suspended", "user", user.id, {"reason": reason})
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def resolve_report(self, report_id: str, admin: User, status: str, note: str | None) -> Report:
+        report = self.db.get(Report, report_id)
+        if not report:
+            raise api_error("NOT_FOUND", "Prijava nije pronađena.", 404)
+        report.status = status
+        report.resolution_note = note
+        report.resolved_by_admin_id = admin.id
+        report.resolved_at = datetime.now(UTC)
+        self.audit(admin, "report.resolved", "report", report.id, {"status": status})
+        self.db.commit()
+        self.db.refresh(report)
+        return report
+
+    def audit(
+        self,
+        admin: User,
+        action: str,
+        entity_type: str,
+        entity_id: str,
+        metadata: dict | None = None,
+    ) -> None:
+        self.db.add(
+            AuditLog(
+                actor_user_id=admin.id,
+                action=action,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                metadata_json=metadata or {},
+            )
+        )
+
+    def _get_listing(self, listing_id: str) -> Listing:
+        listing = self.db.get(Listing, listing_id)
+        if not listing:
+            raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
+        return listing
