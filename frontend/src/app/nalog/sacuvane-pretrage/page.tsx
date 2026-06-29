@@ -11,7 +11,7 @@ type SavedSearch = {
 export default async function SavedSearchesPage() {
   const searches = await apiFetch<SavedSearch[]>("/saved-searches").catch(() => ({ data: [] }));
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div>
       <h1 className="text-3xl font-black">Sačuvane pretrage</h1>
       <div className="mt-6 grid gap-4">
         {searches.data.map((search) => (
@@ -25,4 +25,3 @@ export default async function SavedSearchesPage() {
     </div>
   );
 }
-

@@ -2,6 +2,7 @@
   "name": "sve-za-pecanje-frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@9.15.4",
   "scripts": {
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
@@ -28,4 +29,3 @@
     "typescript": "^5.8.3"
   }
 }
-

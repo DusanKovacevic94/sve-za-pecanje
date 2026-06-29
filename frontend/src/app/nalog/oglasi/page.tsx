@@ -5,13 +5,13 @@ import { apiFetch, ListingCard as ListingCardType } from "@/lib/api";
 export default async function MyListingsPage() {
   const listings = await apiFetch<ListingCardType[]>("/users/me/listings").catch(() => ({ data: [] }));
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
+    <div>
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-black">Moji oglasi</h1>
         <Button href="/postavi-oglas">Postavi oglas</Button>
       </div>
       {listings.data.length ? (
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {listings.data.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
         </div>
       ) : (
@@ -23,4 +23,3 @@ export default async function MyListingsPage() {
     </div>
   );
 }
-

@@ -1,15 +1,63 @@
 services:
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN}
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./ops/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
   backend:
     command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 3 -b 0.0.0.0:8000
     restart: unless-stopped
+    ports: !reset []
+    volumes: !reset []
+    expose:
+      - "8000"
 
   frontend:
-    command: npm start
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_DOMAIN}/api/v1}
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_DOMAIN}/api/v1}
+      INTERNAL_API_URL: http://backend:8000/api/v1
+    command: pnpm start
     restart: unless-stopped
+    ports: !reset []
+    volumes: !reset []
+    expose:
+      - "3000"
 
   postgres:
     restart: unless-stopped
+    ports: !reset []
 
   redis:
     restart: unless-stopped
+    ports: !reset []
 
+  minio:
+    restart: unless-stopped
+    ports: !reset []
+
+  mailpit:
+    restart: unless-stopped
+    ports: !reset []
+
+  worker:
+    volumes: !reset []
+
+volumes:
+  caddy_data:
+  caddy_config:

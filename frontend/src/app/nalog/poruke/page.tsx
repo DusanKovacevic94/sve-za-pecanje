@@ -11,7 +11,7 @@ type Conversation = {
 export default async function MessagesPage() {
   const conversations = await apiFetch<Conversation[]>("/conversations").catch(() => ({ data: [] }));
   return (
-    <div className="mx-auto max-w-5xl px-4 py-10">
+    <div>
       <h1 className="text-3xl font-black">Poruke</h1>
       <div className="mt-6 space-y-4">
         {conversations.data.length ? conversations.data.map((conversation) => (
@@ -29,4 +29,3 @@ export default async function MessagesPage() {
     </div>
   );
 }
-

@@ -33,6 +33,20 @@ class Settings(BaseSettings):
     s3_secret_access_key: str = "minioadmin"
     s3_bucket: str = "fishing-marketplace"
     s3_public_url: str = "http://localhost:9000/fishing-marketplace"
+    s3_region_name: str = "auto"
+    storage_backend: str = "auto"
+
+    hetzner_storage_endpoint: str = ""
+    hetzner_storage_bucket: str = ""
+    hetzner_storage_root_folder: str = ""
+    hetzner_storage_public_url: str = ""
+    hetzner_storage_region: str = "eu-central"
+    hetzner_storage_access_key: str = ""
+    hetzner_storage_secret_key: str = ""
+    hetzner_storage_force_path_style: bool = False
+    hetzner_storage_acl: str = "public-read"
+    hetzner_storage_signed_url_expires: int = 900
+
     local_storage_path: str = "storage/uploads"
 
     listing_review_mode: str = "manual"
@@ -52,6 +66,48 @@ class Settings(BaseSettings):
     @property
     def cors_origins(self) -> list[str]:
         return [origin.strip() for origin in self.cors_allowed_origins.split(",") if origin.strip()]
+
+    @property
+    def use_s3_storage(self) -> bool:
+        backend = self.storage_backend.lower()
+        if backend in {"s3", "hetzner"}:
+            return True
+        if backend == "local":
+            return False
+        return bool(
+            self.hetzner_storage_endpoint
+            and self.hetzner_storage_bucket
+            and self.hetzner_storage_access_key
+            and self.hetzner_storage_secret_key
+        )
+
+    @property
+    def object_storage_endpoint(self) -> str:
+        return self.hetzner_storage_endpoint or self.s3_endpoint_url
+
+    @property
+    def object_storage_bucket(self) -> str:
+        return self.hetzner_storage_bucket or self.s3_bucket
+
+    @property
+    def object_storage_public_url(self) -> str:
+        return self.hetzner_storage_public_url or self.s3_public_url
+
+    @property
+    def object_storage_region(self) -> str:
+        return self.hetzner_storage_region or self.s3_region_name
+
+    @property
+    def object_storage_access_key(self) -> str:
+        return self.hetzner_storage_access_key or self.s3_access_key_id
+
+    @property
+    def object_storage_secret_key(self) -> str:
+        return self.hetzner_storage_secret_key or self.s3_secret_access_key
+
+    @property
+    def object_storage_root_folder(self) -> str:
+        return self.hetzner_storage_root_folder.strip("/")
 
 
 @lru_cache
