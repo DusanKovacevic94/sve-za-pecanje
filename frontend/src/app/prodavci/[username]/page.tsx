@@ -1,5 +1,7 @@
+import { notFound } from "next/navigation";
+
 import { ListingCard } from "@/components/listings/ListingCard";
-import { apiFetch, ListingCard as ListingCardType } from "@/lib/api";
+import { ApiError, apiFetch, ListingCard as ListingCardType } from "@/lib/api";
 
 type SellerProfile = {
   username: string;
@@ -14,7 +16,10 @@ type SellerProfile = {
 
 export default async function SellerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  const response = await apiFetch<SellerProfile>(`/users/profile/${username}`);
+  const response = await apiFetch<SellerProfile>(`/users/profile/${username}`).catch((error) => {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
+  });
   const profile = response.data;
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">

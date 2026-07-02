@@ -26,3 +26,17 @@ export const listingSchema = z.object({
   phone_visible: z.boolean().default(false)
 });
 
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Unesite ispravan email.")
+});
+
+export const resetPasswordSchema = z
+  .object({
+    new_password: z.string().min(8, "Lozinka mora imati najmanje 8 karaktera."),
+    confirm_password: z.string()
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Lozinke se ne poklapaju.",
+    path: ["confirm_password"]
+  });

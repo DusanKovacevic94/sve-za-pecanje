@@ -1,6 +1,6 @@
 from functools import lru_cache
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     cors_allowed_origins: str = "http://localhost:3001,https://svezapecanje.rs"
 
     email_from: str = "noreply@example.com"
+    resend_api_key: str = ""
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_username: str = ""
@@ -55,6 +56,21 @@ class Settings(BaseSettings):
     rate_limit_enabled: bool = True
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @model_validator(mode="after")
+    def reject_default_secrets_in_production(self) -> "Settings":
+        if self.app_env == "production":
+            insecure = [
+                name
+                for name, value in (("SECRET_KEY", self.secret_key), ("JWT_SECRET", self.jwt_secret))
+                if value == "change-me" or len(value) < 32
+            ]
+            if insecure:
+                raise ValueError(
+                    f"Refusing to start in production with weak secrets: {', '.join(insecure)}. "
+                    "Set values of at least 32 random characters."
+                )
+        return self
 
     @field_validator("cors_allowed_origins", mode="before")
     @classmethod

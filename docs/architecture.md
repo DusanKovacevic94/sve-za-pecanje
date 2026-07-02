@@ -15,6 +15,10 @@ The MVP keeps transactions offline. The platform stores listings, structured att
 
 The backend issues an HttpOnly cookie named by `SESSION_COOKIE_NAME`. JWTs are signed with `JWT_SECRET`. Email verification is required before listing creation.
 
+## Email
+
+Transactional emails (email verification, password reset, moderation notices) are sent through [Resend](https://resend.com) when `RESEND_API_KEY` is set. `EMAIL_FROM` must use a domain verified in the Resend account. Without an API key, emails are written to the backend log instead — the verification/reset links appear there during local development.
+
 ## Listings
 
 Listings use stable slugs and `public_id`. Global fields are SQL columns; fishing-specific fields live in `attributes` JSON so categories can evolve through `attribute_definitions`.

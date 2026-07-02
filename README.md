@@ -31,7 +31,7 @@ make test
 
 Implemented foundation:
 
-- User registration, login, logout, `/auth/me`, and email verification token generation
+- User registration, login, logout, `/auth/me`, email verification, and password reset (emails via Resend when `RESEND_API_KEY` is set, otherwise logged)
 - Category, attribute definition, brand, city, and demo listing seed data
 - Listing creation, editing, browsing, structured filtering, image upload metadata, favorites, saved searches
 - Basic conversations/messages, reviews, reports, and admin moderation/audit flows

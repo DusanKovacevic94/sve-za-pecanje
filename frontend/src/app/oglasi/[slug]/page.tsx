@@ -1,9 +1,12 @@
-import { Flag, Heart, MessageSquare, Pencil, ShieldCheck } from "lucide-react";
+import { MessageSquare, Pencil, ShieldCheck } from "lucide-react";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { apiFetch, ListingDetail } from "@/lib/api";
+import { FavoriteButton, ReportButton } from "@/components/listings/ListingActions";
+import { ApiError, apiFetch, ListingDetail } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
 import { conditionLabels, formatDate, formatPrice } from "@/lib/format";
 
 type PageProps = {
@@ -22,8 +25,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ListingDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const response = await apiFetch<ListingDetail>(`/listings/${slug}`);
+  const [response, user] = await Promise.all([
+    apiFetch<ListingDetail>(`/listings/${slug}`).catch((error) => {
+      if (error instanceof ApiError && error.status === 404) notFound();
+      throw error;
+    }),
+    getCurrentUser()
+  ]);
   const listing = response.data;
+  const isOwner = user?.id === listing.seller.id;
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_360px]">
       <section>
@@ -91,9 +101,14 @@ export default async function ListingDetailPage({ params }: PageProps) {
             ) : (
               <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageSquare size={18} /> Pošalji poruku</Button>
             )}
-            <Button variant="secondary"><Heart size={18} /> Dodaj u omiljene</Button>
-            <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
-            <Button variant="ghost"><Flag size={18} /> Prijavi oglas</Button>
+            {isOwner ? (
+              <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
+            ) : (
+              <>
+                <FavoriteButton listingId={listing.id} />
+                <ReportButton listingId={listing.id} />
+              </>
+            )}
           </div>
         </div>
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">

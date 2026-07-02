@@ -3,7 +3,8 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.email import send_email
+from app.core.config import settings
+from app.core.email import render_action_email, send_email
 from app.core.responses import api_error
 from app.core.security import create_access_token, generate_token, hash_password, verify_password
 from app.models.profile import UserProfile
@@ -33,12 +34,22 @@ class AuthService:
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)
+        self.send_verification_email(user)
+        return user
+
+    def send_verification_email(self, user: User) -> None:
+        verify_url = f"{settings.app_url.rstrip('/')}/verifikacija-emaila?token={user.email_verification_token}"
         send_email(
             user.email,
             "Potvrdite email adresu — Sve Za Pecanje",
-            f"Token za potvrdu email adrese: {user.email_verification_token}",
+            f"Potvrdite email adresu otvaranjem linka: {verify_url}",
+            html=render_action_email(
+                "Potvrdite email adresu",
+                f"Zdravo {user.username}, hvala na registraciji. Potvrdite email adresu da biste mogli da postavljate oglase.",
+                "Potvrdi email",
+                verify_url,
+            ),
         )
-        return user
 
     def login(self, email: str, password: str) -> tuple[User, str]:
         user = self.db.scalar(select(User).where(User.email == email.lower()))
@@ -69,10 +80,17 @@ class AuthService:
             return
         user.password_reset_token = generate_token()
         self.db.commit()
+        reset_url = f"{settings.app_url.rstrip('/')}/reset-lozinke?token={user.password_reset_token}"
         send_email(
             user.email,
             "Reset lozinke — Sve Za Pecanje",
-            f"Token za reset lozinke: {user.password_reset_token}",
+            f"Postavite novu lozinku otvaranjem linka: {reset_url}",
+            html=render_action_email(
+                "Reset lozinke",
+                f"Zdravo {user.username}, primili smo zahtev za promenu lozinke na vašem nalogu.",
+                "Postavi novu lozinku",
+                reset_url,
+            ),
         )
 
     def reset_password(self, token: str, new_password: str) -> None:

@@ -7,6 +7,8 @@ export const conditionLabels: Record<string, string> = {
   for_parts_or_repair: "Za delove/popravku"
 };
 
+export const conditionOptions = Object.entries(conditionLabels).map(([value, label]) => ({ value, label }));
+
 export function formatPrice(amount: string | number, currency: string) {
   const numeric = Number(amount);
   const value = new Intl.NumberFormat("sr-RS", { maximumFractionDigits: 0 }).format(numeric);

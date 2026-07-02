@@ -9,11 +9,12 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-function toQuery(params: Record<string, string | string[] | undefined>) {
+function toQuery(params: Record<string, string | string[] | undefined>, overrides: Record<string, string> = {}) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (typeof value === "string" && value) query.set(key, value);
   });
+  Object.entries(overrides).forEach(([key, value]) => query.set(key, value));
   return query.toString();
 }
 
@@ -25,9 +26,14 @@ export default async function BrowsePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const [categories, listings] = await Promise.all([
     apiFetch<Category[]>("/categories").catch(() => ({ data: [] })),
-    apiFetch<ListingCardType[]>(`/listings?${toQuery(params)}`).catch(() => ({ data: [], meta: { total: 0 } }))
+    apiFetch<ListingCardType[]>(`/listings?${toQuery(params)}`).catch(() => ({
+      data: [] as ListingCardType[],
+      meta: { total: 0, page: 1, total_pages: 1 } as Record<string, unknown>
+    }))
   ]);
   const total = Number(listings.meta?.total ?? listings.data.length);
+  const page = Number(listings.meta?.page ?? 1);
+  const totalPages = Number(listings.meta?.total_pages ?? 1);
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -53,11 +59,30 @@ export default async function BrowsePage({ searchParams }: PageProps) {
         </details>
         <section>
           {listings.data.length ? (
-            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {listings.data.map((listing) => (
-                <ListingCard key={listing.id} listing={listing} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                {listings.data.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+              {totalPages > 1 ? (
+                <nav aria-label="Stranice" className="mt-8 flex items-center justify-center gap-3">
+                  {page > 1 ? (
+                    <Button href={`/oglasi?${toQuery(params, { page: String(page - 1) })}`} variant="secondary">
+                      Prethodna
+                    </Button>
+                  ) : null}
+                  <span className="text-sm font-semibold text-slate-600">
+                    Strana {page} od {totalPages}
+                  </span>
+                  {page < totalPages ? (
+                    <Button href={`/oglasi?${toQuery(params, { page: String(page + 1) })}`} variant="secondary">
+                      Sledeća
+                    </Button>
+                  ) : null}
+                </nav>
+              ) : null}
+            </>
           ) : (
             <div className="rounded-lg border border-slate-200 bg-white p-10 text-center">
               <h2 className="text-xl font-black">Nema oglasa za izabrane filtere.</h2>

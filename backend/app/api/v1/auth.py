@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.rate_limit import check_rate_limit
 from app.core.responses import data_response
 from app.db.session import get_db
 from app.models.user import User
@@ -19,7 +20,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post("/register")
-def register(payload: RegisterRequest, db: Session = Depends(get_db)):
+def register(payload: RegisterRequest, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit(request, "auth-register", 10, 60 * 60)
     user = AuthService(db).register(payload)
     return data_response({"user": serialize_auth_user(user)})
 
@@ -56,13 +58,15 @@ def verify_email(payload: VerifyEmailRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/forgot-password")
-def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db)):
+def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit(request, "auth-forgot-password", 5, 60 * 60)
     AuthService(db).start_password_reset(payload.email)
     return data_response({"message": "Ako nalog postoji, poslali smo instrukcije za reset lozinke."})
 
 
 @router.post("/reset-password")
-def reset_password(payload: ResetPasswordRequest, db: Session = Depends(get_db)):
+def reset_password(payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit(request, "auth-reset-password", 10, 60 * 60)
     AuthService(db).reset_password(payload.token, payload.new_password)
     return data_response({"message": "Lozinka je promenjena."})
 

@@ -1,4 +1,5 @@
 import type { Category } from "@/lib/api";
+import { conditionOptions } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select } from "@/components/ui/Field";
 
@@ -47,11 +48,11 @@ export function FilterSidebar({ categories, searchParams }: { categories: Catego
         <FieldLabel htmlFor="condition">Stanje</FieldLabel>
         <Select id="condition" name="condition" defaultValue={typeof searchParams.condition === "string" ? searchParams.condition : ""}>
           <option value="">Sva stanja</option>
-          <option value="new">Novo</option>
-          <option value="like_new">Kao novo</option>
-          <option value="used_excellent">Polovno - odlično</option>
-          <option value="used_good">Polovno - dobro</option>
-          <option value="used_fair">Polovno - korektno</option>
+          {conditionOptions.map(({ value, label }) => (
+            <option value={value} key={value}>
+              {label}
+            </option>
+          ))}
         </Select>
       </div>
       <Button type="submit" className="w-full">Primeni filtere</Button>

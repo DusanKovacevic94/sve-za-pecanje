@@ -1,8 +1,9 @@
 import { cookies } from "next/headers";
+import { cache } from "react";
 
 import { serverApiUrl } from "@/lib/api";
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   try {
     const cookieStore = await cookies();
     const response = await fetch(`${serverApiUrl}/auth/me`, {
@@ -15,4 +16,4 @@ export async function getCurrentUser() {
   } catch {
     return null;
   }
-}
+});

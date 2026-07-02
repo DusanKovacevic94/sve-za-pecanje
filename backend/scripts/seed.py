@@ -198,10 +198,14 @@ def main() -> None:
             if not db.scalar(select(City).where(City.name == city)):
                 db.add(City(name=city))
 
-        seller = db.scalar(select(User).where(User.email == "demo@svezapecanje.local"))
+        # Pydantic email validation rejects the special-use .local TLD, so the
+        # demo account needs a real-looking domain to be able to log in.
+        seller = db.scalar(select(User).where(User.username == "demo_pecaros"))
+        if seller and seller.email.endswith(".local"):
+            seller.email = "demo@svezapecanje.rs"
         if not seller:
             seller = User(
-                email="demo@svezapecanje.local",
+                email="demo@svezapecanje.rs",
                 username="demo_pecaros",
                 password_hash=hash_password("Demo12345!"),
                 role="user",

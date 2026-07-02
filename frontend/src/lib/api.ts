@@ -3,6 +3,13 @@ export const serverApiUrl = process.env.INTERNAL_API_URL ?? publicApiUrl;
 
 export type ApiResponse<T> = { data: T; meta?: Record<string, unknown> };
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
   const baseUrl = typeof window === "undefined" ? serverApiUrl : publicApiUrl;
   const response = await fetch(`${baseUrl}${path}`, {
@@ -14,9 +21,9 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<Api
     },
     cache: "no-store"
   });
-  const json = await response.json();
+  const json = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new Error(json?.error?.message ?? "Došlo je do greške.");
+    throw new ApiError(json?.error?.message ?? "Došlo je do greške.", response.status);
   }
   return json;
 }

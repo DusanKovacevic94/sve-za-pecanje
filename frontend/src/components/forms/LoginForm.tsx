@@ -51,6 +51,11 @@ export function LoginForm() {
       <Button type="submit" disabled={formState.isSubmitting} className="w-full">
         Prijavi se
       </Button>
+      <p className="text-sm">
+        <a href="/zaboravljena-lozinka" className="focus-ring rounded font-semibold text-river-700">
+          Zaboravili ste lozinku?
+        </a>
+      </p>
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
     </form>
   );

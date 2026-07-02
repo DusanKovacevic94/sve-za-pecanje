@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import type { Brand, Category } from "@/lib/api";
 import { publicApiUrl } from "@/lib/api";
+import { conditionOptions } from "@/lib/format";
 import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
@@ -101,12 +102,11 @@ export function CreateListingForm({ categories, brands }: { categories: Category
           <div>
             <FieldLabel htmlFor="condition">Stanje</FieldLabel>
             <Select id="condition" {...register("condition")}>
-              <option value="new">Novo</option>
-              <option value="like_new">Kao novo</option>
-              <option value="used_excellent">Polovno - odlično</option>
-              <option value="used_good">Polovno - dobro</option>
-              <option value="used_fair">Polovno - korektno</option>
-              <option value="for_parts_or_repair">Za delove/popravku</option>
+              {conditionOptions.map(({ value, label }) => (
+                <option value={value} key={value}>
+                  {label}
+                </option>
+              ))}
             </Select>
           </div>
           <div>

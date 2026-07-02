@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
+import { LogoutButton } from "@/components/layout/LogoutButton";
 
 export async function Header() {
   const user = await getCurrentUser();
@@ -35,6 +36,7 @@ export async function Header() {
               <Button href="/nalog" variant="secondary" className="px-3">
                 <UserCircle size={18} /> Moj nalog
               </Button>
+              <LogoutButton />
             </>
           ) : (
             <Button href="/prijava" variant="secondary" className="px-3">

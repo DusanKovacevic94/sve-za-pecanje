@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.v1.deps import get_current_user
@@ -32,7 +33,11 @@ def create_review(
         comment=payload.comment,
     )
     db.add(review)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise api_error("CONFLICT", "Već ste ostavili ocenu za ovaj oglas.", 409) from None
     db.refresh(review)
     return data_response(
         {
