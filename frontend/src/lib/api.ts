@@ -64,6 +64,7 @@ export type ListingCard = {
   brand: Brand | null;
   key_attributes: Record<string, string | number | boolean>;
   is_featured: boolean;
+  is_favorited?: boolean;
   created_at: string;
 };
 
@@ -77,6 +78,7 @@ export type ListingDetail = ListingCard & {
   phone_visible: boolean;
   view_count: number;
   favorite_count: number;
+  is_favorited: boolean;
   images: { id: string; url: string; sort_order: number; is_cover: boolean }[];
   sold_at: string | null;
   rejection_reason: string | null;

@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
 
 type Dashboard = {
   pending_listings: number;
@@ -10,7 +10,9 @@ type Dashboard = {
 };
 
 export default async function AdminPage() {
-  const dashboard = await apiFetch<Dashboard>("/admin/dashboard").catch(() => ({ data: null }));
+  const dashboard = await serverApiFetch<Dashboard>("/admin/dashboard").catch(() => ({
+    data: null,
+  }));
   const data = dashboard.data;
   const cards = data ? [
     ["Na čekanju", data.pending_listings],
@@ -35,4 +37,3 @@ export default async function AdminPage() {
     </div>
   );
 }
-

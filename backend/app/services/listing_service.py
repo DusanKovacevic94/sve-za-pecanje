@@ -100,7 +100,7 @@ class ListingService:
         return listing
 
     def get_owned_or_admin(self, listing_id: str, actor: User) -> Listing:
-        listing = self.db.get(Listing, listing_id)
+        listing = self.db.scalar(self._base_query().where(Listing.id == listing_id))
         if not listing:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
         if listing.seller_id != actor.id and actor.role not in {"admin", "super_admin"}:
@@ -285,7 +285,7 @@ def serialize_listing_card(listing: Listing) -> dict:
     }
 
 
-def serialize_listing_detail(listing: Listing) -> dict:
+def serialize_listing_detail(listing: Listing, is_favorited: bool = False) -> dict:
     data = serialize_listing_card(listing)
     data.update(
         {
@@ -309,6 +309,7 @@ def serialize_listing_detail(listing: Listing) -> dict:
             ],
             "sold_at": listing.sold_at,
             "rejection_reason": listing.rejection_reason,
+            "is_favorited": is_favorited,
         }
     )
     return data

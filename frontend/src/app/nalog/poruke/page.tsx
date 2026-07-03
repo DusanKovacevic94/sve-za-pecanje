@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
 
 type Conversation = {
   id: string;
@@ -9,7 +9,9 @@ type Conversation = {
 };
 
 export default async function MessagesPage() {
-  const conversations = await apiFetch<Conversation[]>("/conversations").catch(() => ({ data: [] }));
+  const conversations = await serverApiFetch<Conversation[]>("/conversations").catch(() => ({
+    data: [],
+  }));
   return (
     <div>
       <h1 className="text-3xl font-black">Poruke</h1>

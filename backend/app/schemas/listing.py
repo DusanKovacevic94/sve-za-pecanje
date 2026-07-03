@@ -118,8 +118,8 @@ class ListingDetail(ListingCard):
     images: list[ListingImageOut]
     sold_at: datetime | None
     rejection_reason: str | None
+    is_favorited: bool = False
 
 
 class MarkSoldRequest(BaseModel):
     sold_to_user_id: str | None = None
-

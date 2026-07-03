@@ -4,48 +4,125 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Archive, CheckCircle2 } from "lucide-react";
+import { z } from "zod";
 
-import type { Brand, Category } from "@/lib/api";
-import { publicApiUrl } from "@/lib/api";
+import type { Brand, Category, ListingDetail } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 import { conditionOptions } from "@/lib/format";
 import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
 
-type FormData = Record<string, unknown>;
+const listingFormSchema = listingSchema.passthrough();
 
-export function CreateListingForm({ categories, brands }: { categories: Category[]; brands: Brand[] }) {
-  const router = useRouter();
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
-  const [message, setMessage] = useState<string | null>(null);
-  const selectedCategory = useMemo(() => categories.find((item) => item.id === categoryId), [categories, categoryId]);
-  const { register, handleSubmit, formState } = useForm<FormData>({
-    resolver: zodResolver(listingSchema) as never,
-    defaultValues: { currency: "RSD", condition: "used_good", allow_messages: true, phone_visible: false, category_id: categoryId }
+type ListingFormInput = z.input<typeof listingFormSchema>;
+type ListingFormOutput = z.output<typeof listingFormSchema>;
+type ListingFormDefaults = Partial<ListingFormInput> & {
+  attributes?: Record<string, string | number | boolean | string[]>;
+};
+
+type ListingFormProps = {
+  categories: Category[];
+  brands: Brand[];
+  mode?: "create" | "edit";
+  listingId?: string;
+  defaultValues?: ListingFormDefaults;
+};
+
+function getDefaultValues(categories: Category[], defaultValues?: ListingFormDefaults): ListingFormInput {
+  const values: Record<string, unknown> = {
+    currency: "RSD",
+    condition: "used_good",
+    allow_messages: true,
+    phone_visible: false,
+    category_id: defaultValues?.category_id ?? categories[0]?.id ?? "",
+    ...defaultValues
+  };
+  Object.entries(defaultValues?.attributes ?? {}).forEach(([key, value]) => {
+    values[`attr_${key}`] = Array.isArray(value) ? value.join(", ") : String(value);
+  });
+  delete values.attributes;
+  return values as ListingFormInput;
+}
+
+function buildPayload(data: ListingFormOutput, category: Category | undefined, mode: "create" | "edit") {
+  const attributes: Record<string, unknown> = {};
+  category?.attributes.forEach((attribute) => {
+    const value = data[`attr_${attribute.key}`];
+    if (value !== undefined && value !== "") {
+      attributes[attribute.key] = value;
+    }
   });
 
-  async function onSubmit(data: FormData) {
-    const attributes: Record<string, unknown> = {};
-    selectedCategory?.attributes.forEach((attribute) => {
-      const value = data[`attr_${attribute.key}`];
-      if (value !== undefined && value !== "") attributes[attribute.key] = value;
-    });
-    const payload = { ...data, category_id: categoryId, attributes };
-    Object.keys(payload).forEach((key) => {
-      if (key.startsWith("attr_")) delete (payload as Record<string, unknown>)[key];
-    });
-    const response = await fetch(`${publicApiUrl}/listings`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify(payload)
-    });
-    const json = await response.json();
-    if (response.ok) {
-      router.push(`/oglasi/${json.data.slug}`);
+  const payload: Record<string, unknown> = { ...data, attributes };
+  Object.keys(payload).forEach((key) => {
+    if (key.startsWith("attr_")) {
+      delete payload[key];
+    }
+  });
+  ["brand_id", "brand_name_custom", "model", "municipality"].forEach((key) => {
+    if (payload[key] === "") {
+      payload[key] = null;
+    }
+  });
+  if (mode === "edit") {
+    delete payload.category_id;
+  }
+  return payload;
+}
+
+export function CreateListingForm({
+  categories,
+  brands,
+  mode = "create",
+  listingId,
+  defaultValues
+}: ListingFormProps) {
+  const router = useRouter();
+  const [message, setMessage] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const isEdit = mode === "edit";
+  const submitLabel = isEdit ? "Sačuvaj izmene" : "Pošalji na pregled";
+  const initialValues = useMemo(() => getDefaultValues(categories, defaultValues), [categories, defaultValues]);
+  const { register, handleSubmit, formState, watch } = useForm<ListingFormInput, unknown, ListingFormOutput>({
+    resolver: zodResolver(listingFormSchema),
+    defaultValues: initialValues
+  });
+  const categoryId = watch("category_id") || categories[0]?.id || "";
+  const selectedCategory = useMemo(() => categories.find((item) => item.id === categoryId), [categories, categoryId]);
+
+  async function onSubmit(data: ListingFormOutput) {
+    setMessage(null);
+    const payload = buildPayload(data, selectedCategory, mode);
+    try {
+      const response = await apiFetch<ListingDetail>(isEdit ? `/listings/${listingId}` : "/listings", {
+        method: isEdit ? "PATCH" : "POST",
+        body: JSON.stringify(payload)
+      });
+      router.push(`/oglasi/${response.data.slug}`);
       router.refresh();
-    } else {
-      setMessage(json?.error?.message ?? "Došlo je do greške.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
+    }
+  }
+
+  async function runOwnerAction(action: "archive" | "mark-sold") {
+    if (!listingId) return;
+    const confirmed = window.confirm(
+      action === "archive" ? "Arhivirati ovaj oglas?" : "Označiti ovaj oglas kao prodat?"
+    );
+    if (!confirmed) return;
+    setActionMessage(null);
+    try {
+      const response = await apiFetch<ListingDetail>(`/listings/${listingId}/${action}`, {
+        method: "POST",
+        body: action === "mark-sold" ? JSON.stringify({ sold_to_user_id: null }) : undefined
+      });
+      router.push(action === "archive" ? "/nalog/oglasi" : `/oglasi/${response.data.slug}`);
+      router.refresh();
+    } catch (error) {
+      setActionMessage(error instanceof Error ? error.message : "Došlo je do greške.");
     }
   }
 
@@ -58,8 +135,7 @@ export function CreateListingForm({ categories, brands }: { categories: Category
           <Select
             id="category_id"
             {...register("category_id")}
-            value={categoryId}
-            onChange={(event) => setCategoryId(event.target.value)}
+            disabled={isEdit}
           >
             {categories.map((category) => (
               <option value={category.id} key={category.id}>
@@ -177,8 +253,24 @@ export function CreateListingForm({ categories, brands }: { categories: Category
       </section>
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
       <Button type="submit" disabled={formState.isSubmitting} className="w-full md:w-auto">
-        Pošalji na pregled
+        {submitLabel}
       </Button>
+      {isEdit ? (
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-black">Akcije oglasa</h2>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <Button type="button" variant="secondary" onClick={() => runOwnerAction("mark-sold")}>
+              <CheckCircle2 size={18} /> Označi kao prodato
+            </Button>
+            <Button type="button" variant="danger" onClick={() => runOwnerAction("archive")}>
+              <Archive size={18} /> Arhiviraj oglas
+            </Button>
+          </div>
+          {actionMessage ? (
+            <p className="mt-3 rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{actionMessage}</p>
+          ) : null}
+        </section>
+      ) : null}
     </form>
   );
 }

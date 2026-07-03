@@ -1,9 +1,10 @@
-import { Heart, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 import Link from "next/link";
 
 import type { ListingCard as ListingCardType } from "@/lib/api";
 import { conditionLabels, formatDate, formatPrice } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
+import { FavoriteIconButton } from "@/components/listings/ListingActions";
 
 export function ListingCard({ listing }: { listing: ListingCardType }) {
   return (
@@ -37,9 +38,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
               {formatPrice(listing.price_amount, listing.currency)}
             </p>
           </div>
-          <button className="focus-ring rounded-md p-2 text-slate-500 hover:bg-river-50" aria-label="Dodaj u omiljene">
-            <Heart size={19} />
-          </button>
+          <FavoriteIconButton listingId={listing.id} initialSaved={listing.is_favorited} />
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
           <span className="inline-flex items-center gap-1">
@@ -60,4 +59,3 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
     </article>
   );
 }
-

@@ -1,9 +1,13 @@
 import { ListingCard } from "@/components/listings/ListingCard";
+import { OwnerListingActions } from "@/components/listings/ListingActions";
 import { Button } from "@/components/ui/Button";
-import { apiFetch, ListingCard as ListingCardType } from "@/lib/api";
+import { ListingCard as ListingCardType } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
 
 export default async function MyListingsPage() {
-  const listings = await apiFetch<ListingCardType[]>("/users/me/listings").catch(() => ({ data: [] }));
+  const listings = await serverApiFetch<ListingCardType[]>("/users/me/listings").catch(() => ({
+    data: [],
+  }));
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -12,7 +16,12 @@ export default async function MyListingsPage() {
       </div>
       {listings.data.length ? (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {listings.data.map((listing) => <ListingCard key={listing.id} listing={listing} />)}
+          {listings.data.map((listing) => (
+            <div key={listing.id} className="space-y-3">
+              <ListingCard listing={listing} />
+              <OwnerListingActions listingId={listing.id} />
+            </div>
+          ))}
         </div>
       ) : (
         <div className="mt-6 rounded-lg border border-slate-200 bg-white p-8 text-center">

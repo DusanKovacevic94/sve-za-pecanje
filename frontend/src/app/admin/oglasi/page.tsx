@@ -1,8 +1,11 @@
 import { ListingCard } from "@/components/listings/ListingCard";
-import { apiFetch, ListingCard as ListingCardType } from "@/lib/api";
+import { ListingCard as ListingCardType } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
 
 export default async function AdminListingsPage() {
-  const listings = await apiFetch<ListingCardType[]>("/admin/listings").catch(() => ({ data: [] }));
+  const listings = await serverApiFetch<ListingCardType[]>("/admin/listings").catch(() => ({
+    data: [],
+  }));
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="text-3xl font-black">Moderacija oglasa</h1>
@@ -12,4 +15,3 @@ export default async function AdminListingsPage() {
     </div>
   );
 }
-

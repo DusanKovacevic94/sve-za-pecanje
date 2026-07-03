@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, File, Request, UploadFile
 from sqlalchemy.orm import Session
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, get_optional_user
 from app.core.rate_limit import check_rate_limit
 from app.core.responses import api_error, data_response
 from app.db.session import get_db
@@ -34,8 +34,32 @@ def list_listings(request: Request, db: Session = Depends(get_db)):
 
 
 @router.get("/{slug}")
-def get_listing(slug: str, db: Session = Depends(get_db)):
+def get_listing(
+    slug: str,
+    user: User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
     listing = ListingService(db).get_by_slug(slug)
+    is_favorited = False
+    if user:
+        from sqlalchemy import select
+
+        from app.models.favorite import Favorite
+
+        is_favorited = (
+            db.scalar(select(Favorite.id).where(Favorite.user_id == user.id, Favorite.listing_id == listing.id))
+            is not None
+        )
+    return data_response(serialize_listing_detail(listing, is_favorited=is_favorited))
+
+
+@router.get("/{listing_id}/edit")
+def get_listing_for_edit(
+    listing_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    listing = ListingService(db).get_owned_or_admin(listing_id, user)
     return data_response(serialize_listing_detail(listing))
 
 

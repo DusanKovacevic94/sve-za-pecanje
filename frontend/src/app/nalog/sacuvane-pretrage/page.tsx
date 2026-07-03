@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
 
 type SavedSearch = {
   id: string;
@@ -9,7 +9,9 @@ type SavedSearch = {
 };
 
 export default async function SavedSearchesPage() {
-  const searches = await apiFetch<SavedSearch[]>("/saved-searches").catch(() => ({ data: [] }));
+  const searches = await serverApiFetch<SavedSearch[]>("/saved-searches").catch(() => ({
+    data: [],
+  }));
   return (
     <div>
       <h1 className="text-3xl font-black">Sačuvane pretrage</h1>

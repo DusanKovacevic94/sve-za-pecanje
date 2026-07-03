@@ -1,9 +1,9 @@
-import { apiFetch } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
 
 type Report = { id: string; reason: string; status: string; description: string | null };
 
 export default async function AdminReportsPage() {
-  const reports = await apiFetch<Report[]>("/admin/reports").catch(() => ({ data: [] }));
+  const reports = await serverApiFetch<Report[]>("/admin/reports").catch(() => ({ data: [] }));
   return (
     <div className="mx-auto max-w-5xl px-4 py-10">
       <h1 className="text-3xl font-black">Prijave</h1>
@@ -19,4 +19,3 @@ export default async function AdminReportsPage() {
     </div>
   );
 }
-

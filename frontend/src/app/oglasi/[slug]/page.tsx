@@ -8,6 +8,7 @@ import { FavoriteButton, ReportButton } from "@/components/listings/ListingActio
 import { ApiError, apiFetch, ListingDetail } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { conditionLabels, formatDate, formatPrice } from "@/lib/format";
+import { serverApiFetch } from "@/lib/server-api";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -26,7 +27,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ListingDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const [response, user] = await Promise.all([
-    apiFetch<ListingDetail>(`/listings/${slug}`).catch((error) => {
+    serverApiFetch<ListingDetail>(`/listings/${slug}`).catch((error) => {
       if (error instanceof ApiError && error.status === 404) notFound();
       throw error;
     }),
@@ -105,7 +106,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
               <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
             ) : (
               <>
-                <FavoriteButton listingId={listing.id} />
+                <FavoriteButton listingId={listing.id} initialSaved={listing.is_favorited} />
                 <ReportButton listingId={listing.id} />
               </>
             )}
@@ -119,4 +120,3 @@ export default async function ListingDetailPage({ params }: PageProps) {
     </div>
   );
 }
-

@@ -1,8 +1,33 @@
+import { ListingCard } from "@/components/listings/ListingCard";
+import { Button } from "@/components/ui/Button";
+import type { ListingCard as ListingCardType } from "@/lib/api";
+import { serverApiFetch } from "@/lib/server-api";
+
 export default function FavoritesPage() {
+  return <FavoritesContent />;
+}
+
+async function FavoritesContent() {
+  const favorites = await serverApiFetch<ListingCardType[]>("/users/me/favorites").catch(() => ({
+    data: [],
+  }));
+
   return (
     <div>
       <h1 className="text-3xl font-black">Omiljeni oglasi</h1>
-      <p className="mt-6 rounded-lg bg-white p-6 text-slate-600">Omiljeni oglasi su podržani u API-ju. Lista za nalog je sledeći mali UI dodatak.</p>
+      {favorites.data.length ? (
+        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          {favorites.data.map((listing) => (
+            <ListingCard key={listing.id} listing={{ ...listing, is_favorited: true }} />
+          ))}
+        </div>
+      ) : (
+        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-8 text-center">
+          <h2 className="text-xl font-black">Nemate omiljene oglase.</h2>
+          <p className="mt-2 text-slate-600">Sačuvajte oglase koje želite da pratite ili uporedite kasnije.</p>
+          <Button href="/oglasi" className="mt-5">Pregledaj oglase</Button>
+        </div>
+      )}
     </div>
   );
 }

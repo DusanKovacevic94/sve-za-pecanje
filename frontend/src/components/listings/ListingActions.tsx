@@ -1,15 +1,20 @@
 "use client";
 
-import { Flag, Heart } from "lucide-react";
+import { Archive, CheckCircle2, Flag, Heart, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { ApiError, apiFetch } from "@/lib/api";
+import { ApiError, apiFetch, type ListingDetail } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 
-export function FavoriteButton({ listingId }: { listingId: string }) {
+type FavoriteProps = {
+  listingId: string;
+  initialSaved?: boolean;
+};
+
+export function FavoriteButton({ listingId, initialSaved = false }: FavoriteProps) {
   const router = useRouter();
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState(initialSaved);
   const [pending, setPending] = useState(false);
 
   async function onToggle() {
@@ -32,6 +37,40 @@ export function FavoriteButton({ listingId }: { listingId: string }) {
       <Heart size={18} fill={saved ? "currentColor" : "none"} />
       {saved ? "Sačuvano u omiljenim" : "Dodaj u omiljene"}
     </Button>
+  );
+}
+
+export function FavoriteIconButton({ listingId, initialSaved = false }: FavoriteProps) {
+  const router = useRouter();
+  const [saved, setSaved] = useState(initialSaved);
+  const [pending, setPending] = useState(false);
+
+  async function onToggle() {
+    setPending(true);
+    try {
+      await apiFetch(`/listings/${listingId}/favorite`, { method: saved ? "DELETE" : "POST" });
+      setSaved(!saved);
+      router.refresh();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        router.push("/prijava");
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      className="focus-ring rounded-md p-2 text-slate-500 hover:bg-river-50 disabled:opacity-60"
+      aria-label={saved ? "Ukloni iz omiljenih" : "Dodaj u omiljene"}
+      aria-pressed={saved}
+      disabled={pending}
+      onClick={onToggle}
+    >
+      <Heart size={19} fill={saved ? "currentColor" : "none"} />
+    </button>
   );
 }
 
@@ -62,5 +101,60 @@ export function ReportButton({ listingId }: { listingId: string }) {
     <Button onClick={onReport} variant="ghost">
       <Flag size={18} /> Prijavi oglas
     </Button>
+  );
+}
+
+export function OwnerListingActions({ listingId }: { listingId: string }) {
+  const router = useRouter();
+  const [busyAction, setBusyAction] = useState<"archive" | "mark-sold" | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function runAction(action: "archive" | "mark-sold") {
+    const confirmed = window.confirm(
+      action === "archive" ? "Arhivirati ovaj oglas?" : "Označiti ovaj oglas kao prodat?"
+    );
+    if (!confirmed) return;
+    setMessage(null);
+    setBusyAction(action);
+    try {
+      await apiFetch<ListingDetail>(`/listings/${listingId}/${action}`, {
+        method: "POST",
+        body: action === "mark-sold" ? JSON.stringify({ sold_to_user_id: null }) : undefined
+      });
+      router.refresh();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="grid gap-2 sm:grid-cols-3">
+        <Button href={`/izmeni-oglas/${listingId}`} variant="secondary" className="min-h-10 px-3">
+          <Pencil size={16} /> Izmeni
+        </Button>
+        <Button
+          type="button"
+          variant="secondary"
+          className="min-h-10 px-3"
+          disabled={busyAction === "mark-sold"}
+          onClick={() => runAction("mark-sold")}
+        >
+          <CheckCircle2 size={16} /> Prodato
+        </Button>
+        <Button
+          type="button"
+          variant="danger"
+          className="min-h-10 px-3"
+          disabled={busyAction === "archive"}
+          onClick={() => runAction("archive")}
+        >
+          <Archive size={16} /> Arhiviraj
+        </Button>
+      </div>
+      {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+    </div>
   );
 }

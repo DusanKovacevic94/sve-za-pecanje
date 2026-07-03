@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.v1.deps import get_current_user
 from app.core.responses import api_error, data_response
 from app.db.session import get_db
+from app.models.favorite import Favorite
 from app.models.listing import Listing
 from app.models.review import Review
 from app.models.user import User
@@ -64,6 +65,23 @@ def my_listings(user: User = Depends(get_current_user), db: Session = Depends(ge
     return data_response([serialize_listing_card(listing) for listing in listings])
 
 
+@router.get("/me/favorites")
+def my_favorites(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    listings = db.scalars(
+        select(Listing)
+        .join(Favorite, Favorite.listing_id == Listing.id)
+        .options(
+            selectinload(Listing.seller).selectinload(User.profile),
+            selectinload(Listing.category),
+            selectinload(Listing.brand),
+            selectinload(Listing.images),
+        )
+        .where(Favorite.user_id == user.id, Listing.status != "deleted")
+        .order_by(Favorite.created_at.desc())
+    ).all()
+    return data_response([serialize_listing_card(listing) for listing in listings])
+
+
 @router.patch("/me/profile")
 def update_profile(
     payload: ProfileUpdate,
@@ -81,4 +99,3 @@ def update_profile(
     db.commit()
     db.refresh(user.profile)
     return data_response({"message": "Profil je ažuriran."})
-
