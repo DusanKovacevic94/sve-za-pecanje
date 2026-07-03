@@ -1,6 +1,6 @@
 # 004 — Poruke: kompletan UI za razgovore
 
-Status: todo
+Status: done
 Prioritet: P1
 
 ## Problem
@@ -9,12 +9,12 @@ Backend za poruke postoji (`GET /conversations`, `GET /conversations/{id}`, `POS
 
 ## Šta uraditi
 
-- [ ] `/nalog/poruke` — lista razgovora: naslov oglasa (ne sirovi `listing_id`), sagovornik, poslednja poruka, unread badge
-- [ ] `/nalog/poruke/[id]` — prikaz celog razgovora + forma za odgovor (klijentska komponenta, `POST /conversations/{id}/messages`)
-- [ ] Slanje prve poruke: na detalju oglasa modal/forma koja gađa `POST /listings/{id}/messages`, ili `/nalog/poruke?listing=...` otvara kompoziciju
-- [ ] Označavanje pročitanog: proveri kako backend vodi `buyer_unread_count`/`seller_unread_count` i resetuj pri otvaranju razgovora
-- [ ] Backend: paginacija poruka u `serialize_conversation` (`message_service.py` trenutno vraća SVE poruke — dugačak razgovor = ogroman payload)
-- [ ] Unread indikator u headeru ("Poruke" dugme) — može kasnije
+- [x] `/nalog/poruke` — lista razgovora: naslov oglasa (ne sirovi `listing_id`), sagovornik, poslednja poruka, unread badge
+- [x] `/nalog/poruke/[id]` — prikaz celog razgovora + forma za odgovor (klijentska komponenta, `POST /conversations/{id}/messages`)
+- [x] Slanje prve poruke: na detalju oglasa modal/forma koja gađa `POST /listings/{id}/messages`, ili `/nalog/poruke?listing=...` otvara kompoziciju
+- [x] Označavanje pročitanog: proveri kako backend vodi `buyer_unread_count`/`seller_unread_count` i resetuj pri otvaranju razgovora
+- [x] Backend: paginacija poruka u `serialize_conversation` (`message_service.py` trenutno vraća SVE poruke — dugačak razgovor = ogroman payload)
+- [x] Unread indikator u headeru ("Poruke" dugme) — može kasnije
 
 ## Kriterijumi prihvatanja
 

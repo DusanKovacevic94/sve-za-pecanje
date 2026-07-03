@@ -9,7 +9,7 @@ Prioriteti: **P1** = bitno odmah (bugovi / core UX), **P2** = potrebno pre ozbil
 - [x] [001 — Popravi autentifikovane server-side fetch pozive](001-server-fetch-auth.md)
 - [x] [002 — Izmena oglasa (edit listing)](002-edit-listing.md)
 - [x] [003 — Omiljeni oglasi (favorites)](003-favorites.md)
-- [ ] [004 — Poruke: kompletan UI za razgovore](004-messaging-ui.md)
+- [x] [004 — Poruke: kompletan UI za razgovore](004-messaging-ui.md)
 - [ ] [005 — Nalog: profil i ocene stranice](005-account-pages.md)
 
 ## P2 — Pre launcha

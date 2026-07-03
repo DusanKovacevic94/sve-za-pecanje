@@ -83,3 +83,39 @@ export type ListingDetail = ListingCard & {
   sold_at: string | null;
   rejection_reason: string | null;
 };
+
+export type MessageUser = {
+  id: string;
+  username: string;
+  display_name: string | null;
+};
+
+export type ConversationMessage = {
+  id: string;
+  sender_id: string;
+  body: string;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type Conversation = {
+  id: string;
+  listing_id: string;
+  listing: { id: string; title: string; slug: string; status: string };
+  buyer_id: string;
+  seller_id: string;
+  buyer: MessageUser;
+  seller: MessageUser;
+  counterpart: MessageUser;
+  last_message_at: string | null;
+  buyer_unread_count: number;
+  seller_unread_count: number;
+  unread_count: number;
+  messages: ConversationMessage[];
+  messages_meta: {
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+  };
+};

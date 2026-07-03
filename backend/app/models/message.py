@@ -1,9 +1,16 @@
+from __future__ import annotations
+
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, ForeignKey, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
+
+if TYPE_CHECKING:
+    from app.models.listing import Listing
+    from app.models.user import User
 
 
 class Conversation(Base, TimestampMixin):
@@ -23,6 +30,9 @@ class Conversation(Base, TimestampMixin):
     messages: Mapped[list["Message"]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan", order_by="Message.created_at"
     )
+    listing: Mapped["Listing"] = relationship()
+    buyer: Mapped["User"] = relationship(foreign_keys=[buyer_id])
+    seller: Mapped["User"] = relationship(foreign_keys=[seller_id])
 
 
 class Message(Base, TimestampMixin):
@@ -35,4 +45,3 @@ class Message(Base, TimestampMixin):
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")
-
