@@ -11,17 +11,20 @@ class Settings(BaseSettings):
     api_url: str = "http://localhost:8001"
 
     database_url: str = "sqlite:///./dev.db"
+    postgres_password: str = "postgres"
     redis_url: str = "redis://localhost:6379/0"
 
     secret_key: str = "change-me"
     jwt_secret: str = "change-me"
     jwt_algorithm: str = "HS256"
-    access_token_minutes: int = 60 * 24 * 7
+    access_token_minutes: int = 60
+    session_lifetime_minutes: int = 60 * 24 * 7
     session_cookie_name: str = "ro_session"
 
     cors_allowed_origins: str = "http://localhost:3001,https://svezapecanje.rs"
 
     email_from: str = "noreply@example.com"
+    contact_email: str = ""
     resend_api_key: str = ""
     smtp_host: str = "localhost"
     smtp_port: int = 1025
@@ -51,9 +54,17 @@ class Settings(BaseSettings):
     local_storage_path: str = "storage/uploads"
 
     listing_review_mode: str = "manual"
+    listing_lifetime_days: int = 60
+    worker_interval_seconds: int = 60
+    view_dedupe_seconds: int = 3600
+    analytics_retention_days: int = 90
+    worker_heartbeat_key: str = "worker:heartbeat"
+    worker_heartbeat_max_age_seconds: int = 300
     max_listing_images: int = 10
     max_image_size_mb: int = 8
     rate_limit_enabled: bool = True
+    sentry_dsn: str = ""
+    sentry_traces_sample_rate: float = 0.0
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
@@ -65,10 +76,14 @@ class Settings(BaseSettings):
                 for name, value in (("SECRET_KEY", self.secret_key), ("JWT_SECRET", self.jwt_secret))
                 if value == "change-me" or len(value) < 32
             ]
+            if not self.resend_api_key:
+                insecure.append("RESEND_API_KEY")
+            if self.postgres_password in {"", "postgres", "change-me"} or len(self.postgres_password) < 16:
+                insecure.append("POSTGRES_PASSWORD")
             if insecure:
                 raise ValueError(
-                    f"Refusing to start in production with weak secrets: {', '.join(insecure)}. "
-                    "Set values of at least 32 random characters."
+                    f"Refusing to start in production with unsafe/missing settings: {', '.join(insecure)}. "
+                    "Set strong secrets and required provider credentials."
                 )
         return self
 

@@ -8,6 +8,7 @@ from app.models.audit import AuditLog
 from app.models.listing import Listing
 from app.models.message import Message
 from app.models.report import Report
+from app.models.email_outbox import EmailOutbox
 from app.models.user import User
 from app.services.email_service import EmailService
 
@@ -43,6 +44,8 @@ class ModerationService:
                 select(func.count(Listing.id)).where(Listing.created_at >= seven_days_ago)
             )
             or 0,
+            "failed_emails": self.db.scalar(select(func.count(EmailOutbox.id)).where(EmailOutbox.status == "failed"))
+            or 0,
         }
 
     def approve_listing(self, listing_id: str, admin: User) -> Listing:
@@ -52,7 +55,7 @@ class ModerationService:
         listing.approved_by_admin_id = admin.id
         listing.rejection_reason = None
         self.audit(admin, "listing.approved", "listing", listing.id)
-        EmailService().send_listing_approved(listing.seller.email, listing.title)
+        EmailService(self.db).send_listing_approved(listing.seller.email, listing.title)
         self.db.commit()
         self.db.refresh(listing)
         return listing
@@ -62,7 +65,7 @@ class ModerationService:
         listing.status = "rejected"
         listing.rejection_reason = reason
         self.audit(admin, "listing.rejected", "listing", listing.id, {"reason": reason})
-        EmailService().send_listing_rejected(listing.seller.email, listing.title, reason)
+        EmailService(self.db).send_listing_rejected(listing.seller.email, listing.title, reason)
         self.db.commit()
         self.db.refresh(listing)
         return listing
@@ -81,7 +84,34 @@ class ModerationService:
         if not user:
             raise api_error("NOT_FOUND", "Korisnik nije pronađen.", 404)
         user.status = "suspended"
-        self.audit(admin, "user.suspended", "user", user.id, {"reason": reason})
+        archived = self.db.scalars(
+            select(Listing).where(Listing.seller_id == user.id, Listing.status == "active")
+        ).all()
+        for listing in archived:
+            listing.status = "archived"
+        self.audit(
+            admin,
+            "user.suspended",
+            "user",
+            user.id,
+            {"reason": reason, "archived_listing_ids": [listing.id for listing in archived]},
+        )
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def unsuspend_user(self, user_id: str, admin: User) -> User:
+        user = self.db.get(User, user_id)
+        if not user:
+            raise api_error("NOT_FOUND", "Korisnik nije pronađen.", 404)
+        user.status = "active"
+        self.audit(
+            admin,
+            "user.unsuspended",
+            "user",
+            user.id,
+            {"restore_policy": "archived listings are not restored automatically"},
+        )
         self.db.commit()
         self.db.refresh(user)
         return user
@@ -90,6 +120,8 @@ class ModerationService:
         report = self.db.get(Report, report_id)
         if not report:
             raise api_error("NOT_FOUND", "Prijava nije pronađena.", 404)
+        if status not in {"resolved", "dismissed"}:
+            raise api_error("VALIDATION_ERROR", "Status prijave mora biti resolved ili dismissed.", 422)
         report.status = status
         report.resolution_note = note
         report.resolved_by_admin_id = admin.id

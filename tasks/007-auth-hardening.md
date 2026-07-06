@@ -1,6 +1,6 @@
 # 007 — Auth hardening
 
-Status: todo
+Status: done
 Prioritet: P2
 
 ## Problem
@@ -12,11 +12,11 @@ Prioritet: P2
 
 ## Šta uraditi
 
-- [ ] Skrati access token (npr. 30–60 min) + refresh token u posebnom HttpOnly kolačiću sa rotacijom; ili server-side sesije u Redis-u (jednostavnije za opoziv — Redis već postoji u compose-u)
-- [ ] Logout tada zaista poništava sesiju/refresh token
-- [ ] Telefon: ili zaista enkriptuj (npr. Fernet sa `SECRET_KEY`) ili preimenuj kolonu u `phone_number` da ne laže (zahteva migraciju — vidi task 006)
-- [ ] Endpoint `POST /auth/resend-verification` (rate-limited, radi samo za neverifikovane naloge) + dugme na frontendu posle registracije/prijave
-- [ ] Verifikacioni i reset tokeni: dodaj `expires_at` (npr. 24h / 1h) i heširaj ih u bazi (sha256 je dovoljan)
+- [x] Skrati access token (npr. 30–60 min) + refresh token u posebnom HttpOnly kolačiću sa rotacijom; ili server-side sesije u Redis-u (jednostavnije za opoziv — Redis već postoji u compose-u)
+- [x] Logout tada zaista poništava sesiju/refresh token
+- [x] Telefon: ili zaista enkriptuj (npr. Fernet sa `SECRET_KEY`) ili preimenuj kolonu u `phone_number` da ne laže (zahteva migraciju — vidi task 006)
+- [x] Endpoint `POST /auth/resend-verification` (rate-limited, radi samo za neverifikovane naloge) + dugme na frontendu posle registracije/prijave
+- [x] Verifikacioni i reset tokeni: dodaj `expires_at` (npr. 24h / 1h) i heširaj ih u bazi (sha256 je dovoljan)
 
 ## Kriterijumi prihvatanja
 

@@ -1,6 +1,6 @@
 # 010 — Admin: preostale stranice + route guard
 
-Status: todo
+Status: done
 Prioritet: P2
 
 ## Problem
@@ -11,12 +11,12 @@ Prioritet: P2
 
 ## Šta uraditi
 
-- [ ] Route guard: u `admin/layout.tsx` proveri `getCurrentUser()` i `role === "admin"`, inače `redirect("/")` (server-side; zavisi od taska 001 za API pozive)
-- [ ] Backend: admin CRUD za brendove (`POST/PATCH/DELETE /admin/brands`) — merge duplikata je čest slučaj kod user-submitted brendova
-- [ ] `admin/brendovi`: lista + dodavanje + preimenovanje
-- [ ] `admin/istaknuto`: lista istaknutih oglasa + postavljanje `featured_until` (backend `POST /admin/listings/{id}/feature` postoji)
-- [ ] `admin/podesavanja`: minimalno — prikaz read-only konfiguracije (review mode, limiti) ili ukloni stranicu dok ne bude pravih podešavanja
-- [ ] `admin/kategorije`: ili napravi pravi admin prikaz (sa attribute definitions) ili ukloni link iz admin navigacije
+- [x] Route guard: u `admin/layout.tsx` proveri `getCurrentUser()` i `role === "admin"`, inače `redirect("/")` (server-side; zavisi od taska 001 za API pozive)
+- [x] Backend: admin CRUD za brendove (`POST/PATCH/DELETE /admin/brands`) — merge duplikata je čest slučaj kod user-submitted brendova
+- [x] `admin/brendovi`: lista + dodavanje + preimenovanje
+- [x] `admin/istaknuto`: lista istaknutih oglasa + postavljanje `featured_until` (backend `POST /admin/listings/{id}/feature` postoji)
+- [x] `admin/podesavanja`: minimalno — prikaz read-only konfiguracije (review mode, limiti) ili ukloni stranicu dok ne bude pravih podešavanja
+- [x] `admin/kategorije`: ili napravi pravi admin prikaz (sa attribute definitions) ili ukloni link iz admin navigacije
 
 ## Kriterijumi prihvatanja
 

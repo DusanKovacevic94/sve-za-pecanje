@@ -1,6 +1,6 @@
 # 014 — View count i analytics ispravke
 
-Status: todo
+Status: done
 Prioritet: P3
 
 ## Problem
@@ -14,11 +14,11 @@ Ovo takođe blokira keširanje detalja oglasa (task 012).
 
 ## Šta uraditi
 
-- [ ] Razdvoji čitanje od beleženja: GET ne sme da piše; view tracking prebaci u poseban lagani endpoint (`POST /listings/{id}/track-view`) koji frontend zove klijentski (beacon), ili u worker preko Redis brojača
-- [ ] Dedup: ne broji ponovljeni pregled istog IP/user-a u kratkom prozoru (Redis `SET NX EX`)
-- [ ] Ignoriši očigledne botove (User-Agent) za view count; sitemap crawl ne treba da duva brojke
-- [ ] `view_count` flush: Redis `INCR` po oglasu + periodični flush u Postgres (worker iz taska 009), ili zadrži direktan upis ali bez commit-a na GET putanji
-- [ ] Analytics events: odluči šta se zaista koristi (admin dashboard?) — ako ništa, ukloni upis; ako da, dodaj retenciju (brisanje starijih od N dana u workeru)
+- [x] Razdvoji čitanje od beleženja: GET ne sme da piše; view tracking prebaci u poseban lagani endpoint (`POST /listings/{id}/track-view`) koji frontend zove klijentski (beacon), ili u worker preko Redis brojača
+- [x] Dedup: ne broji ponovljeni pregled istog IP/user-a u kratkom prozoru (Redis `SET NX EX`)
+- [x] Ignoriši očigledne botove (User-Agent) za view count; sitemap crawl ne treba da duva brojke
+- [x] `view_count` flush: Redis `INCR` po oglasu + periodični flush u Postgres (worker iz taska 009), ili zadrži direktan upis ali bez commit-a na GET putanji
+- [x] Analytics events: odluči šta se zaista koristi (admin dashboard?) — ako ništa, ukloni upis; ako da, dodaj retenciju (brisanje starijih od N dana u workeru)
 
 ## Kriterijumi prihvatanja
 

@@ -24,8 +24,10 @@ class User(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(30), default="pending_verification", index=True)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_login_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    email_verification_token: Mapped[str | None] = mapped_column(String(255), index=True)
-    password_reset_token: Mapped[str | None] = mapped_column(String(255), index=True)
+    email_verification_token_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    email_verification_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    password_reset_token_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    password_reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     profile: Mapped["UserProfile"] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"

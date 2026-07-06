@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.api.v1.deps import get_current_user
@@ -11,6 +11,7 @@ from app.schemas.search import SavedSearchCreate
 from app.services.search_service import SearchService
 
 router = APIRouter(prefix="/saved-searches", tags=["saved-searches"])
+MAX_SAVED_SEARCHES = 20
 
 
 @router.get("")
@@ -38,6 +39,15 @@ def create_saved_search(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
+    count = db.scalar(select(func.count(SavedSearch.id)).where(SavedSearch.user_id == user.id)) or 0
+    if count >= MAX_SAVED_SEARCHES:
+        from app.core.responses import api_error
+
+        raise api_error(
+            "SAVED_SEARCH_LIMIT",
+            f"Možete imati najviše {MAX_SAVED_SEARCHES} sačuvanih pretraga.",
+            400,
+        )
     item = SavedSearch(
         user_id=user.id,
         name=payload.name,
@@ -71,4 +81,3 @@ def delete_saved_search(
         db.delete(item)
         db.commit()
     return data_response({"message": "Sačuvana pretraga je obrisana."})
-

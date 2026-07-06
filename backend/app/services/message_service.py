@@ -135,7 +135,7 @@ class MessageService:
             listing.message_count += 1
             recipient = self.db.get(User, conversation.seller_id if sender.id == conversation.buyer_id else conversation.buyer_id)
             if recipient:
-                EmailService().send_new_message(recipient.email, listing.title, sender.username)
+                EmailService(self.db).send_new_message(recipient.email, listing.title, sender.username)
         self.db.commit()
         self.db.refresh(conversation)
         return conversation

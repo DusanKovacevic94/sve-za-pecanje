@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from hashlib import sha256
 from secrets import token_urlsafe
 from typing import Any
 
@@ -18,9 +19,9 @@ def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password_bytes, password_hash.encode("utf-8"))
 
 
-def create_access_token(subject: str, role: str) -> str:
+def create_access_token(subject: str, role: str, session_id: str) -> str:
     expires_at = datetime.now(UTC) + timedelta(minutes=settings.access_token_minutes)
-    payload: dict[str, Any] = {"sub": subject, "role": role, "exp": expires_at}
+    payload: dict[str, Any] = {"sub": subject, "role": role, "sid": session_id, "exp": expires_at}
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
@@ -33,3 +34,7 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
 
 def generate_token() -> str:
     return token_urlsafe(32)
+
+
+def hash_token(token: str) -> str:
+    return sha256(token.encode("utf-8")).hexdigest()

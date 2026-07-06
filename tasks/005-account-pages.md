@@ -1,6 +1,6 @@
 # 005 — Nalog: profil i ocene stranice
 
-Status: todo
+Status: done
 Prioritet: P1
 
 ## Problem
@@ -10,11 +10,11 @@ Prioritet: P1
 
 ## Šta uraditi
 
-- [ ] `/nalog/profil`: forma (RHF + zod) koja učitava trenutni profil i šalje `PATCH /users/me/profile`
-- [ ] Backend: proveri da li postoji `GET` za sopstveni puni profil (ako ne, dodaj ili proširi `/auth/me`)
-- [ ] `/nalog/ocene`: prikaži primljene ocene (i date, tab/sekcija); backend endpoint za listanje ocena po korisniku verovatno treba dodati (`GET /users/me/reviews` ili reuse javnog profila)
-- [ ] Ostavljanje ocene: posle kupovine (oglas `sold`), forma/dugme na detalju oglasa ili u razgovoru — `POST /reviews` traži da je korisnik učesnik prodaje (`sold_to_user_id`)
-- [ ] Proveri kako se `sold_to_user_id` uopšte postavlja pri `mark-sold` — ako ne postoji način da prodavac izabere kupca, ocene su praktično nedostižne; dodaj izbor kupca (iz razgovora) pri označavanju kao prodato
+- [x] `/nalog/profil`: forma (RHF + zod) koja učitava trenutni profil i šalje `PATCH /users/me/profile`
+- [x] Backend: proveri da li postoji `GET` za sopstveni puni profil (ako ne, dodaj ili proširi `/auth/me`)
+- [x] `/nalog/ocene`: prikaži primljene ocene (i date, tab/sekcija); backend endpoint za listanje ocena po korisniku verovatno treba dodati (`GET /users/me/reviews` ili reuse javnog profila)
+- [x] Ostavljanje ocene: posle kupovine (oglas `sold`), forma/dugme na detalju oglasa ili u razgovoru — `POST /reviews` traži da je korisnik učesnik prodaje (`sold_to_user_id`)
+- [x] Proveri kako se `sold_to_user_id` uopšte postavlja pri `mark-sold` — ako ne postoji način da prodavac izabere kupca, ocene su praktično nedostižne; dodaj izbor kupca (iz razgovora) pri označavanju kao prodato
 
 ## Kriterijumi prihvatanja
 

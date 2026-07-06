@@ -1,6 +1,6 @@
 # 009 — Background worker: digesti, istek oglasa, async email
 
-Status: todo
+Status: done
 Prioritet: P2
 
 ## Problem
@@ -14,12 +14,12 @@ Prioritet: P2
 
 ## Šta uraditi
 
-- [ ] Odluči mehanizam: jednostavan scheduler loop u postojećem worker kontejneru (dovoljno za MVP) ili RQ/arq preko Redis-a
-- [ ] Saved-search digest: periodično (npr. na 15 min) nađi nove oglase koji odgovaraju sačuvanim pretragama i pošalji email (reuse `search_service` matching + `send_email`); zapamti last-run watermark da nema duplikata
-- [ ] Istek oglasa: postavi `expires_at` pri objavi (npr. +60 dana), worker arhivira isteklo i (opciono) šalje email "produžite oglas"
-- [ ] Čišćenje `featured_until < now` → `is_featured = false`
-- [ ] Email queue: `send_email` iz request putanje prebaci u worker (u bazu upiši outbox red ili koristi RQ job); zadrži sync slanje kao fallback u dev-u
-- [ ] Worker health: loguj svaki ciklus, hvataj izuzetke po tasku da jedan pad ne obori petlju
+- [x] Odluči mehanizam: jednostavan scheduler loop u postojećem worker kontejneru (dovoljno za MVP) ili RQ/arq preko Redis-a
+- [x] Saved-search digest: periodično (npr. na 15 min) nađi nove oglase koji odgovaraju sačuvanim pretragama i pošalji email (reuse `search_service` matching + `send_email`); zapamti last-run watermark da nema duplikata
+- [x] Istek oglasa: postavi `expires_at` pri objavi (npr. +60 dana), worker arhivira isteklo i (opciono) šalje email "produžite oglas"
+- [x] Čišćenje `featured_until < now` → `is_featured = false`
+- [x] Email queue: `send_email` iz request putanje prebaci u worker (u bazu upiši outbox red ili koristi RQ job); zadrži sync slanje kao fallback u dev-u
+- [x] Worker health: loguj svaki ciklus, hvataj izuzetke po tasku da jedan pad ne obori petlju
 
 ## Kriterijumi prihvatanja
 

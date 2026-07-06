@@ -4,7 +4,8 @@
 
 This deployment uses Docker Compose on one VPS with Caddy as the public reverse proxy.
 Only Caddy should expose public HTTP/HTTPS ports. PostgreSQL, Redis, backend, frontend,
-MinIO, and Mailpit should not be reachable from the public internet.
+worker, and backup services should not be reachable from the public internet. MinIO and
+Mailpit are development services and are removed by the production Compose overlay.
 
 1. Provision an Ubuntu VPS.
 2. Point DNS `A` and `AAAA` records for `APP_DOMAIN` to the server.
@@ -26,6 +27,17 @@ POSTGRES_DB=fishing_marketplace
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=<strong-postgres-admin-password>
 DATABASE_URL=postgresql+psycopg://fishing_app:<strong-app-password>@postgres:5432/fishing_marketplace
+RESEND_API_KEY=<resend-api-key>
+SENTRY_DSN=<backend-sentry-dsn>
+NEXT_PUBLIC_SENTRY_DSN=<frontend-sentry-dsn>
+STORAGE_BACKEND=hetzner
+HETZNER_STORAGE_ENDPOINT=https://fsn1.your-objectstorage.com
+HETZNER_STORAGE_BUCKET=<bucket>
+HETZNER_STORAGE_ROOT_FOLDER=sve-za-pecanje
+HETZNER_STORAGE_PUBLIC_URL=https://<bucket>.fsn1.your-objectstorage.com
+HETZNER_STORAGE_ACCESS_KEY=<key>
+HETZNER_STORAGE_SECRET_KEY=<secret>
+BACKUP_REMOTE=<rclone-remote>:sve-za-pecanje/postgres
 ```
 
 7. Start services:
@@ -44,7 +56,8 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend
 
 9. Confirm:
 
-- `GET /health`
+- `GET /health/live`
+- `GET /health/ready`
 - Homepage loads
 - Registration email appears in provider logs
 - Admin can approve/reject listings
@@ -61,48 +74,63 @@ Caddy terminates HTTPS and proxies:
 Caddy provisions and renews TLS certificates automatically when DNS points to the VPS
 and ports `80`/`443` are reachable.
 
+## Observability
+
+`SENTRY_DSN` enables backend and worker exception reporting. `NEXT_PUBLIC_SENTRY_DSN`
+enables frontend reporting through `@sentry/nextjs`. Leave both empty in development.
+
+Use `/health/live` for container liveness and `/health/ready` for dependency readiness.
+Readiness checks PostgreSQL, Redis, and the worker heartbeat. If the worker stops writing
+heartbeats for more than five minutes, readiness returns `503`.
+
 ## Backups
 
-Create a backups directory on the VPS:
+The production overlay starts a `backup` service. It runs `backend/scripts/backup_db.sh`
+inside a `postgres:16-alpine` container, keeps seven daily dumps and four weekly dumps
+in the `postgres_backups` volume, and copies them off-site when `BACKUP_REMOTE` points
+to an `rclone` remote.
 
-```bash
-sudo mkdir -p /opt/sve-za-pecanje/backups/postgres
-sudo chown "$USER":"$USER" /opt/sve-za-pecanje/backups/postgres
+Example env:
+
+```dotenv
+BACKUP_REMOTE=hetzner:sve-za-pecanje/postgres
+BACKUP_INTERVAL_SECONDS=86400
 ```
 
-Manual PostgreSQL dump:
+Create a manual dump when needed:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres pg_dump \
-  -U postgres \
-  -d fishing_marketplace \
-  --format=custom \
-  --no-owner \
-  --no-acl \
-  > "/opt/sve-za-pecanje/backups/postgres/fishing_marketplace-$(date +%F-%H%M%S).dump"
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backup sh /scripts/backup_db.sh
 ```
 
-Restore a dump into a fresh database:
+List local backup files:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backup find /backups -type f -name '*.dump'
+```
+
+Restore a dump into a fresh database to verify it:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres createdb -U postgres fishing_marketplace_restore
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres pg_restore \
-  -U postgres \
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backup pg_restore \
+  -h postgres \
+  -U "${POSTGRES_USER:-postgres}" \
   -d fishing_marketplace_restore \
   --clean \
   --if-exists \
-  < /opt/sve-za-pecanje/backups/postgres/<backup-file>.dump
+  /backups/daily/<backup-file>.dump
 ```
 
-Daily cron example:
+Drop the verification database after checking row counts:
 
-```cron
-15 2 * * * cd /root/sve-za-pecanje && docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres pg_dump -U postgres -d fishing_marketplace --format=custom --no-owner --no-acl > /opt/sve-za-pecanje/backups/postgres/fishing_marketplace-$(date +\%F-\%H\%M\%S).dump
-45 2 * * * find /opt/sve-za-pecanje/backups/postgres -type f -name '*.dump' -mtime +14 -delete
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres dropdb -U postgres fishing_marketplace_restore
 ```
 
-Copy backups off the VPS. For example, use `rclone`, `restic`, `borg`, or another
-off-server backup target. Do not rely only on the same VPS disk.
+Do not rely only on the same VPS disk. Configure and test the `rclone` remote before
+launch, then run the manual backup command and restore one dump into
+`fishing_marketplace_restore`.
 
 ## Database Credentials
 
@@ -136,8 +164,7 @@ in `db/migrations/env.py`.
 
 ## Object Storage
 
-Local uploads currently go through `/uploads` on the backend. Before real user volume
-grows, move listing images to Hetzner Object Storage by setting:
+Production uploads should use Hetzner Object Storage:
 
 ```dotenv
 S3_ENDPOINT_URL=https://fsn1.your-objectstorage.com
@@ -167,3 +194,12 @@ HETZNER_STORAGE_SIGNED_URL_EXPIRES=900
 
 When `HETZNER_STORAGE_ROOT_FOLDER` is set, uploaded listing images are written under
 that prefix inside the bucket, for example `sve-za-pecanje/listings/...`.
+
+To migrate existing local uploads after setting the Hetzner env vars:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend python -m scripts.sync_uploads_to_object_storage
+```
+
+Deleting a listing image removes the backing storage object. The worker also removes
+stale local orphan files when local storage is used in development.

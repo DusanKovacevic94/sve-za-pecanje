@@ -5,29 +5,49 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FavoriteButton, ReportButton } from "@/components/listings/ListingActions";
+import { ListingGallery } from "@/components/listings/ListingGallery";
+import { ListingViewTracker } from "@/components/listings/ListingViewTracker";
 import { ApiError, apiFetch, ListingDetail } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import { conditionLabels, formatDate, formatPrice } from "@/lib/format";
-import { serverApiFetch } from "@/lib/server-api";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+function absoluteUrl(pathOrUrl: string) {
+  if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) {
+    return pathOrUrl;
+  }
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://svezapecanje.rs";
+  return `${base}${pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`}`;
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const listing = await apiFetch<ListingDetail>(`/listings/${slug}`).catch(() => null);
+  const listing = await apiFetch<ListingDetail>(`/listings/${slug}`, { next: { revalidate: 60 } }).catch(() => null);
   if (!listing) return { title: "Oglas nije pronađen | Sve Za Pecanje" };
+  const image = listing.data.images.find((item) => item.is_cover)?.url ?? listing.data.cover_image_url ?? undefined;
   return {
     title: `${listing.data.title} — ${listing.data.category.name_sr} | Sve Za Pecanje`,
-    description: `${listing.data.title}, ${conditionLabels[listing.data.condition]}, ${listing.data.city}, ${formatPrice(listing.data.price_amount, listing.data.currency)}.`
+    description: `${listing.data.title}, ${conditionLabels[listing.data.condition]}, ${listing.data.city}, ${formatPrice(listing.data.price_amount, listing.data.currency)}.`,
+    alternates: {
+      canonical: `/oglasi/${listing.data.slug}`
+    },
+    openGraph: {
+      title: listing.data.title,
+      description: `${conditionLabels[listing.data.condition]}, ${listing.data.city}, ${formatPrice(listing.data.price_amount, listing.data.currency)}.`,
+      type: "article",
+      url: `/oglasi/${listing.data.slug}`,
+      images: image ? [{ url: image, alt: listing.data.title }] : undefined
+    }
   };
 }
 
 export default async function ListingDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const [response, user] = await Promise.all([
-    serverApiFetch<ListingDetail>(`/listings/${slug}`).catch((error) => {
+    apiFetch<ListingDetail>(`/listings/${slug}`, { next: { revalidate: 60 } }).catch((error) => {
       if (error instanceof ApiError && error.status === 404) notFound();
       throw error;
     }),
@@ -35,18 +55,30 @@ export default async function ListingDetailPage({ params }: PageProps) {
   ]);
   const listing = response.data;
   const isOwner = user?.id === listing.seller.id;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: listing.title,
+    description: listing.description,
+    image: listing.images.map((image) => absoluteUrl(image.url)),
+    category: listing.category.name_sr,
+    brand: listing.brand?.name ?? listing.brand_name_custom,
+    offers: {
+      "@type": "Offer",
+      price: listing.price_amount,
+      priceCurrency: listing.currency,
+      availability: listing.status === "sold" ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+      itemCondition: listing.condition === "new" ? "https://schema.org/NewCondition" : "https://schema.org/UsedCondition",
+      areaServed: listing.city,
+      url: absoluteUrl(`/oglasi/${listing.slug}`)
+    }
+  };
   return (
     <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_360px]">
+      <ListingViewTracker listingId={listing.id} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <section>
-        <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
-          <div className="aspect-[4/3] bg-gradient-to-br from-river-100 via-white to-reed/30">
-            {listing.images[0] ? (
-              <img src={listing.images[0].url} alt={listing.title} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full items-center justify-center text-river-700">Fotografija opreme</div>
-            )}
-          </div>
-        </div>
+        <ListingGallery listing={listing} />
         <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
           <div className="flex flex-wrap gap-2">
             <Badge tone={listing.status === "sold" ? "sold" : "accent"}>{listing.status === "sold" ? "Prodato" : "Aktivan oglas"}</Badge>

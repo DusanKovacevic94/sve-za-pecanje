@@ -1,6 +1,6 @@
 # 011 — Slike: galerija, upload zaštita, next/image
 
-Status: todo
+Status: done
 Prioritet: P2
 
 ## Problem
@@ -12,11 +12,11 @@ Prioritet: P2
 
 ## Šta uraditi
 
-- [ ] Galerija na detalju: glavna slika + thumbnails, poštuj `sort_order` i `is_cover` (može čisto CSS/klijentska komponenta, bez biblioteke)
-- [ ] Pređi na `next/image` sa `width`/`height`/`sizes` (dodaj `remotePatterns` u `next.config.js` za S3/MinIO domen)
-- [ ] Upload guard: odbij fajl veći od `MAX_IMAGE_SIZE_MB` pre učitavanja u memoriju (proveri `content-length` / čitaj u chunk-ovima), ograniči na `MAX_LISTING_IMAGES`
-- [ ] Validiraj da je fajl zaista slika (Pillow verify) i normalizuj format (JPEG/WebP) + skini EXIF (privatnost: GPS koordinate!)
-- [ ] UI za slike u formi oglasa: pregled, brisanje, izbor cover slike, redosled
+- [x] Galerija na detalju: glavna slika + thumbnails, poštuj `sort_order` i `is_cover` (može čisto CSS/klijentska komponenta, bez biblioteke)
+- [x] Pređi na `next/image` sa `width`/`height`/`sizes` (dodaj `remotePatterns` u `next.config.js` za S3/MinIO domen)
+- [x] Upload guard: odbij fajl veći od `MAX_IMAGE_SIZE_MB` pre učitavanja u memoriju (proveri `content-length` / čitaj u chunk-ovima), ograniči na `MAX_LISTING_IMAGES`
+- [x] Validiraj da je fajl zaista slika (Pillow verify) i normalizuj format (JPEG/WebP) + skini EXIF (privatnost: GPS koordinate!)
+- [x] UI za slike u formi oglasa: pregled, brisanje, izbor cover slike, redosled
 - [ ] (Opciono, veže se na task 009) generisanje thumbnail varijanti u worker-u umesto u requestu
 
 ## Kriterijumi prihvatanja

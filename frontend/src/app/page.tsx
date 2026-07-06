@@ -6,8 +6,8 @@ import { apiFetch, Category, ListingCard as ListingCardType } from "@/lib/api";
 
 async function getHomeData() {
   const [categories, listings] = await Promise.all([
-    apiFetch<Category[]>("/categories").catch(() => ({ data: [] })),
-    apiFetch<ListingCardType[]>("/listings?page_size=8").catch(() => ({ data: [] }))
+    apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
+    apiFetch<ListingCardType[]>("/listings?page_size=8", { next: { revalidate: 60 } }).catch(() => ({ data: [] }))
   ]);
   return { categories: categories.data, listings: listings.data };
 }

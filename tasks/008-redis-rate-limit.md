@@ -1,6 +1,6 @@
 # 008 — Redis rate limiter
 
-Status: todo
+Status: done
 Prioritet: P2
 
 ## Problem
@@ -9,11 +9,11 @@ Prioritet: P2
 
 ## Šta uraditi
 
-- [ ] Implementiraj rate limit preko Redis-a (sliding window ili fixed window sa `INCR` + `EXPIRE` je dovoljan za MVP)
-- [ ] Zadrži isti interfejs `check_rate_limit(request, key, limit, window_seconds)` da pozivi u `auth.py`, `listings.py`, `messages.py` ostanu netaknuti
-- [ ] Fallback: ako Redis nije dostupan (lokalni dev bez docker-a), padni na postojeći in-memory limiter umesto da API pukne
-- [ ] Poštuj postojeći `RATE_LIMIT_ENABLED` flag
-- [ ] Dodaj `redis` klijent u pyproject (sync verzija, endpointi su sync)
+- [x] Implementiraj rate limit preko Redis-a (sliding window ili fixed window sa `INCR` + `EXPIRE` je dovoljan za MVP)
+- [x] Zadrži isti interfejs `check_rate_limit(request, key, limit, window_seconds)` da pozivi u `auth.py`, `listings.py`, `messages.py` ostanu netaknuti
+- [x] Fallback: ako Redis nije dostupan (lokalni dev bez docker-a), padni na postojeći in-memory limiter umesto da API pukne
+- [x] Poštuj postojeći `RATE_LIMIT_ENABLED` flag
+- [x] Dodaj `redis` klijent u pyproject (sync verzija, endpointi su sync)
 
 ## Kriterijumi prihvatanja
 

@@ -1,3 +1,5 @@
+from datetime import UTC, datetime
+
 from fastapi import Cookie, Depends, Header
 from sqlalchemy.orm import Session
 
@@ -5,7 +7,12 @@ from app.core.config import settings
 from app.core.responses import api_error
 from app.core.security import decode_access_token
 from app.db.session import get_db
+from app.models.auth_session import AuthSession
 from app.models.user import User
+
+
+def _as_utc(value: datetime) -> datetime:
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
 
 
 def get_optional_user(
@@ -21,6 +28,19 @@ def get_optional_user(
     payload = decode_access_token(token)
     if not payload:
         return None
+    session_id = payload.get("sid")
+    if not session_id:
+        return None
+    session = db.get(AuthSession, session_id)
+    if (
+        not session
+        or session.revoked_at
+        or _as_utc(session.expires_at) < datetime.now(UTC)
+        or session.user_id != payload.get("sub")
+    ):
+        return None
+    session.last_seen_at = datetime.now(UTC)
+    db.commit()
     user = db.get(User, payload.get("sub"))
     if not user or user.status in {"suspended", "deleted"}:
         return None
@@ -31,4 +51,3 @@ def get_current_user(user: User | None = Depends(get_optional_user)) -> User:
     if not user:
         raise api_error("UNAUTHORIZED", "Prijava je obavezna.", 401)
     return user
-

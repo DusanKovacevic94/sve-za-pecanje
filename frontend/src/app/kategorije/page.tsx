@@ -3,7 +3,7 @@ import { apiFetch, Category } from "@/lib/api";
 export const metadata = { title: "Kategorije | Sve Za Pecanje" };
 
 export default async function CategoriesPage() {
-  const categories = await apiFetch<Category[]>("/categories").catch(() => ({ data: [] }));
+  const categories = await apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] }));
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="text-3xl font-black">Kategorije</h1>
@@ -18,4 +18,3 @@ export default async function CategoriesPage() {
     </div>
   );
 }
-

@@ -1,22 +1,25 @@
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from secrets import token_hex
 from typing import Any
 
-from sqlalchemy import Select, func, or_, select
+from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
 from app.core.responses import api_error
+from app.core.storage import delete_storage_object
 from app.models.analytics import AnalyticsEvent
 from app.models.brand import Brand
 from app.models.category import AttributeDefinition, Category
 from app.models.favorite import Favorite
 from app.models.image import ListingImage
 from app.models.listing import Listing
+from app.models.message import Conversation
 from app.models.user import User
 from app.schemas.listing import ListingCreate, ListingUpdate
+from app.services.search_utils import apply_listing_search
 
 
 def slugify(value: str) -> str:
@@ -53,6 +56,7 @@ class ListingService:
             city=payload.city,
             municipality=payload.municipality,
             status="active" if settings.listing_review_mode == "auto" else "pending_review",
+            expires_at=datetime.now(UTC) + timedelta(days=settings.listing_lifetime_days),
             attributes=payload.attributes,
             allow_messages=payload.allow_messages,
             phone_visible=payload.phone_visible,
@@ -89,14 +93,10 @@ class ListingService:
         rows = self.db.scalars(query.offset((page - 1) * page_size).limit(page_size)).all()
         return list(rows), total
 
-    def get_by_slug(self, slug: str, increment_view: bool = True) -> Listing:
+    def get_by_slug(self, slug: str) -> Listing:
         listing = self.db.scalar(self._base_query().where(Listing.slug == slug))
         if not listing:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
-        if increment_view:
-            listing.view_count += 1
-            self.track(None, "listing_viewed", "listing", listing.id)
-            self.db.commit()
         return listing
 
     def get_owned_or_admin(self, listing_id: str, actor: User) -> Listing:
@@ -134,6 +134,16 @@ class ListingService:
     def mark_sold(self, listing: Listing, actor: User, sold_to_user_id: str | None = None) -> Listing:
         if listing.seller_id != actor.id and actor.role not in {"admin", "super_admin"}:
             raise api_error("FORBIDDEN", "Samo prodavac ili admin može označiti oglas kao prodat.", 403)
+        if sold_to_user_id:
+            buyer_conversation = self.db.scalar(
+                select(Conversation.id).where(
+                    Conversation.listing_id == listing.id,
+                    Conversation.seller_id == listing.seller_id,
+                    Conversation.buyer_id == sold_to_user_id,
+                )
+            )
+            if not buyer_conversation:
+                raise api_error("VALIDATION_ERROR", "Izaberite kupca iz razgovora za ovaj oglas.", 400)
         listing.status = "sold"
         listing.sold_at = datetime.now(UTC)
         listing.sold_to_user_id = sold_to_user_id
@@ -165,6 +175,42 @@ class ListingService:
         self.db.refresh(image)
         return image
 
+    def delete_image(self, listing: Listing, image_id: str) -> None:
+        image = self._get_listing_image(listing, image_id)
+        was_cover = image.is_cover
+        storage_key = image.storage_key
+        self.db.delete(image)
+        self.db.flush()
+        remaining = list(self.db.scalars(select(ListingImage).where(ListingImage.listing_id == listing.id)).all())
+        for index, item in enumerate(sorted(remaining, key=lambda row: row.sort_order)):
+            item.sort_order = index
+            item.is_cover = item.is_cover or (was_cover and index == 0)
+        self.db.commit()
+        delete_storage_object(storage_key)
+
+    def set_cover_image(self, listing: Listing, image_id: str) -> ListingImage:
+        image = self._get_listing_image(listing, image_id)
+        for item in listing.images:
+            item.is_cover = item.id == image.id
+        self.db.commit()
+        self.db.refresh(image)
+        return image
+
+    def reorder_images(self, listing: Listing, image_ids: list[str]) -> list[ListingImage]:
+        current = {image.id: image for image in listing.images}
+        if set(image_ids) != set(current):
+            raise api_error("VALIDATION_ERROR", "Redosled mora sadržati sve slike oglasa.", 400)
+        for index, image_id in enumerate(image_ids):
+            current[image_id].sort_order = index
+        self.db.commit()
+        return sorted(current.values(), key=lambda image: image.sort_order)
+
+    def _get_listing_image(self, listing: Listing, image_id: str) -> ListingImage:
+        image = self.db.get(ListingImage, image_id)
+        if not image or image.listing_id != listing.id:
+            raise api_error("NOT_FOUND", "Slika nije pronađena.", 404)
+        return image
+
     def _base_query(self) -> Select[tuple[Listing]]:
         return select(Listing).options(
             selectinload(Listing.seller).selectinload(User.profile),
@@ -176,17 +222,11 @@ class ListingService:
     def _apply_filters(self, query: Select[tuple[Listing]], params: dict[str, Any]) -> Select[tuple[Listing]]:
         q = params.get("q")
         if q:
-            pattern = f"%{q}%"
-            query = query.outerjoin(Brand).where(
-                or_(
-                    Listing.title.ilike(pattern),
-                    Listing.description.ilike(pattern),
-                    Listing.model.ilike(pattern),
-                    Listing.city.ilike(pattern),
-                    Listing.brand_name_custom.ilike(pattern),
-                    Brand.name.ilike(pattern),
-                )
-            )
+            dialect_name = self.db.bind.dialect.name if self.db.bind is not None else "sqlite"
+            query = query.outerjoin(Brand)
+            query, rank = apply_listing_search(query, q, dialect_name, include_brand=True)
+            if rank is not None:
+                query = query.order_by(rank.desc())
             self.track(None, "search_performed", "search", "public", {"q": q})
         if params.get("category"):
             query = query.join(Category, Listing.category_id == Category.id).where(
@@ -281,7 +321,9 @@ def serialize_listing_card(listing: Listing) -> dict:
         ),
         "key_attributes": key_attributes,
         "is_featured": listing.is_featured,
+        "featured_until": listing.featured_until,
         "created_at": listing.created_at,
+        "updated_at": listing.updated_at,
     }
 
 

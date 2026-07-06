@@ -1,6 +1,6 @@
 # 013 — CI, ESLint i pokrivenost testovima
 
-Status: todo
+Status: done
 Prioritet: P3
 
 ## Problem
@@ -12,16 +12,16 @@ Prioritet: P3
 
 ## Šta uraditi
 
-- [ ] GitHub Actions workflow: backend (uv sync, ruff, pytest) + frontend (pnpm install, tsc, next build, lint) na svaki push/PR
-- [ ] ESLint setup: `next/core-web-vitals` config, popravi ono što prijavi
-- [ ] Test fixtures: pytest fixture sa in-memory SQLite (ili tmp fajl) + `TestClient`, factory helperi za usera/oglas
-- [ ] Prioritetni testovi:
-  - [ ] authz: PATCH/DELETE tuđeg oglasa → 403/404; ne-admin na `/admin/*` → 403
-  - [ ] listing filteri: kategorija, cena min/max, stanje, atributi
-  - [ ] auth flow: register → verify → login → forgot → reset (sa mock emailom)
-  - [ ] poruke: samo učesnici razgovora vide poruke
-  - [ ] review: samo učesnici prodaje, dupla ocena → 409
-- [ ] (Opciono) alembic drift check iz taska 006
+- [x] GitHub Actions workflow: backend (uv sync, ruff, pytest) + frontend (pnpm install, tsc, next build, lint) na svaki push/PR
+- [x] ESLint setup: `next/core-web-vitals` config, popravi ono što prijavi
+- [x] Test fixtures: pytest fixture sa in-memory SQLite (ili tmp fajl) + `TestClient`, factory helperi za usera/oglas
+- [x] Prioritetni testovi:
+  - [x] authz: PATCH/DELETE tuđeg oglasa → 403/404; ne-admin na `/admin/*` → 403
+  - [x] listing filteri: kategorija, cena min/max, stanje, atributi
+  - [x] auth flow: register → verify → login → forgot → reset (sa mock emailom)
+  - [x] poruke: samo učesnici razgovora vide poruke
+  - [x] review: samo učesnici prodaje, dupla ocena → 409
+- [x] (Opciono) alembic drift check iz taska 006
 
 ## Kriterijumi prihvatanja
 

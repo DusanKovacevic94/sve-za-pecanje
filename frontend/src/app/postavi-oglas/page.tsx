@@ -5,8 +5,8 @@ export const metadata = { title: "Postavi oglas | Sve Za Pecanje" };
 
 export default async function CreateListingPage() {
   const [categories, brands] = await Promise.all([
-    apiFetch<Category[]>("/categories").catch(() => ({ data: [] })),
-    apiFetch<Brand[]>("/brands").catch(() => ({ data: [] }))
+    apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
+    apiFetch<Brand[]>("/brands", { next: { revalidate: 3600 } }).catch(() => ({ data: [] }))
   ]);
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
@@ -18,4 +18,3 @@ export default async function CreateListingPage() {
     </div>
   );
 }
-

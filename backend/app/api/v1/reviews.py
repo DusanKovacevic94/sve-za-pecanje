@@ -25,6 +25,8 @@ def create_review(
     allowed_users = {listing.seller_id, listing.sold_to_user_id}
     if user.id not in allowed_users or payload.reviewee_id not in allowed_users:
         raise api_error("FORBIDDEN", "Nemate dozvolu za ovu ocenu.", 403)
+    if payload.reviewee_id == user.id:
+        raise api_error("VALIDATION_ERROR", "Ne možete oceniti sami sebe.", 400)
     review = Review(
         listing_id=payload.listing_id,
         reviewer_id=user.id,
@@ -48,6 +50,6 @@ def create_review(
             "rating": review.rating,
             "comment": review.comment,
             "status": review.status,
+            "created_at": review.created_at,
         }
     )
-

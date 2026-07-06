@@ -1,15 +1,23 @@
 import logging
 
 import httpx
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.models.email_outbox import EmailOutbox
 
 logger = logging.getLogger(__name__)
 
 RESEND_API_URL = "https://api.resend.com/emails"
 
 
-def send_email(to_email: str, subject: str, body: str, html: str | None = None) -> bool:
+def send_email(
+    to_email: str,
+    subject: str,
+    body: str,
+    html: str | None = None,
+    reply_to: str | None = None,
+) -> bool:
     if not settings.resend_api_key:
         # Dev fallback: the body (with its verification/reset link) must be readable
         # in the plain log output, so it goes into the message, not `extra`.
@@ -23,6 +31,8 @@ def send_email(to_email: str, subject: str, body: str, html: str | None = None) 
     }
     if html:
         payload["html"] = html
+    if reply_to:
+        payload["reply_to"] = reply_to
     try:
         response = httpx.post(
             RESEND_API_URL,
@@ -45,6 +55,12 @@ def send_email(to_email: str, subject: str, body: str, html: str | None = None) 
         )
         return False
     return True
+
+
+def enqueue_email(db: Session, to_email: str, subject: str, body: str, html: str | None = None) -> EmailOutbox:
+    email = EmailOutbox(to_email=to_email, subject=subject, body=body, html=html)
+    db.add(email)
+    return email
 
 
 def render_action_email(title: str, intro: str, button_text: str, button_url: str) -> str:

@@ -1,6 +1,6 @@
 # 015 — Kontakt forma
 
-Status: todo
+Status: done
 Prioritet: P3
 
 ## Problem
@@ -9,10 +9,10 @@ Prioritet: P3
 
 ## Šta uraditi
 
-- [ ] Backend: `POST /contact` — ime, email, poruka; rate limit (npr. 3/h po IP); šalje email na admin adresu preko postojećeg `send_email`
-- [ ] Dodaj `CONTACT_EMAIL` u config/.env (podrazumevano `EMAIL_FROM` adresa)
-- [ ] Frontend: klijentska forma (RHF + zod) sa success/error porukom, reuse `apiFetch`
-- [ ] Anti-spam minimum: honeypot polje + rate limit (bez captcha za MVP)
+- [x] Backend: `POST /contact` — ime, email, poruka; rate limit (npr. 3/h po IP); šalje email na admin adresu preko postojećeg `send_email`
+- [x] Dodaj `CONTACT_EMAIL` u config/.env (podrazumevano `EMAIL_FROM` adresa)
+- [x] Frontend: klijentska forma (RHF + zod) sa success/error porukom, reuse `apiFetch`
+- [x] Anti-spam minimum: honeypot polje + rate limit (bez captcha za MVP)
 
 ## Kriterijumi prihvatanja
 

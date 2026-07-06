@@ -7,12 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Archive, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 
-import type { Brand, Category, ListingDetail } from "@/lib/api";
+import type { Brand, BuyerCandidate, Category, ListingDetail } from "@/lib/api";
 import { apiFetch } from "@/lib/api";
 import { conditionOptions } from "@/lib/format";
 import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
+import { ListingImageManager } from "@/components/forms/ListingImageManager";
 
 const listingFormSchema = listingSchema.passthrough();
 
@@ -28,6 +29,7 @@ type ListingFormProps = {
   mode?: "create" | "edit";
   listingId?: string;
   defaultValues?: ListingFormDefaults;
+  images?: ListingDetail["images"];
 };
 
 function getDefaultValues(categories: Category[], defaultValues?: ListingFormDefaults): ListingFormInput {
@@ -77,7 +79,8 @@ export function CreateListingForm({
   brands,
   mode = "create",
   listingId,
-  defaultValues
+  defaultValues,
+  images = []
 }: ListingFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -109,15 +112,30 @@ export function CreateListingForm({
 
   async function runOwnerAction(action: "archive" | "mark-sold") {
     if (!listingId) return;
-    const confirmed = window.confirm(
-      action === "archive" ? "Arhivirati ovaj oglas?" : "Označiti ovaj oglas kao prodat?"
-    );
+    let soldToUserId: string | null | undefined = null;
+    if (action === "mark-sold") {
+      const candidates = (await apiFetch<BuyerCandidate[]>(`/listings/${listingId}/buyer-candidates`)).data;
+      if (!candidates.length) {
+        soldToUserId = window.confirm("Nema razgovora sa kupcima za ovaj oglas. Označiti kao prodato bez kupca?")
+          ? null
+          : undefined;
+      } else {
+        const options = candidates
+          .map((candidate, index) => `${index + 1}. ${candidate.display_name ?? candidate.username}`)
+          .join("\n");
+        const selected = window.prompt(`Izaberite kupca unosom broja:\n${options}`);
+        if (!selected) return;
+        soldToUserId = candidates[Number(selected) - 1]?.id;
+      }
+    }
+    if (soldToUserId === undefined) return;
+    const confirmed = action === "archive" ? window.confirm("Arhivirati ovaj oglas?") : true;
     if (!confirmed) return;
     setActionMessage(null);
     try {
       const response = await apiFetch<ListingDetail>(`/listings/${listingId}/${action}`, {
         method: "POST",
-        body: action === "mark-sold" ? JSON.stringify({ sold_to_user_id: null }) : undefined
+        body: action === "mark-sold" ? JSON.stringify({ sold_to_user_id: soldToUserId }) : undefined
       });
       router.push(action === "archive" ? "/nalog/oglasi" : `/oglasi/${response.data.slug}`);
       router.refresh();
@@ -251,6 +269,7 @@ export function CreateListingForm({
           </p>
         </div>
       </section>
+      {isEdit && listingId ? <ListingImageManager listingId={listingId} initialImages={images} /> : null}
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
       <Button type="submit" disabled={formState.isSubmitting} className="w-full md:w-auto">
         {submitLabel}

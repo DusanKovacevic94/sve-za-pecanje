@@ -17,13 +17,14 @@ function mergeHeaders(initHeaders?: HeadersInit, cookieHeader?: string) {
 
 export async function serverApiFetch<T>(
   path: string,
-  init?: RequestInit,
+  init?: RequestInit & { next?: { revalidate?: number } },
 ): Promise<ApiResponse<T>> {
   const cookieStore = await cookies();
+  const cacheOptions = init?.cache || init?.next ? {} : { cache: "no-store" as RequestCache };
   const response = await fetch(`${serverApiUrl}${path}`, {
     ...init,
+    ...cacheOptions,
     headers: mergeHeaders(init?.headers, cookieStore.toString()),
-    cache: "no-store",
   });
   const json = await response.json().catch(() => null);
   if (!response.ok) {

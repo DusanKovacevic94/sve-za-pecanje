@@ -1,4 +1,5 @@
 import { MapPin } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import type { ListingCard as ListingCardType } from "@/lib/api";
@@ -12,9 +13,11 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
       <Link href={`/oglasi/${listing.slug}`} className="block">
         <div className="relative aspect-[4/3] bg-gradient-to-br from-river-100 via-white to-reed/30">
           {listing.cover_image_url ? (
-            <img
+            <Image
               src={listing.cover_image_url}
               alt={listing.title}
+              fill
+              sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
               className="h-full w-full object-cover"
             />
           ) : (

@@ -4,7 +4,7 @@ import { Archive, CheckCircle2, Flag, Heart, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import { ApiError, apiFetch, type ListingDetail } from "@/lib/api";
+import { ApiError, apiFetch, type BuyerCandidate, type ListingDetail } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 
 type FavoriteProps = {
@@ -109,17 +109,32 @@ export function OwnerListingActions({ listingId }: { listingId: string }) {
   const [busyAction, setBusyAction] = useState<"archive" | "mark-sold" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
+  async function chooseBuyerId() {
+    const response = await apiFetch<BuyerCandidate[]>(`/listings/${listingId}/buyer-candidates`);
+    const candidates = response.data;
+    if (!candidates.length) {
+      return window.confirm("Nema razgovora sa kupcima za ovaj oglas. Označiti kao prodato bez kupca?") ? null : undefined;
+    }
+    const options = candidates
+      .map((candidate, index) => `${index + 1}. ${candidate.display_name ?? candidate.username}`)
+      .join("\n");
+    const selected = window.prompt(`Izaberite kupca unosom broja:\n${options}`);
+    if (!selected) return undefined;
+    const index = Number(selected) - 1;
+    return candidates[index]?.id;
+  }
+
   async function runAction(action: "archive" | "mark-sold") {
-    const confirmed = window.confirm(
-      action === "archive" ? "Arhivirati ovaj oglas?" : "Označiti ovaj oglas kao prodat?"
-    );
+    const soldToUserId = action === "mark-sold" ? await chooseBuyerId() : null;
+    if (soldToUserId === undefined) return;
+    const confirmed = action === "archive" ? window.confirm("Arhivirati ovaj oglas?") : true;
     if (!confirmed) return;
     setMessage(null);
     setBusyAction(action);
     try {
       await apiFetch<ListingDetail>(`/listings/${listingId}/${action}`, {
         method: "POST",
-        body: action === "mark-sold" ? JSON.stringify({ sold_to_user_id: null }) : undefined
+        body: action === "mark-sold" ? JSON.stringify({ sold_to_user_id: soldToUserId }) : undefined
       });
       router.refresh();
     } catch (error) {

@@ -1,7 +1,9 @@
 from app.models.analytics import AnalyticsEvent
 from app.models.audit import AuditLog
+from app.models.auth_session import AuthSession
 from app.models.brand import Brand
 from app.models.category import AttributeDefinition, Category, City
+from app.models.email_outbox import EmailOutbox
 from app.models.favorite import Favorite
 from app.models.image import ListingImage
 from app.models.listing import Listing
@@ -15,11 +17,13 @@ from app.models.user import User
 __all__ = [
     "AnalyticsEvent",
     "AuditLog",
+    "AuthSession",
     "AttributeDefinition",
     "Brand",
     "Category",
     "City",
     "Conversation",
+    "EmailOutbox",
     "Favorite",
     "Listing",
     "ListingImage",
@@ -30,4 +34,3 @@ __all__ = [
     "User",
     "UserProfile",
 ]
-

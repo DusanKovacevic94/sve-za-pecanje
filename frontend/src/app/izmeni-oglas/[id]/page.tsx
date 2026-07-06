@@ -29,8 +29,8 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
   }
 
   const [categories, brands] = await Promise.all([
-    serverApiFetch<Category[]>("/categories").catch(() => ({ data: [] })),
-    serverApiFetch<Brand[]>("/brands").catch(() => ({ data: [] }))
+    serverApiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
+    serverApiFetch<Brand[]>("/brands", { next: { revalidate: 3600 } }).catch(() => ({ data: [] }))
   ]);
 
   return (
@@ -59,6 +59,7 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
             phone_visible: listing.phone_visible,
             attributes: listing.attributes
           }}
+          images={listing.images}
         />
       </div>
     </div>

@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends, File, Request, UploadFile
-from sqlalchemy.orm import Session
+from sqlalchemy import select
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.v1.deps import get_current_user, get_optional_user
 from app.core.rate_limit import check_rate_limit
 from app.core.responses import api_error, data_response
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.listing import ListingCreate, ListingUpdate, MarkSoldRequest
+from app.schemas.listing import ListingCreate, ListingUpdate, MarkSoldRequest, ReorderImagesRequest
 from app.schemas.report import ReportCreate
 from app.services.image_service import ImageService
 from app.services.listing_service import (
@@ -14,10 +15,17 @@ from app.services.listing_service import (
     serialize_listing_card,
     serialize_listing_detail,
 )
+from app.services.view_service import track_listing_view
 from app.models.report import Report
 from app.models.listing import Listing
+from app.models.message import Conversation
+from app.models.user import User as UserModel
 
 router = APIRouter(prefix="/listings", tags=["listings"])
+
+
+def serialize_image(image) -> dict:
+    return {"id": image.id, "url": image.url, "sort_order": image.sort_order, "is_cover": image.is_cover}
 
 
 @router.get("")
@@ -51,6 +59,22 @@ def get_listing(
             is not None
         )
     return data_response(serialize_listing_detail(listing, is_favorited=is_favorited))
+
+
+@router.post("/{listing_id}/track-view")
+def track_view(
+    listing_id: str,
+    request: Request,
+    user: User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
+    listing = db.get(Listing, listing_id)
+    if not listing or listing.status != "active":
+        return data_response({"tracked": False})
+    ip = request.client.host if request.client else "unknown"
+    user_agent = request.headers.get("user-agent")
+    tracked = track_listing_view(db, listing.id, ip, user_agent, user_id=user.id if user else None)
+    return data_response({"tracked": tracked})
 
 
 @router.get("/{listing_id}/edit")
@@ -117,6 +141,34 @@ def mark_sold(
     return data_response(serialize_listing_detail(service.mark_sold(listing, user, payload.sold_to_user_id)))
 
 
+@router.get("/{listing_id}/buyer-candidates")
+def buyer_candidates(
+    listing_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    rows = db.execute(
+        select(Conversation, UserModel)
+        .join(UserModel, UserModel.id == Conversation.buyer_id)
+        .options(selectinload(UserModel.profile))
+        .where(Conversation.listing_id == listing.id, Conversation.seller_id == listing.seller_id)
+        .order_by(Conversation.last_message_at.desc().nullslast())
+    ).all()
+    return data_response(
+        [
+            {
+                "id": buyer.id,
+                "username": buyer.username,
+                "display_name": buyer.profile.display_name if buyer.profile else None,
+                "last_message_at": conversation.last_message_at,
+            }
+            for conversation, buyer in rows
+        ]
+    )
+
+
 @router.post("/{listing_id}/favorite")
 def favorite_listing(listing_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     ListingService(db).favorite(listing_id, user)
@@ -170,6 +222,41 @@ def upload_image(
     service = ListingService(db)
     listing = service.get_owned_or_admin(listing_id, user)
     image = ImageService(db).upload_listing_image(listing, upload)
-    return data_response(
-        {"id": image.id, "url": image.url, "sort_order": image.sort_order, "is_cover": image.is_cover}
-    )
+    return data_response(serialize_image(image))
+
+
+@router.delete("/{listing_id}/images/{image_id}")
+def delete_image(
+    listing_id: str,
+    image_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    service.delete_image(listing, image_id)
+    return data_response({"message": "Slika je obrisana."})
+
+
+@router.post("/{listing_id}/images/{image_id}/cover")
+def set_cover_image(
+    listing_id: str,
+    image_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    return data_response(serialize_image(service.set_cover_image(listing, image_id)))
+
+
+@router.patch("/{listing_id}/images/reorder")
+def reorder_images(
+    listing_id: str,
+    payload: ReorderImagesRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    return data_response([serialize_image(image) for image in service.reorder_images(listing, payload.image_ids)])

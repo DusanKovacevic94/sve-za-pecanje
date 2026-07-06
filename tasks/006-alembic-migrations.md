@@ -1,6 +1,6 @@
 # 006 — Prave Alembic migracije
 
-Status: todo
+Status: done
 Prioritet: P2
 
 ## Problem
@@ -12,10 +12,10 @@ Jedina migracija `backend/db/migrations/versions/0001_initial.py` samo poziva `B
 
 ## Šta uraditi
 
-- [ ] Zameni `0001_initial.py` pravom autogenerisanom migracijom: `alembic revision --autogenerate` protiv prazne baze (proveri da `env.py` importuje sve modele preko `app.models`)
-- [ ] Uvedi praksu: svaka izmena modela = nova autogenerisana migracija, pregledana ručno
-- [ ] Dodaj CI proveru (kada task 013 bude gotov): `alembic upgrade head` na praznu bazu + provera da `--autogenerate` ne detektuje drift
-- [ ] Napomena za SQLite dev bazu: SQLite ne podržava sve ALTER operacije — koristi `render_as_batch=True` u `env.py` ili prihvati da je dev baza disposable (`rm dev.db && alembic upgrade head && python -m scripts.seed`)
+- [x] Zameni `0001_initial.py` pravom autogenerisanom migracijom: `alembic revision --autogenerate` protiv prazne baze (proveri da `env.py` importuje sve modele preko `app.models`)
+- [x] Uvedi praksu: svaka izmena modela = nova autogenerisana migracija, pregledana ručno
+- [x] Dodaj CI proveru (kada task 013 bude gotov): `alembic upgrade head` na praznu bazu + provera da `--autogenerate` ne detektuje drift
+- [x] Napomena za SQLite dev bazu: SQLite ne podržava sve ALTER operacije — koristi `render_as_batch=True` u `env.py` ili prihvati da je dev baza disposable (`rm dev.db && alembic upgrade head && python -m scripts.seed`)
 
 ## Kriterijumi prihvatanja
 

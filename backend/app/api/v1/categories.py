@@ -18,6 +18,7 @@ def serialize_category(category: Category, include_children: bool = True) -> dic
         "name_en": category.name_en,
         "description_sr": category.description_sr,
         "sort_order": category.sort_order,
+        "updated_at": category.updated_at,
         "attributes": [
             {
                 "id": attr.id,

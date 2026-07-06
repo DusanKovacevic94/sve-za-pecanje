@@ -7,6 +7,7 @@ type Dashboard = {
   unresolved_reports: number;
   messages_last_7_days: number;
   listings_last_7_days: number;
+  failed_emails: number;
 };
 
 export default async function AdminPage() {
@@ -19,6 +20,7 @@ export default async function AdminPage() {
     ["Aktivni oglasi", data.active_listings],
     ["Novi korisnici 7 dana", data.new_users_last_7_days],
     ["Nerešene prijave", data.unresolved_reports],
+    ["Neuspeli emailovi", data.failed_emails],
     ["Poruke 7 dana", data.messages_last_7_days],
     ["Oglasi 7 dana", data.listings_last_7_days]
   ] : [];

@@ -1,9 +1,10 @@
-import { Fish, Heart, MessageSquare, PlusCircle, UserCircle } from "lucide-react";
+import { Fish, Heart, PlusCircle, UserCircle } from "lucide-react";
 import Link from "next/link";
 
 import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { LogoutButton } from "@/components/layout/LogoutButton";
+import { UnreadMessagesLink } from "@/components/layout/UnreadMessagesLink";
 
 export async function Header() {
   const user = await getCurrentUser();
@@ -30,9 +31,7 @@ export async function Header() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <Button href="/nalog/poruke" variant="ghost" className="hidden px-3 md:inline-flex">
-                <MessageSquare size={18} /> Poruke
-              </Button>
+              <UnreadMessagesLink />
               <Button href="/nalog" variant="secondary" className="px-3">
                 <UserCircle size={18} /> Moj nalog
               </Button>
@@ -55,11 +54,14 @@ export async function Header() {
         <Link className="rounded-md bg-river-50 px-3 py-2 text-sm font-semibold" href="/kategorije">
           Kategorije
         </Link>
+        <Link className="rounded-md bg-river-50 px-3 py-2 text-sm font-semibold" href="/saveti-za-bezbednost">
+          Bezbednost
+        </Link>
         <Link className="rounded-md bg-river-50 px-3 py-2 text-sm font-semibold" href="/nalog/omiljeni">
           <Heart size={15} className="inline" /> Omiljeni
         </Link>
+        {user ? <UnreadMessagesLink compact /> : null}
       </div>
     </header>
   );
 }
-

@@ -25,8 +25,8 @@ export const metadata = {
 export default async function BrowsePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const [categories, listings] = await Promise.all([
-    apiFetch<Category[]>("/categories").catch(() => ({ data: [] })),
-    apiFetch<ListingCardType[]>(`/listings?${toQuery(params)}`).catch(() => ({
+    apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
+    apiFetch<ListingCardType[]>(`/listings?${toQuery(params)}`, { next: { revalidate: 60 } }).catch(() => ({
       data: [] as ListingCardType[],
       meta: { total: 0, page: 1, total_pages: 1 } as Record<string, unknown>
     }))
@@ -96,4 +96,3 @@ export default async function BrowsePage({ searchParams }: PageProps) {
     </div>
   );
 }
-

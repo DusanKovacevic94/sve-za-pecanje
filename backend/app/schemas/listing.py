@@ -123,3 +123,7 @@ class ListingDetail(ListingCard):
 
 class MarkSoldRequest(BaseModel):
     sold_to_user_id: str | None = None
+
+
+class ReorderImagesRequest(BaseModel):
+    image_ids: list[str] = Field(min_length=1)

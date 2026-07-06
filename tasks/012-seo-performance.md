@@ -1,6 +1,6 @@
 # 012 — SEO i performanse
 
-Status: todo
+Status: done
 Prioritet: P3
 
 ## Problem
@@ -15,12 +15,12 @@ Za classifieds sajt organski saobraćaj je ključan, a trenutno:
 
 ## Šta uraditi
 
-- [ ] Uvedi `revalidate` za polustatične podatke: kategorije (npr. 1h), detalj oglasa (npr. 60s) — `apiFetch` treba opcioni `next: { revalidate }` parametar umesto bezuslovnog `no-store`
-- [ ] JSON-LD na detalju oglasa: `Product` + `Offer` (cena, valuta, stanje, lokacija, slika)
-- [ ] `generateMetadata` OpenGraph slike za oglase (cover slika)
-- [ ] Kanonični URL-ovi i `metadataBase` u root layoutu
-- [ ] `output: "standalone"` u `next.config.js` + multi-stage Dockerfile (manji image, brži deploy)
-- [ ] Proveri sitemap: svi aktivni oglasi + kategorije, `lastModified` iz `updated_at`
+- [x] Uvedi `revalidate` za polustatične podatke: kategorije (npr. 1h), detalj oglasa (npr. 60s) — `apiFetch` treba opcioni `next: { revalidate }` parametar umesto bezuslovnog `no-store`
+- [x] JSON-LD na detalju oglasa: `Product` + `Offer` (cena, valuta, stanje, lokacija, slika)
+- [x] `generateMetadata` OpenGraph slike za oglase (cover slika)
+- [x] Kanonični URL-ovi i `metadataBase` u root layoutu
+- [x] `output: "standalone"` u `next.config.js` + multi-stage Dockerfile (manji image, brži deploy)
+- [x] Proveri sitemap: svi aktivni oglasi + kategorije, `lastModified` iz `updated_at`
 
 ## Kriterijumi prihvatanja
 

@@ -19,8 +19,15 @@ services:
   backend:
     command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 3 -b 0.0.0.0:8000
     restart: unless-stopped
+    environment:
+      SMTP_HOST: ""
     ports: !reset []
     volumes: !reset []
+    depends_on: !override
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
     expose:
       - "8000"
 
@@ -32,7 +39,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_DOMAIN}/api/v1}
       INTERNAL_API_URL: http://backend:8000/api/v1
-    command: pnpm start
+    command: node server.js
     restart: unless-stopped
     ports: !reset []
     volumes: !reset []
@@ -47,17 +54,34 @@ services:
     restart: unless-stopped
     ports: !reset []
 
-  minio:
-    restart: unless-stopped
-    ports: !reset []
+  minio: !reset null
 
-  mailpit:
-    restart: unless-stopped
-    ports: !reset []
+  mailpit: !reset null
 
   worker:
+    environment:
+      SMTP_HOST: ""
     volumes: !reset []
+
+  backup:
+    image: postgres:16-alpine
+    env_file: .env
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BACKUP_ROOT: /backups
+      BACKUP_REMOTE: ${BACKUP_REMOTE:-}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      SMTP_HOST: ""
+    volumes:
+      - ./backend/scripts/backup_db.sh:/scripts/backup_db.sh:ro
+      - postgres_backups:/backups
+    entrypoint: /bin/sh
+    command: -c "apk add --no-cache rclone >/dev/null && while true; do sh /scripts/backup_db.sh; sleep $${BACKUP_INTERVAL_SECONDS}; done"
 
 volumes:
   caddy_data:
   caddy_config:
+  postgres_backups:
