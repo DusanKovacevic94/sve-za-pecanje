@@ -31,6 +31,9 @@ def serialize_profile(user: User) -> dict:
         "bio": profile.bio if profile else None,
         "fishing_styles": profile.fishing_styles if profile else [],
         "member_badges": profile.member_badges if profile else [],
+        "notify_messages": profile.notify_messages if profile else True,
+        "notify_saved_searches": profile.notify_saved_searches if profile else True,
+        "notify_listing_expiry": profile.notify_listing_expiry if profile else True,
         "created_at": user.created_at,
     }
 

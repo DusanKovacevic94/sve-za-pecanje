@@ -18,11 +18,13 @@ from app.schemas.admin import (
     BrandUpdateRequest,
     FeatureListingRequest,
     RejectListingRequest,
+    ResolveFeatureRequest,
     ResolveReportRequest,
     SuspendUserRequest,
 )
 from app.services.listing_service import serialize_listing_detail, slugify
 from app.services.moderation_service import ModerationService
+from app.services.feature_service import FeatureService, serialize_feature_request
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -200,6 +202,42 @@ def feature_listing(
     return data_response(
         serialize_listing_detail(ModerationService(db).feature_listing(listing_id, admin, payload.featured_until))
     )
+
+
+@router.get("/feature-requests")
+def feature_requests(
+    status: str | None = Query(default=None),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    requests = FeatureService(db).list_admin(status)
+    return data_response([serialize_feature_request(request) for request in requests])
+
+
+@router.post("/feature-requests/{request_id}/approve")
+def approve_feature_request(
+    request_id: str,
+    payload: ResolveFeatureRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    request = FeatureService(db).approve(request_id, admin, payload.admin_note)
+    ModerationService(db).audit(admin, "feature_request.approved", "feature_request", request.id)
+    db.commit()
+    return data_response(serialize_feature_request(request))
+
+
+@router.post("/feature-requests/{request_id}/reject")
+def reject_feature_request(
+    request_id: str,
+    payload: ResolveFeatureRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    request = FeatureService(db).reject(request_id, admin, payload.admin_note)
+    ModerationService(db).audit(admin, "feature_request.rejected", "feature_request", request.id)
+    db.commit()
+    return data_response(serialize_feature_request(request))
 
 
 @router.get("/users")

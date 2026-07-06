@@ -7,7 +7,6 @@ from app.core.responses import api_error
 from app.models.listing import Listing
 from app.models.message import Conversation, Message
 from app.models.user import User
-from app.services.email_service import EmailService
 
 
 class MessageService:
@@ -133,9 +132,6 @@ class MessageService:
             conversation.buyer_unread_count += 1
         if listing:
             listing.message_count += 1
-            recipient = self.db.get(User, conversation.seller_id if sender.id == conversation.buyer_id else conversation.buyer_id)
-            if recipient:
-                EmailService(self.db).send_new_message(recipient.email, listing.title, sender.username)
         self.db.commit()
         self.db.refresh(conversation)
         return conversation

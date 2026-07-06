@@ -5,6 +5,7 @@ import { Bell, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { apiFetch } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
 
@@ -64,6 +65,7 @@ export function SavedSearchManager({
           notification_enabled: notify
         })
       });
+      trackEvent("saved_search_created");
       router.refresh();
       setMessage("Pretraga je sačuvana.");
     } catch (error) {

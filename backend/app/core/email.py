@@ -57,7 +57,13 @@ def send_email(
     return True
 
 
-def enqueue_email(db: Session, to_email: str, subject: str, body: str, html: str | None = None) -> EmailOutbox:
+def enqueue_email(
+    db: Session,
+    to_email: str,
+    subject: str,
+    body: str,
+    html: str | None = None,
+) -> EmailOutbox:
     email = EmailOutbox(to_email=to_email, subject=subject, body=body, html=html)
     db.add(email)
     return email

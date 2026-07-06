@@ -43,6 +43,10 @@ class FeatureListingRequest(BaseModel):
     featured_until: datetime
 
 
+class ResolveFeatureRequest(BaseModel):
+    admin_note: str | None = Field(default=None, max_length=500)
+
+
 class SuspendUserRequest(BaseModel):
     reason: str = Field(min_length=3, max_length=500)
 

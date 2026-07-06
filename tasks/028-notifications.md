@@ -1,6 +1,6 @@
 # 028 — Notifikacije: email za novu poruku + in-app
 
-Status: todo
+Status: done
 Prioritet: P3
 
 ## Problem
@@ -9,11 +9,11 @@ Prioritet: P3
 
 ## Šta uraditi
 
-- [ ] Worker task: email "Imate novu poruku" — batching (ne mail po poruci: šalji tek ako je poruka nepročitana ≥ N minuta i nije poslat mail za taj razgovor u zadnjih X sati), kroz postojeći outbox
-- [ ] Email podsetnik "Oglas vam ističe za 3 dana" sa linkom za produženje (proveri postoji li produženje — ako ne, dodaj `POST /listings/{id}/renew`)
-- [ ] Podešavanja notifikacija na `/nalog/profil`: opt-out po tipu (poruke, digesti, istek) — kolone na User/Profile modelu + poštovanje u svim taskovima
-- [ ] Link za odjavu u footeru emaila (token, bez logina)
-- [ ] Odluči: in-app notifikacioni feed (tabela + zvonce u headeru) — implementiraj ili izbriši `NotificationService` stub da ne stoji mrtav kod
+- [x] Worker task: email "Imate novu poruku" — batching (ne mail po poruci: šalji tek ako je poruka nepročitana ≥ N minuta i nije poslat mail za taj razgovor u zadnjih X sati), kroz postojeći outbox
+- [x] Email podsetnik "Oglas vam ističe za 3 dana" sa linkom za produženje (proveri postoji li produženje — ako ne, dodaj `POST /listings/{id}/renew`)
+- [x] Podešavanja notifikacija na `/nalog/profil`: opt-out po tipu (poruke, digesti, istek) — kolone na User/Profile modelu + poštovanje u svim taskovima
+- [x] Link za odjavu u footeru emaila (token, bez logina)
+- [x] Odluči: in-app notifikacioni feed (tabela + zvonce u headeru) — implementiraj ili izbriši `NotificationService` stub da ne stoji mrtav kod
 
 ## Kriterijumi prihvatanja
 

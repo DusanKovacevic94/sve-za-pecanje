@@ -26,6 +26,8 @@ class Conversation(Base, TimestampMixin):
     last_message_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     buyer_unread_count: Mapped[int] = mapped_column(default=0)
     seller_unread_count: Mapped[int] = mapped_column(default=0)
+    buyer_message_email_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    seller_message_email_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     messages: Mapped[list["Message"]] = relationship(
         back_populates="conversation", cascade="all, delete-orphan", order_by="Message.created_at"
@@ -43,5 +45,6 @@ class Message(Base, TimestampMixin):
     sender_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     body: Mapped[str] = mapped_column(Text)
     read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    notification_email_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     conversation: Mapped[Conversation] = relationship(back_populates="messages")

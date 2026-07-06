@@ -127,3 +127,14 @@ class MarkSoldRequest(BaseModel):
 
 class ReorderImagesRequest(BaseModel):
     image_ids: list[str] = Field(min_length=1)
+
+
+class FeatureRequestCreate(BaseModel):
+    package_days: int
+
+    @field_validator("package_days")
+    @classmethod
+    def validate_package_days(cls, value: int) -> int:
+        if value not in {7, 14, 30}:
+            raise ValueError("Izaberite paket od 7, 14 ili 30 dana.")
+        return value

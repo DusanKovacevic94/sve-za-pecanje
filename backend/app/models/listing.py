@@ -48,6 +48,7 @@ class Listing(Base, TimestampMixin):
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     approved_by_admin_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expiry_notice_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     seller: Mapped["User"] = relationship(foreign_keys=[seller_id], back_populates="listings")
     category: Mapped["Category"] = relationship()

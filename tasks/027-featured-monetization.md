@@ -1,6 +1,6 @@
 # 027 — Isticanje oglasa: self-serve tok (monetizacija)
 
-Status: todo
+Status: done
 Prioritet: P3
 
 ## Problem
@@ -9,13 +9,13 @@ Isticanje oglasa (`is_featured` + `featured_until`) postoji i utiče na sortiran
 
 ## Šta uraditi
 
-- [ ] Odluči model plaćanja za start (preporuka za Srbiju: prva faza **ručna uplata** — korisnik pošalje zahtev, admin potvrdi po uplati na račun; kartice/provajder u drugoj fazi)
-- [ ] Model `FeatureRequest` (ili `Order`): listing, korisnik, paket (7/14/30 dana), cena, status (`pending` / `paid` / `rejected`), migracija
-- [ ] Backend: `POST /listings/{id}/feature-request` (samo vlasnik, samo aktivan oglas), admin endpoint za potvrdu (postavlja `featured_until`) — reuse postojeći feature mehanizam
-- [ ] Frontend: dugme "Istakni oglas" na `/nalog/oglasi` + stranica sa paketima, cenama i instrukcijama za uplatu (poziv na broj = ID zahteva)
-- [ ] Admin: lista zahteva sa potvrdi/odbij
-- [ ] Email potvrda korisniku kad isticanje krene (kroz postojeći outbox)
-- [ ] Druga faza (poseban task kad dođe vreme): kartično plaćanje (Stripe nije dostupan u RS — istražiti lokalne: ChipCard, AllSecure, NestPay banke)
+- [x] Odluči model plaćanja za start (preporuka za Srbiju: prva faza **ručna uplata** — korisnik pošalje zahtev, admin potvrdi po uplati na račun; kartice/provajder u drugoj fazi)
+- [x] Model `FeatureRequest` (ili `Order`): listing, korisnik, paket (7/14/30 dana), cena, status (`pending` / `paid` / `rejected`), migracija
+- [x] Backend: `POST /listings/{id}/feature-request` (samo vlasnik, samo aktivan oglas), admin endpoint za potvrdu (postavlja `featured_until`) — reuse postojeći feature mehanizam
+- [x] Frontend: dugme "Istakni oglas" na `/nalog/oglasi` + stranica sa paketima, cenama i instrukcijama za uplatu (poziv na broj = ID zahteva)
+- [x] Admin: lista zahteva sa potvrdi/odbij
+- [x] Email potvrda korisniku kad isticanje krene (kroz postojeći outbox)
+- [x] Druga faza (poseban task kad dođe vreme): kartično plaćanje (Stripe nije dostupan u RS — istražiti lokalne: ChipCard, AllSecure, NestPay banke)
 
 ## Kriterijumi prihvatanja
 

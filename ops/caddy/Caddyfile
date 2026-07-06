@@ -17,3 +17,8 @@
 		reverse_proxy frontend:3000
 	}
 }
+
+stats.{$APP_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy umami:3000
+}

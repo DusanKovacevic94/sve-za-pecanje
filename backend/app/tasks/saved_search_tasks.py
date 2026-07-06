@@ -1,12 +1,13 @@
 from datetime import UTC, datetime
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.core.email import enqueue_email
 from app.models.saved_search import SavedSearch
 from app.models.user import User
 from app.services.search_service import SearchService
+from app.services.notification_service import NotificationService
 
 
 def send_saved_search_digests(db: Session, limit: int = 50) -> int:
@@ -14,6 +15,7 @@ def send_saved_search_digests(db: Session, limit: int = 50) -> int:
     rows = db.execute(
         select(SavedSearch, User)
         .join(User, User.id == SavedSearch.user_id)
+        .options(selectinload(User.profile))
         .where(SavedSearch.notification_enabled.is_(True), User.status != "suspended")
         .order_by(SavedSearch.updated_at.asc())
         .limit(limit)
@@ -21,6 +23,8 @@ def send_saved_search_digests(db: Session, limit: int = 50) -> int:
     search_service = SearchService(db)
     sent = 0
     for saved_search, user in rows:
+        if not NotificationService.can_send_saved_search_email(user):
+            continue
         watermark = saved_search.last_notified_at or saved_search.created_at
         listings = search_service.matching_listings(saved_search.query, saved_search.filters, since=watermark, limit=10)
         saved_search.last_notified_at = now

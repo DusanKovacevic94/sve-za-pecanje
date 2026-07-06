@@ -9,6 +9,7 @@ import { z } from "zod";
 
 import type { Brand, BuyerCandidate, Category, ListingDetail } from "@/lib/api";
 import { apiFetch } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { conditionOptions } from "@/lib/format";
 import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
@@ -103,6 +104,9 @@ export function CreateListingForm({
         method: isEdit ? "PATCH" : "POST",
         body: JSON.stringify(payload)
       });
+      if (!isEdit) {
+        trackEvent("listing_created", { listing_id: response.data.id });
+      }
       router.push(`/oglasi/${response.data.slug}`);
       router.refresh();
     } catch (error) {

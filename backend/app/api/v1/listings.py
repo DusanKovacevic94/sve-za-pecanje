@@ -7,7 +7,7 @@ from app.core.rate_limit import check_rate_limit
 from app.core.responses import api_error, data_response
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.listing import ListingCreate, ListingUpdate, MarkSoldRequest, ReorderImagesRequest
+from app.schemas.listing import FeatureRequestCreate, ListingCreate, ListingUpdate, MarkSoldRequest, ReorderImagesRequest
 from app.schemas.report import ReportCreate
 from app.services.image_service import ImageService
 from app.services.listing_service import (
@@ -20,6 +20,7 @@ from app.models.report import Report
 from app.models.listing import Listing
 from app.models.message import Conversation
 from app.models.user import User as UserModel
+from app.services.feature_service import FeatureService, serialize_feature_request
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
@@ -39,6 +40,17 @@ def list_listings(request: Request, db: Session = Depends(get_db)):
         [serialize_listing_card(listing) for listing in listings],
         {"page": page, "page_size": page_size, "total": total, "total_pages": total_pages},
     )
+
+
+@router.get("/feature/packages")
+def feature_packages(db: Session = Depends(get_db)):
+    return data_response(FeatureService(db).list_packages())
+
+
+@router.get("/feature/requests")
+def my_feature_requests(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    requests = FeatureService(db).list_for_user(user)
+    return data_response([serialize_feature_request(request) for request in requests])
 
 
 @router.get("/{slug}")
@@ -139,6 +151,23 @@ def mark_sold(
     service = ListingService(db)
     listing = service.get_owned_or_admin(listing_id, user)
     return data_response(serialize_listing_detail(service.mark_sold(listing, user, payload.sold_to_user_id)))
+
+
+@router.post("/{listing_id}/renew")
+def renew_listing(listing_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    listing = FeatureService(db).renew_listing(listing_id, user)
+    return data_response(serialize_listing_detail(listing))
+
+
+@router.post("/{listing_id}/feature-request")
+def create_feature_request(
+    listing_id: str,
+    payload: FeatureRequestCreate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    request = FeatureService(db).create_request(listing_id, user, payload.package_days)
+    return data_response(serialize_feature_request(request))
 
 
 @router.get("/{listing_id}/buyer-candidates")

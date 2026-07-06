@@ -148,21 +148,6 @@ export type Conversation = {
   };
 };
 
-export type UserProfile = {
-  id: string;
-  email: string;
-  username: string;
-  display_name: string | null;
-  city: string | null;
-  municipality: string | null;
-  phone_number: string | null;
-  phone_visible: boolean;
-  bio: string | null;
-  fishing_styles: string[];
-  member_badges: string[];
-  created_at: string;
-};
-
 export type ReviewItem = {
   id: string;
   listing_id: string;
@@ -188,4 +173,44 @@ export type MyReviews = {
   received: ReviewItem[];
   given: ReviewItem[];
   pending: PendingReview[];
+};
+
+export type FeaturePackage = {
+  days: number;
+  price_amount: string;
+  currency: string;
+};
+
+export type FeatureRequest = {
+  id: string;
+  listing_id: string;
+  listing: { id: string; title: string; slug: string } | null;
+  user_id: string;
+  user?: { id: string; email: string; username: string } | null;
+  package_days: number;
+  price_amount: string;
+  currency: string;
+  status: "pending" | "paid" | "rejected";
+  payment_reference: string;
+  admin_note: string | null;
+  paid_at: string | null;
+  created_at: string;
+};
+
+export type UserProfile = {
+  id: string;
+  email: string;
+  username: string;
+  display_name: string | null;
+  city: string | null;
+  municipality: string | null;
+  phone_number: string | null;
+  phone_visible: boolean;
+  bio: string | null;
+  fishing_styles: string[];
+  member_badges: string[];
+  notify_messages: boolean;
+  notify_saved_searches: boolean;
+  notify_listing_expiry: boolean;
+  created_at: string;
 };

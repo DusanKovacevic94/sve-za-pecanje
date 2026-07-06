@@ -16,7 +16,10 @@ const profileSchema = z.object({
   phone_number: z.string().max(120).optional(),
   phone_visible: z.boolean().default(false),
   bio: z.string().max(2000).optional(),
-  fishing_styles: z.string().max(500).optional()
+  fishing_styles: z.string().max(500).optional(),
+  notify_messages: z.boolean().default(true),
+  notify_saved_searches: z.boolean().default(true),
+  notify_listing_expiry: z.boolean().default(true)
 });
 
 type ProfileFormInput = z.input<typeof profileSchema>;
@@ -33,7 +36,10 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
       phone_number: profile.phone_number ?? "",
       phone_visible: profile.phone_visible,
       bio: profile.bio ?? "",
-      fishing_styles: profile.fishing_styles.join(", ")
+      fishing_styles: profile.fishing_styles.join(", "),
+      notify_messages: profile.notify_messages,
+      notify_saved_searches: profile.notify_saved_searches,
+      notify_listing_expiry: profile.notify_listing_expiry
     }
   });
 
@@ -89,6 +95,21 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
           <input type="checkbox" {...register("phone_visible")} />
           Prikaži telefon prijavljenim korisnicima
         </label>
+        <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-4 md:col-span-2">
+          <p className="text-sm font-black text-slate-800">Email notifikacije</p>
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input type="checkbox" {...register("notify_messages")} />
+            Nove poruke
+          </label>
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input type="checkbox" {...register("notify_saved_searches")} />
+            Sačuvane pretrage
+          </label>
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input type="checkbox" {...register("notify_listing_expiry")} />
+            Isticanje oglasa
+          </label>
+        </div>
       </div>
       {message ? (
         <p className={`mt-4 rounded-md p-3 text-sm font-semibold ${message.includes("ažuriran") ? "bg-river-50 text-river-700" : "bg-red-50 text-red-700"}`}>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
 import { apiFetch, type Conversation } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Field";
 
@@ -39,6 +40,7 @@ export function MessageForm(props: MessageFormProps) {
         method: "POST",
         body: JSON.stringify({ body: value })
       });
+      trackEvent("message_sent", { mode: props.mode });
       setBody("");
       if (props.mode === "new") {
         router.push(`/nalog/poruke/${response.data.id}`);

@@ -1,6 +1,6 @@
 # 025 — E2E testovi (Playwright) i pokrivenost backenda
 
-Status: todo
+Status: done
 Prioritet: P3
 
 ## Problem
@@ -9,11 +9,11 @@ Backend ima 18 testova, ali poruke, moderacija, ocene, prijave, favoriti i worke
 
 ## Šta uraditi
 
-- [ ] Playwright setup u `frontend/` (chromium, `webServer` konfiguracija koja diže backend + frontend na test portovima, izolovana SQLite baza)
-- [ ] E2E smoke tok: registracija → verifikacija (link iz log fallbacka) → postavi oglas → drugi korisnik šalje poruku → prodavac odgovara → mark sold → ocena
-- [ ] E2E: pretraga + filteri + paginacija; favoriti toggle
-- [ ] Backend testovi: message_service (slanje, unread counts, autorizacija), moderation_service (approve/reject/suspend + audit log), favorites, reports
-- [ ] CI: dodaj Playwright job (`.github/workflows/ci.yml`), cache browsera; pytest sa `--cov` i pragom (npr. 60% za početak)
+- [x] Playwright setup u `frontend/` (chromium, `webServer` konfiguracija koja diže backend + frontend na test portovima, izolovana SQLite baza)
+- [x] E2E smoke tok: registracija → verifikacija (link iz log fallbacka) → postavi oglas → drugi korisnik šalje poruku → prodavac odgovara → mark sold → ocena
+- [x] E2E: pretraga + filteri + paginacija; favoriti toggle
+- [x] Backend testovi: message_service (slanje, unread counts, autorizacija), moderation_service (approve/reject/suspend + audit log), favorites, reports
+- [x] CI: dodaj Playwright job (`.github/workflows/ci.yml`), cache browsera; pytest sa `--cov` i pragom (npr. 60% za početak)
 
 ## Kriterijumi prihvatanja
 

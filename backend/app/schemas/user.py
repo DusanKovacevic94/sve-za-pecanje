@@ -21,6 +21,9 @@ class ProfileUpdate(BaseModel):
     phone_visible: bool | None = None
     bio: str | None = None
     fishing_styles: list[str] | None = None
+    notify_messages: bool | None = None
+    notify_saved_searches: bool | None = None
+    notify_listing_expiry: bool | None = None
 
 
 class UserListItem(BaseModel):
@@ -30,4 +33,3 @@ class UserListItem(BaseModel):
     role: str
     status: str
     created_at: datetime
-

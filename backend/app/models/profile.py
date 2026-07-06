@@ -25,5 +25,8 @@ class UserProfile(Base, TimestampMixin):
     bio: Mapped[str | None] = mapped_column(Text)
     fishing_styles: Mapped[list[str]] = mapped_column(JSON, default=list)
     member_badges: Mapped[list[str]] = mapped_column(JSON, default=list)
+    notify_messages: Mapped[bool] = mapped_column(Boolean, default=True)
+    notify_saved_searches: Mapped[bool] = mapped_column(Boolean, default=True)
+    notify_listing_expiry: Mapped[bool] = mapped_column(Boolean, default=True)
 
     user: Mapped["User"] = relationship(back_populates="profile")

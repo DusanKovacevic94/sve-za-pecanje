@@ -4,6 +4,7 @@ from app.models.auth_session import AuthSession
 from app.models.brand import Brand
 from app.models.category import AttributeDefinition, Category, City
 from app.models.email_outbox import EmailOutbox
+from app.models.feature_request import FeatureRequest
 from app.models.favorite import Favorite
 from app.models.image import ListingImage
 from app.models.listing import Listing
@@ -24,6 +25,7 @@ __all__ = [
     "City",
     "Conversation",
     "EmailOutbox",
+    "FeatureRequest",
     "Favorite",
     "Listing",
     "ListingImage",

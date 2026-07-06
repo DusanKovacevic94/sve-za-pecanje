@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { publicApiUrl } from "@/lib/api";
+import { trackEvent } from "@/lib/analytics";
 import { registerSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
@@ -28,6 +29,9 @@ export function RegisterForm() {
       body: JSON.stringify(data)
     });
     const json = await response.json();
+    if (response.ok) {
+      trackEvent("registration_completed");
+    }
     setMessage(response.ok ? "Nalog je kreiran. Proverite email za potvrdu." : json?.error?.message ?? "Došlo je do greške.");
   }
 

@@ -8,9 +8,13 @@ export default function PrivacyPage() {
         <p>Prikupljamo podatke potrebne za nalog, oglase, poruke, bezbednost i rad marketplace-a.</p>
         <p>Email adrese se ne prikazuju javno. Broj telefona se prikazuje samo ako korisnik uključi tu opciju.</p>
         <p>Poruke se čuvaju radi komunikacije između kupca i prodavca i osnovne moderacije u slučaju prijave.</p>
+        <p>
+          U produkciji koristimo Umami analitiku bez kolačića za osnovne statistike posećenosti i anonimne događaje
+          kao što su registracija, postavljanje oglasa, slanje poruke i čuvanje pretrage. Ne koristimo ove podatke za
+          profilisanje pojedinačnih korisnika.
+        </p>
         <p>Koristimo kolačiće za prijavu i sesiju. Zahtev za brisanje naloga možete poslati preko kontakt stranice.</p>
       </div>
     </article>
   );
 }
-
