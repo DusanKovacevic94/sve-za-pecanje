@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Bell, CheckCircle2, Search, ShieldCheck, SlidersHorizontal, Star, Waves, type LucideIcon } from "lucide-react";
+import Image from "next/image";
+import { Bell, CheckCircle2, Search, ShieldCheck, SlidersHorizontal, Star, type LucideIcon } from "lucide-react";
 
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import { Button } from "@/components/ui/Button";
@@ -65,19 +66,16 @@ export default async function HomePage() {
               <Button href="/oglasi" variant="ghost" className="text-white hover:bg-white/10">Pogledaj oglase</Button>
             </div>
           </div>
-          <div className="relative min-h-[300px] self-end">
-            <div className="absolute inset-x-0 bottom-0 h-28 rounded-[50%] bg-white/10 blur-2xl" />
-            <div className="absolute inset-x-8 bottom-8 h-1 rounded-full bg-reed-300/90" />
-            <Waves className="absolute bottom-10 left-8 text-river-100/80" size={180} strokeWidth={1.2} />
-            <div className="absolute right-8 top-0 grid h-36 w-36 place-items-center rounded-full border border-white/20 bg-white/10 backdrop-blur">
-              <CategoryIcon slug="stapovi" name="Štapovi" size={68} />
-            </div>
-            <div className="absolute bottom-16 right-28 grid h-28 w-28 place-items-center rounded-full border border-white/20 bg-white/10 backdrop-blur">
-              <CategoryIcon slug="masinice" name="Mašinice" size={52} />
-            </div>
-            <div className="absolute bottom-24 left-20 grid h-24 w-24 place-items-center rounded-full border border-white/20 bg-white/10 backdrop-blur">
-              <CategoryIcon slug="varalice" name="Varalice" size={44} />
-            </div>
+          <div className="relative min-h-[300px] overflow-hidden rounded-lg border border-white/15 bg-river-900/20 shadow-lift md:min-h-[380px]">
+            <Image
+              src="/images/hero-fishing-gear.png"
+              alt="Ribolovačka oprema pored reke"
+              fill
+              sizes="(min-width: 1024px) 560px, 100vw"
+              className="object-cover"
+              priority
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,53,47,0.45),rgba(15,53,47,0.05)_45%,rgba(0,0,0,0.18))]" />
           </div>
         </div>
       </section>
