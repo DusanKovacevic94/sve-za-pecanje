@@ -72,6 +72,10 @@ class ListingSellerOut(BaseModel):
     id: str
     username: str
     display_name: str | None = None
+    member_since: datetime | None = None
+    rating_average: float | None = None
+    review_count: int | None = None
+    active_listing_count: int | None = None
 
 
 class ListingCategoryOut(BaseModel):
@@ -84,6 +88,13 @@ class ListingBrandOut(BaseModel):
     id: str
     name: str
     slug: str
+
+
+class AttributeDisplayOut(BaseModel):
+    key: str
+    label_sr: str
+    value: str
+    unit: str | None = None
 
 
 class ListingCard(BaseModel):
@@ -100,7 +111,7 @@ class ListingCard(BaseModel):
     seller: ListingSellerOut
     category: ListingCategoryOut
     brand: ListingBrandOut | None
-    key_attributes: dict
+    key_attributes: list[AttributeDisplayOut]
     is_featured: bool
     created_at: datetime
 
@@ -111,6 +122,7 @@ class ListingDetail(ListingCard):
     model: str | None
     brand_name_custom: str | None
     attributes: dict
+    attributes_display: list[AttributeDisplayOut]
     allow_messages: bool
     phone_visible: bool
     view_count: int

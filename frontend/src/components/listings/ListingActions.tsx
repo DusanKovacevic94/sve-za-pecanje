@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { ApiError, apiFetch, type BuyerCandidate, type ListingDetail } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FavoriteProps = {
   listingId: string;
@@ -16,17 +17,21 @@ export function FavoriteButton({ listingId, initialSaved = false }: FavoriteProp
   const router = useRouter();
   const [saved, setSaved] = useState(initialSaved);
   const [pending, setPending] = useState(false);
+  const { pushToast } = useToast();
 
   async function onToggle() {
     setPending(true);
     try {
       await apiFetch(`/listings/${listingId}/favorite`, { method: saved ? "DELETE" : "POST" });
-      setSaved(!saved);
+      const next = !saved;
+      setSaved(next);
+      pushToast(next ? "Oglas je dodat u omiljene." : "Oglas je uklonjen iz omiljenih.", "success");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         router.push("/prijava");
         return;
       }
+      pushToast("Omiljeni nisu ažurirani.", "error");
     } finally {
       setPending(false);
     }
@@ -44,17 +49,21 @@ export function FavoriteIconButton({ listingId, initialSaved = false }: Favorite
   const router = useRouter();
   const [saved, setSaved] = useState(initialSaved);
   const [pending, setPending] = useState(false);
+  const { pushToast } = useToast();
 
   async function onToggle() {
     setPending(true);
     try {
       await apiFetch(`/listings/${listingId}/favorite`, { method: saved ? "DELETE" : "POST" });
-      setSaved(!saved);
+      const next = !saved;
+      setSaved(next);
+      pushToast(next ? "Oglas je dodat u omiljene." : "Oglas je uklonjen iz omiljenih.", "success");
       router.refresh();
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         router.push("/prijava");
       }
+      pushToast("Omiljeni nisu ažurirani.", "error");
     } finally {
       setPending(false);
     }
@@ -63,7 +72,9 @@ export function FavoriteIconButton({ listingId, initialSaved = false }: Favorite
   return (
     <button
       type="button"
-      className="focus-ring rounded-md p-2 text-slate-500 hover:bg-river-50 disabled:opacity-60"
+      className={`focus-ring rounded-md p-2 transition hover:bg-river-50 disabled:opacity-60 ${
+        saved ? "scale-105 text-river-700" : "text-slate-500"
+      }`}
       aria-label={saved ? "Ukloni iz omiljenih" : "Dodaj u omiljene"}
       aria-pressed={saved}
       disabled={pending}
@@ -77,6 +88,7 @@ export function FavoriteIconButton({ listingId, initialSaved = false }: Favorite
 export function ReportButton({ listingId }: { listingId: string }) {
   const router = useRouter();
   const [reported, setReported] = useState(false);
+  const { pushToast } = useToast();
 
   async function onReport() {
     const reason = window.prompt("Zašto prijavljujete ovaj oglas?");
@@ -87,10 +99,12 @@ export function ReportButton({ listingId }: { listingId: string }) {
         body: JSON.stringify({ reason: "user_report", description: reason.trim() })
       });
       setReported(true);
+      pushToast("Prijava je poslata administratorima.", "success");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         router.push("/prijava");
       }
+      pushToast("Prijava nije poslata.", "error");
     }
   }
 

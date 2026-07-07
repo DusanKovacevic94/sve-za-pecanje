@@ -1,4 +1,5 @@
-import { MessageSquare, Pencil, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, Eye, Heart, MessageSquare, Pencil, ShieldCheck, Star } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -6,10 +7,12 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FavoriteButton, ReportButton } from "@/components/listings/ListingActions";
 import { ListingGallery } from "@/components/listings/ListingGallery";
+import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingViewTracker } from "@/components/listings/ListingViewTracker";
-import { ApiError, apiFetch, ListingDetail } from "@/lib/api";
+import { ShareButton } from "@/components/listings/ShareButton";
+import { ApiError, apiFetch, ListingCard as ListingCardType, ListingDetail } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
-import { conditionLabels, formatDate, formatPrice } from "@/lib/format";
+import { conditionLabels, formatDate, formatMonthYear, formatPrice } from "@/lib/format";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -54,7 +57,17 @@ export default async function ListingDetailPage({ params }: PageProps) {
     getCurrentUser()
   ]);
   const listing = response.data;
+  const similar = await apiFetch<ListingCardType[]>(`/listings/${listing.id}/similar`, { next: { revalidate: 120 } }).catch(() => ({
+    data: [] as ListingCardType[]
+  }));
   const isOwner = user?.id === listing.seller.id;
+  const sellerName = listing.seller.display_name ?? listing.seller.username;
+  const initials = sellerName
+    .split(/\s+/)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -73,43 +86,76 @@ export default async function ListingDetailPage({ params }: PageProps) {
       url: absoluteUrl(`/oglasi/${listing.slug}`)
     }
   };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Početna", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Oglasi", item: absoluteUrl("/oglasi") },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: listing.category.name_sr,
+        item: absoluteUrl(`/oglasi?category=${listing.category.slug}`)
+      },
+      { "@type": "ListItem", position: 4, name: listing.title, item: absoluteUrl(`/oglasi/${listing.slug}`) }
+    ]
+  };
+  const metaRows = [
+    ["Stanje", conditionLabels[listing.condition] ?? listing.condition],
+    ["Lokacija", listing.municipality ? `${listing.city}, ${listing.municipality}` : listing.city],
+    ["Brend", listing.brand?.name ?? listing.brand_name_custom],
+    ["Model", listing.model],
+    ["Objavljeno", formatDate(listing.created_at)],
+    ["Pregledi", String(listing.view_count)]
+  ].filter(([, value]) => Boolean(value)) as [string, string][];
   return (
-    <div className="mx-auto grid max-w-7xl gap-8 px-4 py-8 lg:grid-cols-[1fr_360px]">
+    <div className="mx-auto max-w-7xl px-4 py-8">
       <ListingViewTracker listingId={listing.id} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <section>
-        <ListingGallery listing={listing} />
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
+      <nav aria-label="Putanja" className="mb-5 flex flex-wrap gap-2 text-sm font-semibold text-slate-600">
+        <Link href="/" className="hover:text-river-700">Početna</Link>
+        <span>/</span>
+        <Link href="/oglasi" className="hover:text-river-700">Oglasi</Link>
+        <span>/</span>
+        <Link href={`/oglasi?category=${listing.category.slug}`} className="hover:text-river-700">{listing.category.name_sr}</Link>
+      </nav>
+      <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
+        <section>
+          <ListingGallery listing={listing} />
+          <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
           <div className="flex flex-wrap gap-2">
             <Badge tone={listing.status === "sold" ? "sold" : "accent"}>{listing.status === "sold" ? "Prodato" : "Aktivan oglas"}</Badge>
             {listing.is_featured ? <Badge tone="accent">Istaknuto</Badge> : null}
             <Badge>{listing.category.name_sr}</Badge>
           </div>
-          <h1 className="mt-4 text-3xl font-black">{listing.title}</h1>
-          <p className="mt-3 text-3xl font-black text-river-700">{formatPrice(listing.price_amount, listing.currency)}</p>
+          <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <div>
+              <h1 className="text-3xl font-black">{listing.title}</h1>
+              <p className="mt-3 text-3xl font-black text-river-800">{formatPrice(listing.price_amount, listing.currency)}</p>
+            </div>
+            <ShareButton title={listing.title} />
+          </div>
           <dl className="mt-6 grid gap-3 sm:grid-cols-2">
-            {[
-              ["Stanje", conditionLabels[listing.condition] ?? listing.condition],
-              ["Lokacija", listing.municipality ? `${listing.city}, ${listing.municipality}` : listing.city],
-              ["Brend", listing.brand?.name ?? listing.brand_name_custom ?? "Nije navedeno"],
-              ["Model", listing.model ?? "Nije navedeno"],
-              ["Objavljeno", formatDate(listing.created_at)],
-              ["Pregledi", String(listing.view_count)]
-            ].map(([label, value]) => (
+            {metaRows.map(([label, value]) => (
               <div key={label} className="rounded-md bg-slate-50 p-3">
                 <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
                 <dd className="mt-1 font-semibold">{value}</dd>
               </div>
             ))}
           </dl>
-          {Object.keys(listing.attributes).length ? (
+          {listing.attributes_display.length ? (
             <div className="mt-6">
               <h2 className="font-black">Detalji opreme</h2>
               <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-                {Object.entries(listing.attributes).map(([key, value]) => (
-                  <div key={key} className="flex justify-between gap-4 border-b border-slate-100 py-2 text-sm">
-                    <dt className="font-semibold text-slate-600">{key}</dt>
-                    <dd>{String(value)}</dd>
+                {listing.attributes_display.map((attribute) => (
+                  <div key={attribute.key} className="flex justify-between gap-4 border-b border-slate-100 py-2 text-sm">
+                    <dt className="font-semibold text-slate-600">{attribute.label_sr}</dt>
+                    <dd className="text-right">
+                      {attribute.value}
+                      {attribute.unit ? ` ${attribute.unit}` : ""}
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -119,36 +165,79 @@ export default async function ListingDetailPage({ params }: PageProps) {
             <h2 className="font-black">Opis</h2>
             <p className="mt-3 whitespace-pre-line text-slate-700">{listing.description}</p>
           </div>
-        </div>
-      </section>
-      <aside className="space-y-4">
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="font-black">Prodavac</h2>
-          <a href={`/prodavci/${listing.seller.username}`} className="mt-2 block text-lg font-black text-river-700">
-            {listing.seller.display_name ?? listing.seller.username}
-          </a>
-          <p className="mt-1 text-sm text-slate-600">{listing.city}</p>
-          <div className="mt-4 grid gap-2">
-            {listing.status === "sold" ? (
-              <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
-            ) : (
-              <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageSquare size={18} /> Pošalji poruku</Button>
-            )}
-            {isOwner ? (
-              <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
-            ) : (
-              <>
-                <FavoriteButton listingId={listing.id} initialSaved={listing.is_favorited} />
-                <ReportButton listingId={listing.id} />
-              </>
-            )}
           </div>
-        </div>
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-          <ShieldCheck size={20} />
-          <p className="mt-2 font-semibold">Proverite opremu uživo i ne šaljite novac unapred nepoznatim prodavcima.</p>
-        </div>
-      </aside>
+        </section>
+        <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+            <h2 className="font-black">Prodavac</h2>
+            <div className="mt-4 flex items-center gap-3">
+              <div className="grid h-12 w-12 place-items-center rounded-lg bg-river-700 text-lg font-black text-white">
+                {initials || "SZ"}
+              </div>
+              <div>
+                <Link href={`/prodavci/${listing.seller.username}`} className="block text-lg font-black text-river-800 hover:text-river-600">
+                  {sellerName}
+                </Link>
+                <p className="text-sm text-slate-600">{listing.city}</p>
+              </div>
+            </div>
+            <div className="mt-5 grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-md bg-slate-50 p-3">
+                <Star className="text-reed-500" size={17} />
+                <p className="mt-1 font-black">{listing.seller.rating_average ?? "Nema"}</p>
+                <p className="text-xs text-slate-500">{listing.seller.review_count ?? 0} ocena</p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-3">
+                <CalendarDays className="text-river-700" size={17} />
+                <p className="mt-1 font-black">{formatMonthYear(listing.seller.member_since)}</p>
+                <p className="text-xs text-slate-500">član od</p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-3">
+                <Eye className="text-river-700" size={17} />
+                <p className="mt-1 font-black">{listing.view_count}</p>
+                <p className="text-xs text-slate-500">pregleda</p>
+              </div>
+              <div className="rounded-md bg-slate-50 p-3">
+                <Heart className="text-river-700" size={17} />
+                <p className="mt-1 font-black">{listing.seller.active_listing_count ?? 0}</p>
+                <p className="text-xs text-slate-500">aktivnih oglasa</p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-2">
+              {listing.status === "sold" ? (
+                <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
+              ) : (
+                <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageSquare size={18} /> Pošalji poruku</Button>
+              )}
+              {isOwner ? (
+                <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
+              ) : (
+                <>
+                  <FavoriteButton listingId={listing.id} initialSaved={listing.is_favorited} />
+                  <ReportButton listingId={listing.id} />
+                </>
+              )}
+            </div>
+          </div>
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
+            <ShieldCheck size={20} />
+            <p className="mt-2 font-semibold">Proverite opremu uživo i ne šaljite novac unapred nepoznatim prodavcima.</p>
+          </div>
+        </aside>
+      </div>
+      {similar.data.length ? (
+        <section className="mt-10">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-2xl font-black">Slični oglasi</h2>
+            <Button href={`/oglasi?category=${listing.category.slug}`} variant="secondary">Još iz kategorije</Button>
+          </div>
+          <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {similar.data.map((item) => (
+              <ListingCard key={item.id} listing={item} />
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

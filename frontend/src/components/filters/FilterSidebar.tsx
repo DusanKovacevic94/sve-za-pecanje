@@ -5,8 +5,10 @@ import { FieldLabel, Input, Select } from "@/components/ui/Field";
 
 export function FilterSidebar({ categories, searchParams }: { categories: Category[]; searchParams: Record<string, string | string[] | undefined> }) {
   const category = typeof searchParams.category === "string" ? searchParams.category : "";
+  const sort = typeof searchParams.sort === "string" ? searchParams.sort : "";
   return (
     <form action="/oglasi" className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
+      {sort ? <input type="hidden" name="sort" value={sort} /> : null}
       <div>
         <FieldLabel htmlFor="q">Pretraga</FieldLabel>
         <Input id="q" name="q" defaultValue={typeof searchParams.q === "string" ? searchParams.q : ""} placeholder="Shimano, štap, varalice..." />
@@ -16,9 +18,14 @@ export function FilterSidebar({ categories, searchParams }: { categories: Catego
         <Select id="category" name="category" defaultValue={category}>
           <option value="">Sve kategorije</option>
           {categories.map((item) => (
-            <option value={item.slug} key={item.id}>
-              {item.name_sr}
-            </option>
+            <optgroup label={item.name_sr} key={item.id}>
+              <option value={item.slug}>{item.name_sr}</option>
+              {item.children.map((child) => (
+                <option value={child.slug} key={child.id}>
+                  {child.name_sr}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </Select>
       </div>
@@ -55,8 +62,10 @@ export function FilterSidebar({ categories, searchParams }: { categories: Catego
           ))}
         </Select>
       </div>
-      <Button type="submit" className="w-full">Primeni filtere</Button>
+      <div className="grid gap-2">
+        <Button type="submit" className="w-full">Primeni filtere</Button>
+        <Button href="/oglasi" variant="ghost" className="w-full">Poništi sve</Button>
+      </div>
     </form>
   );
 }
-

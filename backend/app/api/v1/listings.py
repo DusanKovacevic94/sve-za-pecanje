@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, File, Request, UploadFile
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.v1.deps import get_current_user, get_optional_user
@@ -19,7 +19,10 @@ from app.services.view_service import track_listing_view
 from app.models.report import Report
 from app.models.listing import Listing
 from app.models.message import Conversation
+from app.models.review import Review
 from app.models.user import User as UserModel
+from app.models.category import Category
+from app.models.favorite import Favorite
 from app.services.feature_service import FeatureService, serialize_feature_request
 
 router = APIRouter(prefix="/listings", tags=["listings"])
@@ -62,15 +65,53 @@ def get_listing(
     listing = ListingService(db).get_by_slug(slug)
     is_favorited = False
     if user:
-        from sqlalchemy import select
-
-        from app.models.favorite import Favorite
-
         is_favorited = (
             db.scalar(select(Favorite.id).where(Favorite.user_id == user.id, Favorite.listing_id == listing.id))
             is not None
         )
-    return data_response(serialize_listing_detail(listing, is_favorited=is_favorited))
+    rating_average, review_count = db.execute(
+        select(func.avg(Review.rating), func.count(Review.id)).where(
+            Review.reviewee_id == listing.seller_id,
+            Review.status == "published",
+        )
+    ).one()
+    active_listing_count = db.scalar(
+        select(func.count(Listing.id)).where(
+            Listing.seller_id == listing.seller_id,
+            Listing.status == "active",
+        )
+    )
+    seller_stats = {
+        "member_since": listing.seller.created_at,
+        "rating_average": round(float(rating_average), 1) if rating_average else None,
+        "review_count": int(review_count or 0),
+        "active_listing_count": int(active_listing_count or 0),
+    }
+    return data_response(serialize_listing_detail(listing, is_favorited=is_favorited, seller_stats=seller_stats))
+
+
+@router.get("/{listing_id}/similar")
+def similar_listings(listing_id: str, db: Session = Depends(get_db)):
+    listing = db.get(Listing, listing_id)
+    if not listing:
+        raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
+    rows = db.scalars(
+        select(Listing)
+        .options(
+            selectinload(Listing.seller).selectinload(UserModel.profile),
+            selectinload(Listing.category).selectinload(Category.attributes),
+            selectinload(Listing.brand),
+            selectinload(Listing.images),
+        )
+        .where(
+            Listing.status == "active",
+            Listing.category_id == listing.category_id,
+            Listing.id != listing.id,
+        )
+        .order_by(Listing.is_featured.desc(), Listing.created_at.desc())
+        .limit(4)
+    ).all()
+    return data_response([serialize_listing_card(row) for row in rows])
 
 
 @router.post("/{listing_id}/track-view")

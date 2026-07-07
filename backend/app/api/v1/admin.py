@@ -165,7 +165,7 @@ def admin_listings(
 ):
     statement = select(Listing).options(
         selectinload(Listing.seller).selectinload(User.profile),
-        selectinload(Listing.category),
+        selectinload(Listing.category).selectinload(Category.attributes),
         selectinload(Listing.brand),
         selectinload(Listing.images),
     )

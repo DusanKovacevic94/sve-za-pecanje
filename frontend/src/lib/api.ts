@@ -38,6 +38,7 @@ export type Category = {
   id: string;
   slug: string;
   name_sr: string;
+  active_count: number;
   updated_at: string;
   children: Category[];
   attributes: AttributeDefinition[];
@@ -54,6 +55,13 @@ export type AttributeDefinition = {
 };
 
 export type Brand = { id: string; name: string; slug: string };
+
+export type AttributeDisplay = {
+  key: string;
+  label_sr: string;
+  value: string;
+  unit: string | null;
+};
 
 export type AdminBrand = Brand & {
   aliases: string[];
@@ -74,10 +82,18 @@ export type ListingCard = {
   condition: string;
   status: string;
   cover_image_url: string | null;
-  seller: { id: string; username: string; display_name: string | null };
+  seller: {
+    id: string;
+    username: string;
+    display_name: string | null;
+    member_since?: string | null;
+    rating_average?: number | null;
+    review_count?: number | null;
+    active_listing_count?: number | null;
+  };
   category: { id: string; slug: string; name_sr: string };
   brand: Brand | null;
-  key_attributes: Record<string, string | number | boolean>;
+  key_attributes: AttributeDisplay[];
   is_featured: boolean;
   featured_until?: string | null;
   is_favorited?: boolean;
@@ -91,6 +107,7 @@ export type ListingDetail = ListingCard & {
   model: string | null;
   brand_name_custom: string | null;
   attributes: Record<string, string | number | boolean | string[]>;
+  attributes_display: AttributeDisplay[];
   allow_messages: boolean;
   phone_visible: boolean;
   view_count: number;

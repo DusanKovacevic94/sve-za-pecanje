@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.v1.deps import get_current_user
 from app.core.responses import api_error, data_response
 from app.db.session import get_db
+from app.models.category import Category
 from app.models.favorite import Favorite
 from app.models.listing import Listing
 from app.models.message import Conversation
@@ -103,7 +104,7 @@ def public_profile(username: str, db: Session = Depends(get_db)):
         select(Listing)
         .options(
             selectinload(Listing.seller).selectinload(User.profile),
-            selectinload(Listing.category),
+            selectinload(Listing.category).selectinload(Category.attributes),
             selectinload(Listing.brand),
             selectinload(Listing.images),
         )
@@ -142,7 +143,7 @@ def my_listings(user: User = Depends(get_current_user), db: Session = Depends(ge
         select(Listing)
         .options(
             selectinload(Listing.seller).selectinload(User.profile),
-            selectinload(Listing.category),
+            selectinload(Listing.category).selectinload(Category.attributes),
             selectinload(Listing.brand),
             selectinload(Listing.images),
         )
@@ -222,7 +223,7 @@ def my_favorites(user: User = Depends(get_current_user), db: Session = Depends(g
         .join(Favorite, Favorite.listing_id == Listing.id)
         .options(
             selectinload(Listing.seller).selectinload(User.profile),
-            selectinload(Listing.category),
+            selectinload(Listing.category).selectinload(Category.attributes),
             selectinload(Listing.brand),
             selectinload(Listing.images),
         )

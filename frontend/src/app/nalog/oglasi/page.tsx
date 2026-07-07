@@ -2,6 +2,7 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { OwnerListingActions } from "@/components/listings/ListingActions";
 import { FeatureRequestPanel } from "@/components/listings/FeatureRequestPanel";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { FeaturePackage, FeatureRequest, ListingCard as ListingCardType } from "@/lib/api";
 import { formatDate, formatPrice } from "@/lib/format";
 import { serverApiFetch } from "@/lib/server-api";
@@ -36,9 +37,12 @@ export default async function MyListingsPage() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-8 text-center">
-          <h2 className="text-xl font-black">Još nemate postavljenih oglasa.</h2>
-          <p className="mt-2 text-slate-600">Postavite prvi oglas i pronađite kupca među ribolovcima.</p>
+        <div className="mt-6">
+          <EmptyState
+            title="Još nemate postavljenih oglasa"
+            copy="Postavite prvi oglas i pronađite kupca među ribolovcima."
+            action={{ href: "/postavi-oglas", label: "Postavi oglas" }}
+          />
         </div>
       )}
       {requests.data.length ? (

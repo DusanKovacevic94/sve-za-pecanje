@@ -41,15 +41,34 @@ Prioriteti: **P1** = bitno odmah (bugovi / core UX), **P2** = potrebno pre ozbil
 
 ## P2 — Pre launcha
 
-- [ ] [020 — Observability: Sentry, logovi, health check](020-observability.md)
-- [ ] [021 — Backup baze i prelazak uploada na object storage](021-backups-object-storage.md)
-- [ ] [022 — Pretraga: full-text umesto ILIKE](022-search-fulltext.md)
-- [ ] [023 — UX polish: loading states, mobilna navigacija, pristupačnost](023-ux-polish.md)
-- [ ] [024 — Produkcijski overlay: čišćenje i hardening](024-prod-cleanup.md)
+- [x] [020 — Observability: Sentry, logovi, health check](020-observability.md)
+- [x] [021 — Backup baze i prelazak uploada na object storage](021-backups-object-storage.md)
+- [x] [022 — Pretraga: full-text umesto ILIKE](022-search-fulltext.md)
+- [x] [023 — UX polish: loading states, mobilna navigacija, pristupačnost](023-ux-polish.md)
+- [x] [024 — Produkcijski overlay: čišćenje i hardening](024-prod-cleanup.md)
 
 ## P3 — Kvalitet i rast
 
-- [ ] [025 — E2E testovi (Playwright) i pokrivenost backenda](025-e2e-tests.md)
-- [ ] [026 — Web analitika (privacy-friendly)](026-analytics.md)
-- [ ] [027 — Isticanje oglasa: self-serve tok (monetizacija)](027-featured-monetization.md)
-- [ ] [028 — Notifikacije: email za novu poruku + in-app](028-notifications.md)
+- [x] [025 — E2E testovi (Playwright) i pokrivenost backenda](025-e2e-tests.md)
+- [x] [026 — Web analitika (privacy-friendly)](026-analytics.md)
+- [x] [027 — Isticanje oglasa: self-serve tok (monetizacija)](027-featured-monetization.md)
+- [x] [028 — Notifikacije: email za novu poruku + in-app](028-notifications.md)
+
+---
+
+# Runda 3 — Dizajn i osećaj sajta (2026-07-07)
+
+Cilj: skinuti "default Tailwind" utisak — tipografija, boje sa karakterom, kartice koje ne liče na debug ispis, i povratne informacije na svaku akciju. Redosled: 029 prvo (temelji), pa 031, pa ostalo.
+
+## P1 — Vizuelni identitet
+
+- [x] [029 — Dizajn temelji: tipografija, paleta, tokeni](029-design-foundations.md)
+- [x] [030 — Header, footer i brend detalji](030-header-footer-brand.md)
+- [x] [031 — ListingCard redizajn + čitljivi atributi](031-listing-card-attributes.md)
+
+## P2 — Stranice i interakcije
+
+- [x] [032 — Početna strana: redizajn](032-homepage-redesign.md)
+- [x] [033 — /oglasi: sortiranje, aktivni filteri, paginacija](033-browse-page-ux.md)
+- [x] [034 — Detalj oglasa: layout, breadcrumbs, slični oglasi](034-detail-page-layout.md)
+- [x] [035 — Mikrointerakcije, empty states i povratne informacije](035-micro-interactions.md)

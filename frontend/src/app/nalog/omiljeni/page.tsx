@@ -1,5 +1,5 @@
 import { ListingCard } from "@/components/listings/ListingCard";
-import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { ListingCard as ListingCardType } from "@/lib/api";
 import { serverApiFetch } from "@/lib/server-api";
 
@@ -22,10 +22,12 @@ async function FavoritesContent() {
           ))}
         </div>
       ) : (
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-8 text-center">
-          <h2 className="text-xl font-black">Nemate omiljene oglase.</h2>
-          <p className="mt-2 text-slate-600">Sačuvajte oglase koje želite da pratite ili uporedite kasnije.</p>
-          <Button href="/oglasi" className="mt-5">Pregledaj oglase</Button>
+        <div className="mt-6">
+          <EmptyState
+            title="Nemate omiljene oglase"
+            copy="Sačuvajte oglase koje želite da pratite ili uporedite kasnije."
+            action={{ href: "/oglasi", label: "Pregledaj oglase" }}
+          />
         </div>
       )}
     </div>

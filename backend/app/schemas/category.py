@@ -23,6 +23,7 @@ class CategoryOut(BaseModel):
     name_en: str
     description_sr: str | None
     sort_order: int
+    active_count: int = 0
     children: list["CategoryOut"] = []
     attributes: list[AttributeDefinitionOut] = []
 
@@ -35,4 +36,3 @@ class BrandOut(BaseModel):
 
 
 CategoryOut.model_rebuild()
-

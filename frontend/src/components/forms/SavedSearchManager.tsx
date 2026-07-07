@@ -7,7 +7,9 @@ import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { FieldLabel, Input } from "@/components/ui/Field";
+import { useToast } from "@/components/ui/Toast";
 
 export type SavedSearchItem = {
   id: string;
@@ -50,6 +52,7 @@ export function SavedSearchManager({
   const [name, setName] = useState(defaultName(currentQuery, currentFilters));
   const [notify, setNotify] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const { pushToast } = useToast();
   const hasCurrentSearch = Boolean(currentQuery || Object.keys(currentFilters).length);
   const visibleSearches = useMemo(() => searches, [searches]);
 
@@ -68,8 +71,11 @@ export function SavedSearchManager({
       trackEvent("saved_search_created");
       router.refresh();
       setMessage("Pretraga je sačuvana.");
+      pushToast("Pretraga je sačuvana.", "success");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Pretraga nije sačuvana.");
+      const errorMessage = error instanceof Error ? error.message : "Pretraga nije sačuvana.";
+      setMessage(errorMessage);
+      pushToast(errorMessage, "error");
     }
   }
 
@@ -79,8 +85,11 @@ export function SavedSearchManager({
     try {
       await apiFetch<{ message: string }>(`/saved-searches/${id}`, { method: "DELETE" });
       router.refresh();
+      pushToast("Pretraga je obrisana.", "success");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Pretraga nije obrisana.");
+      const errorMessage = error instanceof Error ? error.message : "Pretraga nije obrisana.";
+      setMessage(errorMessage);
+      pushToast(errorMessage, "error");
     }
   }
 
@@ -135,7 +144,7 @@ export function SavedSearchManager({
           </article>
         ))}
         {!visibleSearches.length ? (
-          <p className="rounded-lg bg-white p-6 text-slate-600">Nemate sačuvane pretrage.</p>
+          <EmptyState title="Nemate sačuvane pretrage" copy="Sačuvajte filtere sa stranice oglasa i dobijajte brži pregled novih rezultata." action={{ href: "/oglasi", label: "Pregledaj oglase" }} />
         ) : null}
       </div>
     </div>

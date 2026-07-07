@@ -214,7 +214,7 @@ class ListingService:
     def _base_query(self) -> Select[tuple[Listing]]:
         return select(Listing).options(
             selectinload(Listing.seller).selectinload(User.profile),
-            selectinload(Listing.category),
+            selectinload(Listing.category).selectinload(Category.attributes),
             selectinload(Listing.brand),
             selectinload(Listing.images),
         )
@@ -289,10 +289,54 @@ class ListingService:
         )
 
 
+def _attribute_option_label(definition: AttributeDefinition, value: Any) -> str | None:
+    options = definition.options.get("options", []) if isinstance(definition.options, dict) else []
+    for option in options:
+        if str(option.get("value")) == str(value):
+            return option.get("label_sr") or option.get("label") or str(value)
+    return str(value) if value not in (None, "") else None
+
+
+def _format_attribute_value(definition: AttributeDefinition, value: Any) -> str | None:
+    if value in (None, ""):
+        return None
+    if definition.field_type == "boolean":
+        return "Da" if bool(value) else "Ne"
+    if definition.field_type == "enum":
+        return _attribute_option_label(definition, value)
+    if definition.field_type == "multiselect" and isinstance(value, list):
+        labels = [_attribute_option_label(definition, item) for item in value]
+        return ", ".join(label for label in labels if label)
+    if isinstance(value, list):
+        return ", ".join(str(item) for item in value if item not in (None, ""))
+    return str(value)
+
+
+def _display_attributes(listing: Listing) -> list[dict[str, str | None]]:
+    if not listing.attributes:
+        return []
+    definitions = sorted(listing.category.attributes, key=lambda item: item.sort_order)
+    values: list[dict[str, str | None]] = []
+    for definition in definitions:
+        value = listing.attributes.get(definition.key)
+        display_value = _format_attribute_value(definition, value)
+        if not display_value:
+            continue
+        values.append(
+            {
+                "key": definition.key,
+                "label_sr": definition.label_sr,
+                "value": display_value,
+                "unit": definition.unit,
+            }
+        )
+    return values
+
+
 def serialize_listing_card(listing: Listing) -> dict:
     cover = next((image for image in listing.images if image.is_cover), listing.images[0] if listing.images else None)
     seller_profile = listing.seller.profile if listing.seller else None
-    key_attributes = dict(list(listing.attributes.items())[:4]) if listing.attributes else {}
+    display_attributes = _display_attributes(listing)
     return {
         "id": listing.id,
         "public_id": listing.public_id,
@@ -319,7 +363,7 @@ def serialize_listing_card(listing: Listing) -> dict:
             if listing.brand
             else None
         ),
-        "key_attributes": key_attributes,
+        "key_attributes": display_attributes[:4],
         "is_featured": listing.is_featured,
         "featured_until": listing.featured_until,
         "created_at": listing.created_at,
@@ -327,8 +371,15 @@ def serialize_listing_card(listing: Listing) -> dict:
     }
 
 
-def serialize_listing_detail(listing: Listing, is_favorited: bool = False) -> dict:
+def serialize_listing_detail(
+    listing: Listing,
+    is_favorited: bool = False,
+    seller_stats: dict[str, int | float | None] | None = None,
+) -> dict:
     data = serialize_listing_card(listing)
+    if seller_stats:
+        data["seller"].update(seller_stats)
+    display_attributes = _display_attributes(listing)
     data.update(
         {
             "description": listing.description,
@@ -336,6 +387,7 @@ def serialize_listing_detail(listing: Listing, is_favorited: bool = False) -> di
             "model": listing.model,
             "brand_name_custom": listing.brand_name_custom,
             "attributes": listing.attributes,
+            "attributes_display": display_attributes,
             "allow_messages": listing.allow_messages,
             "phone_visible": listing.phone_visible,
             "view_count": listing.view_count,

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
+import { Camera } from "lucide-react";
 
 import type { ListingDetail } from "@/lib/api";
 
@@ -15,23 +16,28 @@ export function ListingGallery({ listing }: { listing: ListingDetail }) {
     [listing.images]
   );
   const [selectedId, setSelectedId] = useState(images[0]?.id ?? "");
+  const [loadedId, setLoadedId] = useState(images[0]?.id ?? "");
   const selected = images.find((image) => image.id === selectedId) ?? images[0];
 
   return (
     <div className="space-y-3">
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-river-100 via-white to-reed/30">
+        <div className="relative aspect-[4/3] bg-gradient-to-br from-river-50 via-white to-reed-100">
           {selected ? (
             <Image
               src={selected.url}
               alt={listing.title}
               fill
               sizes="(min-width: 1024px) 820px, 100vw"
-              className="object-cover"
+              className={`object-cover transition-opacity duration-300 ${loadedId === selected.id ? "opacity-100" : "opacity-0"}`}
+              onLoad={() => setLoadedId(selected.id)}
               priority
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-river-700">Fotografija opreme</div>
+            <div className="flex h-full flex-col items-center justify-center gap-2 text-river-700">
+              <Camera size={34} />
+              Fotografija opreme
+            </div>
           )}
         </div>
       </div>
@@ -41,7 +47,10 @@ export function ListingGallery({ listing }: { listing: ListingDetail }) {
             <button
               key={image.id}
               type="button"
-              onClick={() => setSelectedId(image.id)}
+              onClick={() => {
+                setSelectedId(image.id);
+                setLoadedId("");
+              }}
               className={`focus-ring relative aspect-square overflow-hidden rounded-md border bg-white ${
                 selected?.id === image.id ? "border-river-600 ring-2 ring-river-100" : "border-slate-200"
               }`}
