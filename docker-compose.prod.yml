@@ -49,8 +49,12 @@ services:
       context: ./frontend
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_DOMAIN}/api/v1}
+        NEXT_PUBLIC_ANALYTICS_URL: ${NEXT_PUBLIC_ANALYTICS_URL:-}
+        NEXT_PUBLIC_ANALYTICS_WEBSITE_ID: ${NEXT_PUBLIC_ANALYTICS_WEBSITE_ID:-}
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_DOMAIN}/api/v1}
+      NEXT_PUBLIC_ANALYTICS_URL: ${NEXT_PUBLIC_ANALYTICS_URL:-}
+      NEXT_PUBLIC_ANALYTICS_WEBSITE_ID: ${NEXT_PUBLIC_ANALYTICS_WEBSITE_ID:-}
       INTERNAL_API_URL: http://backend:8000/api/v1
     command: node server.js
     restart: unless-stopped
