@@ -2,6 +2,7 @@ FROM python:3.12-slim AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+ENV HOME=/tmp
 
 WORKDIR /app
 
@@ -20,9 +21,9 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN addgroup --system app && adduser --system --ingroup app app \
-  && mkdir -p /app/storage/uploads \
-  && chown -R app:app /app
+RUN addgroup --system app && adduser --system --ingroup app --home /home/app app \
+  && mkdir -p /home/app /app/storage/uploads \
+  && chown -R app:app /home/app /app
 
 COPY --from=builder /install /usr/local
 COPY --chown=app:app . .
