@@ -1,5 +1,7 @@
 import { apiFetch, Category, ListingCard } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 function escapeXml(value: string) {
   return value
     .replaceAll("&", "&amp;")

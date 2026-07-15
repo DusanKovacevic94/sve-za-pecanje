@@ -25,6 +25,11 @@ from app.schemas.admin import (
 from app.services.listing_service import serialize_listing_detail, slugify
 from app.services.moderation_service import ModerationService
 from app.services.feature_service import FeatureService, serialize_feature_request
+from app.services.shop_service import (
+    ShopService,
+    serialize_shop_profile,
+    serialize_shop_subscription_request,
+)
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -207,10 +212,11 @@ def feature_listing(
 @router.get("/feature-requests")
 def feature_requests(
     status: str | None = Query(default=None),
+    type: str | None = Query(default=None),
     admin: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    requests = FeatureService(db).list_admin(status)
+    requests = FeatureService(db).list_admin(status, type)
     return data_response([serialize_feature_request(request) for request in requests])
 
 
@@ -222,7 +228,7 @@ def approve_feature_request(
     db: Session = Depends(get_db),
 ):
     request = FeatureService(db).approve(request_id, admin, payload.admin_note)
-    ModerationService(db).audit(admin, "feature_request.approved", "feature_request", request.id)
+    ModerationService(db).audit(admin, "promotion_order.approved", "promotion_order", request.id)
     db.commit()
     return data_response(serialize_feature_request(request))
 
@@ -235,7 +241,7 @@ def reject_feature_request(
     db: Session = Depends(get_db),
 ):
     request = FeatureService(db).reject(request_id, admin, payload.admin_note)
-    ModerationService(db).audit(admin, "feature_request.rejected", "feature_request", request.id)
+    ModerationService(db).audit(admin, "promotion_order.rejected", "promotion_order", request.id)
     db.commit()
     return data_response(serialize_feature_request(request))
 
@@ -256,6 +262,68 @@ def admin_users(admin: User = Depends(require_admin), db: Session = Depends(get_
             for user in users
         ]
     )
+
+
+@router.get("/shops")
+def admin_shops(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    users = ShopService(db).list_admin_shops()
+    return data_response(
+        [
+            {
+                "id": user.id,
+                "email": user.email,
+                "username": user.username,
+                "created_at": user.created_at,
+                **serialize_shop_profile(user.profile),
+            }
+            for user in users
+            if user.profile
+        ]
+    )
+
+
+@router.post("/shops/{user_id}/deactivate")
+def deactivate_shop(user_id: str, admin: User = Depends(require_admin), db: Session = Depends(get_db)):
+    profile = ShopService(db).deactivate_shop(user_id)
+    ModerationService(db).audit(admin, "shop.deactivated", "user", user_id)
+    db.commit()
+    return data_response(serialize_shop_profile(profile))
+
+
+@router.get("/shop-subscription-requests")
+def admin_shop_subscription_requests(
+    status: str | None = Query(default=None),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    requests = ShopService(db).list_admin_requests(status)
+    return data_response([serialize_shop_subscription_request(request) for request in requests])
+
+
+@router.post("/shop-subscription-requests/{request_id}/approve")
+def approve_shop_subscription_request(
+    request_id: str,
+    payload: ResolveFeatureRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    request = ShopService(db).approve_request(request_id, admin, payload.admin_note)
+    ModerationService(db).audit(admin, "shop_subscription.approved", "shop_subscription_request", request.id)
+    db.commit()
+    return data_response(serialize_shop_subscription_request(request))
+
+
+@router.post("/shop-subscription-requests/{request_id}/reject")
+def reject_shop_subscription_request(
+    request_id: str,
+    payload: ResolveFeatureRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    request = ShopService(db).reject_request(request_id, admin, payload.admin_note)
+    ModerationService(db).audit(admin, "shop_subscription.rejected", "shop_subscription_request", request.id)
+    db.commit()
+    return data_response(serialize_shop_subscription_request(request))
 
 
 @router.post("/users/{user_id}/suspend")

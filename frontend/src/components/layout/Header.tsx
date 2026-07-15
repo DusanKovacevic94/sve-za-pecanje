@@ -23,6 +23,7 @@ export async function Header() {
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           <HeaderNavLink href="/oglasi">Oglasi</HeaderNavLink>
+          <HeaderNavLink href="/prodavnice">Prodavnice</HeaderNavLink>
           <HeaderNavLink href="/kategorije">Kategorije</HeaderNavLink>
           <HeaderNavLink href="/saveti-za-bezbednost">Bezbednost</HeaderNavLink>
         </nav>
@@ -47,6 +48,7 @@ export async function Header() {
       </div>
       <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto px-4 pb-3 md:hidden">
         <HeaderNavLink href="/oglasi" mobile>Oglasi</HeaderNavLink>
+        <HeaderNavLink href="/prodavnice" mobile>Prodavnice</HeaderNavLink>
         <HeaderNavLink href="/kategorije" mobile>Kategorije</HeaderNavLink>
         <HeaderNavLink href="/saveti-za-bezbednost" mobile>Bezbednost</HeaderNavLink>
         <Link className="focus-ring rounded-md bg-river-50 px-3 py-2 text-sm font-semibold text-ink hover:bg-river-100" href="/nalog/omiljeni">

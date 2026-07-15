@@ -14,6 +14,7 @@ from app.models.review import Review
 from app.models.user import User
 from app.schemas.user import ProfileUpdate
 from app.services.listing_service import serialize_listing_card
+from app.services.shop_service import ShopService, serialize_shop_profile
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -32,6 +33,7 @@ def serialize_profile(user: User) -> dict:
         "bio": profile.bio if profile else None,
         "fishing_styles": profile.fishing_styles if profile else [],
         "member_badges": profile.member_badges if profile else [],
+        **serialize_shop_profile(profile),
         "notify_messages": profile.notify_messages if profile else True,
         "notify_saved_searches": profile.notify_saved_searches if profile else True,
         "notify_listing_expiry": profile.notify_listing_expiry if profile else True,
@@ -123,6 +125,7 @@ def public_profile(username: str, db: Session = Depends(get_db)):
             "fishing_styles": user.profile.fishing_styles if user.profile else [],
             "member_since": user.created_at,
             "phone_visible": user.profile.phone_visible if user.profile else False,
+            "shop": serialize_shop_profile(user.profile),
             "rating": float(rating) if rating else None,
             "reviews": reviews,
             "active_listings_count": len(listings),
@@ -150,7 +153,19 @@ def my_listings(user: User = Depends(get_current_user), db: Session = Depends(ge
         .where(Listing.seller_id == user.id, Listing.status != "deleted")
         .order_by(Listing.created_at.desc())
     ).all()
-    return data_response([serialize_listing_card(listing) for listing in listings])
+    conversation_counts = dict(
+        db.execute(
+            select(Conversation.listing_id, func.count(Conversation.id))
+            .where(Conversation.seller_id == user.id)
+            .group_by(Conversation.listing_id)
+        ).all()
+    )
+    data = []
+    for listing in listings:
+        item = serialize_listing_card(listing)
+        item["message_count"] = int(conversation_counts.get(listing.id, 0))
+        data.append(item)
+    return data_response(data)
 
 
 @router.get("/me/unread-count")

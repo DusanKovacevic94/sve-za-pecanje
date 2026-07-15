@@ -1,4 +1,4 @@
-import { Heart, MessageSquare, Search, Settings, SquarePlus, type LucideIcon } from "lucide-react";
+import { Heart, MessageSquare, Search, Settings, SquarePlus, Store, type LucideIcon } from "lucide-react";
 
 export const metadata = { title: "Moj nalog | Sve Za Pecanje" };
 
@@ -7,6 +7,7 @@ export default function AccountPage() {
     { Icon: SquarePlus, title: "Moji oglasi", href: "/nalog/oglasi", copy: "Aktivni, na čekanju i prodati oglasi." },
     { Icon: MessageSquare, title: "Poruke", href: "/nalog/poruke", copy: "Razgovori sa kupcima i prodavcima." },
     { Icon: Heart, title: "Omiljeni", href: "/nalog/omiljeni", copy: "Oglasi koje pratite." },
+    { Icon: Store, title: "Prodavnica", href: "/nalog/prodavnica", copy: "Podaci, pretplata i javna stranica prodavnice." },
     { Icon: Search, title: "Sačuvane pretrage", href: "/nalog/sacuvane-pretrage", copy: "Filteri koje želite da pratite." },
     { Icon: Settings, title: "Profil", href: "/nalog/profil", copy: "Lokacija, telefon i stilovi ribolova." }
   ];

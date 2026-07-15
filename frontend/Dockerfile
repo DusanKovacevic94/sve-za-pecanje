@@ -11,6 +11,7 @@ FROM base AS deps
 
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
+RUN chown -R 1000:1000 /app/node_modules /app/package.json /app/pnpm-lock.yaml
 
 FROM deps AS builder
 

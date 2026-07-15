@@ -30,7 +30,7 @@ class SearchService:
             _, rank = apply_listing_search(select(Listing), query, "postgresql")
             if rank is not None:
                 order.append(rank.desc())
-        order.append(Listing.created_at.desc())
+        order.append(func.coalesce(Listing.bumped_at, Listing.created_at).desc())
         return list(self.db.scalars(statement.order_by(*order).limit(limit)).all())
 
     def _matching_statement(self, query: str | None, filters: dict):

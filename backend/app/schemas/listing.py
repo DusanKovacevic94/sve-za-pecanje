@@ -113,6 +113,7 @@ class ListingCard(BaseModel):
     brand: ListingBrandOut | None
     key_attributes: list[AttributeDisplayOut]
     is_featured: bool
+    bumped_at: datetime | None = None
     created_at: datetime
 
 
@@ -142,11 +143,19 @@ class ReorderImagesRequest(BaseModel):
 
 
 class FeatureRequestCreate(BaseModel):
+    type: str = "featured"
     package_days: int
+
+    @field_validator("type")
+    @classmethod
+    def validate_type(cls, value: str) -> str:
+        if value not in {"featured", "bump", "homepage"}:
+            raise ValueError("Izaberite tip promocije.")
+        return value
 
     @field_validator("package_days")
     @classmethod
     def validate_package_days(cls, value: int) -> int:
-        if value not in {7, 14, 30}:
-            raise ValueError("Izaberite paket od 7, 14 ili 30 dana.")
+        if value not in {0, 7, 14, 30}:
+            raise ValueError("Izaberite važeći paket promocije.")
         return value

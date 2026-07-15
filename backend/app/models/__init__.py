@@ -4,7 +4,7 @@ from app.models.auth_session import AuthSession
 from app.models.brand import Brand
 from app.models.category import AttributeDefinition, Category, City
 from app.models.email_outbox import EmailOutbox
-from app.models.feature_request import FeatureRequest
+from app.models.feature_request import FeatureRequest, PromotionOrder
 from app.models.favorite import Favorite
 from app.models.image import ListingImage
 from app.models.listing import Listing
@@ -13,6 +13,7 @@ from app.models.profile import UserProfile
 from app.models.report import Report
 from app.models.review import Review
 from app.models.saved_search import SavedSearch
+from app.models.shop_subscription import ShopSubscriptionRequest
 from app.models.user import User
 
 __all__ = [
@@ -26,6 +27,7 @@ __all__ = [
     "Conversation",
     "EmailOutbox",
     "FeatureRequest",
+    "PromotionOrder",
     "Favorite",
     "Listing",
     "ListingImage",
@@ -33,6 +35,7 @@ __all__ = [
     "Report",
     "Review",
     "SavedSearch",
+    "ShopSubscriptionRequest",
     "User",
     "UserProfile",
 ]

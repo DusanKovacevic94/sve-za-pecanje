@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Eye, Heart, MessageSquare, Pencil, ShieldCheck, Star } from "lucide-react";
+import { CalendarDays, Eye, Heart, MessageSquare, Pencil, ShieldCheck, Star, Store } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -128,6 +128,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2">
             <Badge tone={listing.status === "sold" ? "sold" : "accent"}>{listing.status === "sold" ? "Prodato" : "Aktivan oglas"}</Badge>
             {listing.is_featured ? <Badge tone="accent">Istaknuto</Badge> : null}
+            {listing.seller.shop_active ? <Badge>Prodavnica</Badge> : null}
             <Badge>{listing.category.name_sr}</Badge>
           </div>
           <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
@@ -178,6 +179,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 <Link href={`/prodavci/${listing.seller.username}`} className="block text-lg font-black text-river-800 hover:text-river-600">
                   {sellerName}
                 </Link>
+                {listing.seller.shop_active && listing.seller.shop_slug ? (
+                  <Link href={`/prodavnice/${listing.seller.shop_slug}`} className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-river-700 hover:text-river-600">
+                    <Store size={14} aria-hidden />
+                    {listing.seller.shop_name}
+                  </Link>
+                ) : null}
                 <p className="text-sm text-slate-600">{listing.city}</p>
               </div>
             </div>

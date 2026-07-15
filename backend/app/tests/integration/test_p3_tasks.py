@@ -2,12 +2,17 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 
-from app.models import AuditLog, EmailOutbox, Favorite, Report
+from app.models import AuditLog, EmailOutbox, Favorite, Listing, Report
 from app.models.message import Message
 from app.services.feature_service import FeatureService
 from app.services.message_service import MessageService
 from app.services.moderation_service import ModerationService
-from app.tasks.notification_tasks import send_listing_expiry_reminders, send_unread_message_notifications
+from app.services.shop_service import ShopService
+from app.tasks.notification_tasks import (
+    send_listing_expiry_reminders,
+    send_shop_subscription_expiry_reminders,
+    send_unread_message_notifications,
+)
 
 
 def test_message_service_unread_counts_and_authorization(db, factories):
@@ -85,6 +90,75 @@ def test_feature_request_flow_sets_featured_until(db, factories):
     assert approved.status == "paid"
     assert listing.is_featured is True
     assert listing.featured_until is not None
+    assert db.scalar(select(EmailOutbox).where(EmailOutbox.to_email == seller.email))
+
+
+def test_bump_promotion_updates_sort_order(db, factories):
+    seller = factories.user()
+    admin = factories.user(role="admin")
+    category = factories.category()
+    older = factories.listing(seller, category, title="Stariji oglas")
+    newer = factories.listing(seller, category, title="Noviji oglas")
+    older.created_at = datetime.now(UTC) - timedelta(days=10)
+    newer.created_at = datetime.now(UTC) - timedelta(days=1)
+    db.commit()
+
+    request = FeatureService(db).create_request(older.id, seller, 0, "bump")
+    assert request.payment_reference.startswith("BMP-")
+    FeatureService(db).approve(request.id, admin)
+    db.refresh(older)
+
+    rows = db.scalars(select(Listing).where(Listing.category_id == category.id).order_by(Listing.bumped_at.desc(), Listing.created_at.desc())).all()
+    assert older.bumped_at is not None
+    assert rows[0].id == older.id
+    assert older.featured_until is None
+
+
+def test_homepage_promotion_lists_active_listing(db, factories):
+    seller = factories.user()
+    admin = factories.user(role="admin")
+    listing = factories.listing(seller, factories.category())
+
+    request = FeatureService(db).create_request(listing.id, seller, 7, "homepage")
+    assert request.payment_reference.startswith("HOM-")
+    FeatureService(db).approve(request.id, admin)
+
+    rows = FeatureService(db).list_homepage_listings()
+    assert [row.id for row in rows] == [listing.id]
+
+
+def test_shop_subscription_activation_and_expiry(db, factories):
+    seller = factories.user()
+    admin = factories.user(role="admin")
+    seller.profile.shop_name = "Dunav Ribolov"
+    seller.profile.shop_tax_id = "123456789"
+    db.commit()
+
+    service = ShopService(db)
+    request = service.create_subscription_request(seller, "monthly")
+    assert request.payment_reference.startswith("SHOP-")
+
+    approved = service.approve_request(request.id, admin)
+    db.refresh(seller.profile)
+    assert approved.status == "paid"
+    assert seller.profile.shop_active_until is not None
+    assert service.get_me(seller)["listing_limit"] == 100
+    assert service.get_public_shop(seller.profile.shop_slug).user_id == seller.id
+
+    seller.profile.shop_active_until = datetime.now(UTC) - timedelta(days=1)
+    db.commit()
+    assert service.get_me(seller)["shop_active"] is False
+
+
+def test_shop_subscription_expiry_reminder(db, factories):
+    seller = factories.user()
+    seller.profile.shop_name = "Sava Carp"
+    seller.profile.shop_slug = "sava-carp"
+    seller.profile.shop_active_until = datetime.now(UTC) + timedelta(days=6)
+    db.commit()
+
+    assert send_shop_subscription_expiry_reminders(db) == 1
+    assert send_shop_subscription_expiry_reminders(db) == 0
     assert db.scalar(select(EmailOutbox).where(EmailOutbox.to_email == seller.email))
 
 

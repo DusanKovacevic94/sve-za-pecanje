@@ -1,19 +1,80 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import Select, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.responses import api_error
-from app.models.feature_request import FeatureRequest
+from app.models.category import Category
+from app.models.feature_request import PromotionOrder
 from app.models.listing import Listing
 from app.models.user import User
 from app.services.email_service import EmailService
 
-FEATURE_PACKAGES: dict[int, Decimal] = {
-    7: Decimal("490"),
-    14: Decimal("790"),
-    30: Decimal("1290"),
+PROMOTION_PACKAGES: dict[str, list[dict[str, object]]] = {
+    "featured": [
+        {
+            "type": "featured",
+            "option_id": "featured_7",
+            "label": "Istaknut oglas",
+            "description": "Oglas dobija istaknuti bedž i prednost u listama.",
+            "days": 7,
+            "price_amount": Decimal("490"),
+            "currency": "RSD",
+        },
+        {
+            "type": "featured",
+            "option_id": "featured_14",
+            "label": "Istaknut oglas",
+            "description": "Duže isticanje za oglase koji treba da ostanu vidljivi.",
+            "days": 14,
+            "price_amount": Decimal("790"),
+            "currency": "RSD",
+        },
+        {
+            "type": "featured",
+            "option_id": "featured_30",
+            "label": "Istaknut oglas",
+            "description": "Mesečni paket za opremu koju želite jače da gurate.",
+            "days": 30,
+            "price_amount": Decimal("1290"),
+            "currency": "RSD",
+        },
+    ],
+    "bump": [
+        {
+            "type": "bump",
+            "option_id": "bump_once",
+            "label": "Podigni oglas",
+            "description": "Oglas skače na vrh rezultata bez promene isticanja.",
+            "days": 0,
+            "price_amount": Decimal("120"),
+            "currency": "RSD",
+        }
+    ],
+    "homepage": [
+        {
+            "type": "homepage",
+            "option_id": "homepage_7",
+            "label": "Početna strana",
+            "description": "Oglas ulazi u sekciju istaknutih oglasa na početnoj.",
+            "days": 7,
+            "price_amount": Decimal("2490"),
+            "currency": "RSD",
+        }
+    ],
+}
+
+PROMOTION_LABELS = {
+    "featured": "Isticanje oglasa",
+    "bump": "Podizanje oglasa",
+    "homepage": "Promocija na početnoj",
+}
+
+REFERENCE_PREFIXES = {
+    "featured": "IST",
+    "bump": "BMP",
+    "homepage": "HOM",
 }
 
 
@@ -23,86 +84,150 @@ class FeatureService:
 
     def list_packages(self) -> list[dict]:
         return [
-            {"days": days, "price_amount": str(price), "currency": "RSD"}
-            for days, price in FEATURE_PACKAGES.items()
+            {
+                **package,
+                "price_amount": str(package["price_amount"]),
+            }
+            for packages in PROMOTION_PACKAGES.values()
+            for package in packages
         ]
 
-    def list_for_user(self, user: User) -> list[FeatureRequest]:
+    def list_feature_packages(self) -> list[dict]:
+        return [
+            {"days": package["days"], "price_amount": str(package["price_amount"]), "currency": package["currency"]}
+            for package in PROMOTION_PACKAGES["featured"]
+        ]
+
+    def list_for_user(self, user: User) -> list[PromotionOrder]:
         return list(
             self.db.scalars(
-                select(FeatureRequest)
-                .options(selectinload(FeatureRequest.listing))
-                .where(FeatureRequest.user_id == user.id)
-                .order_by(FeatureRequest.created_at.desc())
+                select(PromotionOrder)
+                .options(selectinload(PromotionOrder.listing))
+                .where(PromotionOrder.user_id == user.id)
+                .order_by(PromotionOrder.created_at.desc())
             ).all()
         )
 
-    def list_admin(self, status: str | None = None) -> list[FeatureRequest]:
-        statement = select(FeatureRequest).options(
-            selectinload(FeatureRequest.listing),
-            selectinload(FeatureRequest.user),
+    def list_admin(self, status: str | None = None, type_: str | None = None) -> list[PromotionOrder]:
+        statement: Select[tuple[PromotionOrder]] = select(PromotionOrder).options(
+            selectinload(PromotionOrder.listing),
+            selectinload(PromotionOrder.user),
         )
         if status:
-            statement = statement.where(FeatureRequest.status == status)
-        return list(self.db.scalars(statement.order_by(FeatureRequest.created_at.desc()).limit(200)).all())
+            statement = statement.where(PromotionOrder.status == status)
+        if type_:
+            statement = statement.where(PromotionOrder.type == type_)
+        return list(self.db.scalars(statement.order_by(PromotionOrder.created_at.desc()).limit(200)).all())
 
-    def create_request(self, listing_id: str, user: User, package_days: int) -> FeatureRequest:
+    def list_homepage_listings(self, limit: int = 12) -> list[Listing]:
+        now = datetime.now(UTC)
+        return list(
+            self.db.scalars(
+                select(Listing)
+                .join(PromotionOrder, PromotionOrder.listing_id == Listing.id)
+                .options(
+                    selectinload(Listing.seller).selectinload(User.profile),
+                    selectinload(Listing.category).selectinload(Category.attributes),
+                    selectinload(Listing.brand),
+                    selectinload(Listing.images),
+                )
+                .where(
+                    Listing.status == "active",
+                    PromotionOrder.type == "homepage",
+                    PromotionOrder.status == "paid",
+                    PromotionOrder.starts_at <= now,
+                    PromotionOrder.ends_at > now,
+                )
+                .order_by(PromotionOrder.starts_at.desc(), Listing.created_at.desc())
+                .limit(limit)
+            ).all()
+        )
+
+    def create_request(
+        self,
+        listing_id: str,
+        user: User,
+        package_days: int,
+        type_: str = "featured",
+    ) -> PromotionOrder:
         listing = self.db.get(Listing, listing_id)
         if not listing:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
         if listing.seller_id != user.id:
-            raise api_error("FORBIDDEN", "Samo vlasnik oglasa može zatražiti isticanje.", 403)
+            raise api_error("FORBIDDEN", "Samo vlasnik oglasa može zatražiti promociju.", 403)
         if listing.status != "active":
-            raise api_error("VALIDATION_ERROR", "Isticanje je dostupno samo za aktivne oglase.", 400)
-        price = FEATURE_PACKAGES.get(package_days)
-        if price is None:
-            raise api_error("VALIDATION_ERROR", "Izaberite paket od 7, 14 ili 30 dana.", 422)
+            raise api_error("VALIDATION_ERROR", "Promocija je dostupna samo za aktivne oglase.", 400)
+        package = self._get_package(type_, package_days)
 
         existing = self.db.scalar(
-            select(FeatureRequest).where(
-                FeatureRequest.listing_id == listing.id,
-                FeatureRequest.status == "pending",
+            select(PromotionOrder).where(
+                PromotionOrder.listing_id == listing.id,
+                PromotionOrder.type == type_,
+                PromotionOrder.status == "pending",
             )
         )
         if existing:
-            raise api_error("VALIDATION_ERROR", "Već postoji zahtev za isticanje ovog oglasa.", 400)
+            raise api_error("VALIDATION_ERROR", "Već postoji zahtev za ovu promociju oglasa.", 400)
 
-        request = FeatureRequest(
+        prefix = REFERENCE_PREFIXES[type_]
+        request = PromotionOrder(
             listing_id=listing.id,
             user_id=user.id,
+            type=type_,
             package_days=package_days,
-            price_amount=price,
-            currency="RSD",
+            price_amount=package["price_amount"],
+            currency=str(package["currency"]),
             status="pending",
-            payment_reference=f"IST-{listing.public_id}-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
+            payment_reference=f"{prefix}-{listing.public_id}-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}",
         )
         self.db.add(request)
         self.db.commit()
         self.db.refresh(request)
         return request
 
-    def approve(self, request_id: str, admin: User, note: str | None = None) -> FeatureRequest:
+    def approve(self, request_id: str, admin: User, note: str | None = None) -> PromotionOrder:
         request = self._get_request(request_id)
         if request.status != "pending":
             raise api_error("VALIDATION_ERROR", "Obrađen zahtev nije moguće ponovo potvrditi.", 400)
         listing = self.db.get(Listing, request.listing_id)
         if not listing:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
-        starts_at = max(datetime.now(UTC), listing.featured_until or datetime.now(UTC))
-        listing.is_featured = True
-        listing.featured_until = starts_at + timedelta(days=request.package_days)
+
+        now = datetime.now(UTC)
         request.status = "paid"
-        request.paid_at = datetime.now(UTC)
+        request.paid_at = now
         request.resolved_by_admin_id = admin.id
         request.admin_note = note
+
+        if request.type == "featured":
+            starts_at = max(now, listing.featured_until or now)
+            request.starts_at = starts_at
+            request.ends_at = starts_at + timedelta(days=request.package_days)
+            listing.is_featured = True
+            listing.featured_until = request.ends_at
+        elif request.type == "bump":
+            request.starts_at = now
+            request.ends_at = now
+            listing.bumped_at = now
+        elif request.type == "homepage":
+            request.starts_at = now
+            request.ends_at = now + timedelta(days=request.package_days)
+        else:
+            raise api_error("VALIDATION_ERROR", "Nepoznat tip promocije.", 422)
+
         seller = self.db.get(User, request.user_id)
         if seller:
-            EmailService(self.db).send_feature_started(seller, listing.title, listing.featured_until)
+            EmailService(self.db).send_promotion_started(
+                seller,
+                listing.title,
+                PROMOTION_LABELS.get(request.type, "Promocija"),
+                request.ends_at,
+            )
         self.db.commit()
         self.db.refresh(request)
         return request
 
-    def reject(self, request_id: str, admin: User, note: str | None = None) -> FeatureRequest:
+    def reject(self, request_id: str, admin: User, note: str | None = None) -> PromotionOrder:
         request = self._get_request(request_id)
         if request.status != "pending":
             raise api_error("VALIDATION_ERROR", "Obrađen zahtev nije moguće ponovo odbiti.", 400)
@@ -125,18 +250,28 @@ class FeatureService:
         self.db.refresh(listing)
         return listing
 
-    def _get_request(self, request_id: str) -> FeatureRequest:
+    def _get_package(self, type_: str, package_days: int) -> dict[str, object]:
+        packages = PROMOTION_PACKAGES.get(type_)
+        if not packages:
+            raise api_error("VALIDATION_ERROR", "Nepoznat tip promocije.", 422)
+        package = next((item for item in packages if item["days"] == package_days), None)
+        if not package:
+            allowed = ", ".join(str(item["days"]) for item in packages)
+            raise api_error("VALIDATION_ERROR", f"Izaberite paket: {allowed}.", 422)
+        return package
+
+    def _get_request(self, request_id: str) -> PromotionOrder:
         request = self.db.scalar(
-            select(FeatureRequest)
-            .options(selectinload(FeatureRequest.listing), selectinload(FeatureRequest.user))
-            .where(FeatureRequest.id == request_id)
+            select(PromotionOrder)
+            .options(selectinload(PromotionOrder.listing), selectinload(PromotionOrder.user))
+            .where(PromotionOrder.id == request_id)
         )
         if not request:
             raise api_error("NOT_FOUND", "Zahtev nije pronađen.", 404)
         return request
 
 
-def serialize_feature_request(request: FeatureRequest) -> dict:
+def serialize_feature_request(request: PromotionOrder) -> dict:
     return {
         "id": request.id,
         "listing_id": request.listing_id,
@@ -151,6 +286,8 @@ def serialize_feature_request(request: FeatureRequest) -> dict:
             if request.user
             else None
         ),
+        "type": request.type,
+        "type_label": PROMOTION_LABELS.get(request.type, request.type),
         "package_days": request.package_days,
         "price_amount": str(request.price_amount),
         "currency": request.currency,
@@ -158,5 +295,7 @@ def serialize_feature_request(request: FeatureRequest) -> dict:
         "payment_reference": request.payment_reference,
         "admin_note": request.admin_note,
         "paid_at": request.paid_at,
+        "starts_at": request.starts_at,
+        "ends_at": request.ends_at,
         "created_at": request.created_at,
     }

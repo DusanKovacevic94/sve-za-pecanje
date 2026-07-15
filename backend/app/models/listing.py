@@ -39,6 +39,7 @@ class Listing(Base, TimestampMixin):
     phone_visible: Mapped[bool] = mapped_column(Boolean, default=False)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     featured_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    bumped_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     view_count: Mapped[int] = mapped_column(default=0)
     favorite_count: Mapped[int] = mapped_column(default=0)
     message_count: Mapped[int] = mapped_column(default=0)

@@ -19,6 +19,7 @@ from app.models.listing import Listing
 from app.models.message import Conversation
 from app.models.user import User
 from app.schemas.listing import ListingCreate, ListingUpdate
+from app.models.profile import UserProfile
 from app.services.search_utils import apply_listing_search
 
 
@@ -249,13 +250,14 @@ class ListingService:
 
     def _apply_sort(self, query: Select[tuple[Listing]], sort: str | None) -> Select[tuple[Listing]]:
         featured = Listing.is_featured.desc()
+        freshness = func.coalesce(Listing.bumped_at, Listing.created_at).desc()
         if sort == "price_asc":
             return query.order_by(featured, Listing.price_amount.asc())
         if sort == "price_desc":
             return query.order_by(featured, Listing.price_amount.desc())
         if sort == "most_viewed":
             return query.order_by(featured, Listing.view_count.desc())
-        return query.order_by(featured, Listing.created_at.desc())
+        return query.order_by(featured, freshness)
 
     def _validate_attributes(self, category_id: str, attributes: dict[str, Any]) -> None:
         definitions = self.db.scalars(
@@ -333,9 +335,17 @@ def _display_attributes(listing: Listing) -> list[dict[str, str | None]]:
     return values
 
 
+def _is_shop_active(profile: UserProfile | None) -> bool:
+    if not profile or not profile.shop_name or not profile.shop_slug or not profile.shop_active_until:
+        return False
+    active_until = profile.shop_active_until.replace(tzinfo=UTC) if profile.shop_active_until.tzinfo is None else profile.shop_active_until.astimezone(UTC)
+    return active_until > datetime.now(UTC)
+
+
 def serialize_listing_card(listing: Listing) -> dict:
     cover = next((image for image in listing.images if image.is_cover), listing.images[0] if listing.images else None)
     seller_profile = listing.seller.profile if listing.seller else None
+    seller_shop_active = _is_shop_active(seller_profile)
     display_attributes = _display_attributes(listing)
     return {
         "id": listing.id,
@@ -352,6 +362,10 @@ def serialize_listing_card(listing: Listing) -> dict:
             "id": listing.seller.id,
             "username": listing.seller.username,
             "display_name": seller_profile.display_name if seller_profile else None,
+            "shop_name": seller_profile.shop_name if seller_profile and seller_shop_active else None,
+            "shop_slug": seller_profile.shop_slug if seller_profile and seller_shop_active else None,
+            "shop_logo_url": seller_profile.shop_logo_url if seller_profile and seller_shop_active else None,
+            "shop_active": seller_shop_active,
         },
         "category": {
             "id": listing.category.id,
@@ -366,6 +380,9 @@ def serialize_listing_card(listing: Listing) -> dict:
         "key_attributes": display_attributes[:4],
         "is_featured": listing.is_featured,
         "featured_until": listing.featured_until,
+        "bumped_at": listing.bumped_at,
+        "view_count": listing.view_count,
+        "favorite_count": listing.favorite_count,
         "created_at": listing.created_at,
         "updated_at": listing.updated_at,
     }

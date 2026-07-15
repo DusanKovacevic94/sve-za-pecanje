@@ -72,3 +72,19 @@ Cilj: skinuti "default Tailwind" utisak — tipografija, boje sa karakterom, kar
 - [x] [033 — /oglasi: sortiranje, aktivni filteri, paginacija](033-browse-page-ux.md)
 - [x] [034 — Detalj oglasa: layout, breadcrumbs, slični oglasi](034-detail-page-layout.md)
 - [x] [035 — Mikrointerakcije, empty states i povratne informacije](035-micro-interactions.md)
+
+---
+
+# Runda 4 — Monetizacija (2026-07-07)
+
+Model: KupujemProdajem put (naplata vidljivosti, ne transakcija) — obrazloženje i redosled u [docs/business-model.md](../docs/business-model.md). Bez provizije na prodaju, bez escrow-a, bez logistike (Ananas lekcija).
+
+## P2 — Sledeći prihodi
+
+- [x] [036 — Promocije: bump, homepage slot, generalizacija porudžbina](036-promotion-types.md)
+- [x] [037 — Prodavnice: pretplate za pecaroške radnje](037-shop-subscriptions.md)
+
+## P3 — Kad dođe vreme
+
+- [ ] [038 — Kartično plaćanje za promocije i pretplate](038-card-payments.md)
+- [ ] [039 — Limiti besplatnih oglasa (tek posle likvidnosti!)](039-listing-quotas.md)

@@ -10,7 +10,11 @@ from app.tasks.analytics_tasks import delete_old_analytics_events, flush_listing
 from app.tasks.email_tasks import process_email_outbox
 from app.tasks.image_tasks import cleanup_orphan_local_uploads
 from app.tasks.listing_tasks import archive_expired_listings, clear_expired_featured_listings
-from app.tasks.notification_tasks import send_listing_expiry_reminders, send_unread_message_notifications
+from app.tasks.notification_tasks import (
+    send_listing_expiry_reminders,
+    send_shop_subscription_expiry_reminders,
+    send_unread_message_notifications,
+)
 from app.tasks.saved_search_tasks import send_saved_search_digests
 
 logger = logging.getLogger(__name__)
@@ -38,6 +42,7 @@ def run_cycle() -> None:
     run_task("cleanup_orphan_local_uploads", cleanup_orphan_local_uploads)
     run_task("send_unread_message_notifications", send_unread_message_notifications)
     run_task("send_listing_expiry_reminders", send_listing_expiry_reminders)
+    run_task("send_shop_subscription_expiry_reminders", send_shop_subscription_expiry_reminders)
 
 
 def write_heartbeat() -> None:

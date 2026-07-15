@@ -43,7 +43,8 @@ function FeatureRequestRow({ request }: { request: FeatureRequest }) {
       <div>
         <p className="font-bold">{request.listing?.title ?? request.listing_id}</p>
         <p className="mt-1 text-sm text-slate-600">
-          {request.user?.email ?? request.user_id} · {request.package_days} dana ·{" "}
+          {request.user?.email ?? request.user_id} · {request.type_label} ·{" "}
+          {request.package_days ? `${request.package_days} dana · ` : ""}
           {formatPrice(request.price_amount, request.currency)}
         </p>
         <p className="mt-1 text-sm text-slate-600">

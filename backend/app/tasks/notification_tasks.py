@@ -8,10 +8,12 @@ from app.models.message import Conversation, Message
 from app.models.user import User
 from app.services.email_service import EmailService
 from app.services.notification_service import NotificationService
+from app.models.profile import UserProfile
 
 MESSAGE_EMAIL_DELAY = timedelta(minutes=10)
 MESSAGE_EMAIL_COOLDOWN = timedelta(hours=12)
 EXPIRY_NOTICE_WINDOW = timedelta(days=3)
+SHOP_EXPIRY_NOTICE_WINDOW = timedelta(days=7)
 
 
 def send_unread_message_notifications(db: Session, limit: int = 100) -> int:
@@ -105,6 +107,33 @@ def send_listing_expiry_reminders(db: Session, limit: int = 100) -> int:
             continue
         EmailService(db).send_listing_expiring(seller, listing.id, listing.title)
         listing.expiry_notice_sent_at = now
+        sent += 1
+    if sent:
+        db.commit()
+    return sent
+
+
+def send_shop_subscription_expiry_reminders(db: Session, limit: int = 100) -> int:
+    now = datetime.now(UTC)
+    upper = now + SHOP_EXPIRY_NOTICE_WINDOW
+    profiles = db.scalars(
+        select(UserProfile)
+        .options(selectinload(UserProfile.user))
+        .where(
+            UserProfile.shop_name.is_not(None),
+            UserProfile.shop_active_until.is_not(None),
+            UserProfile.shop_active_until <= upper,
+            UserProfile.shop_active_until > now,
+            UserProfile.shop_expiry_notice_sent_at.is_(None),
+        )
+        .limit(limit)
+    ).all()
+    sent = 0
+    for profile in profiles:
+        if not profile.user:
+            continue
+        EmailService(db).send_shop_subscription_expiring(profile.user, profile.shop_name or "Prodavnica", profile.shop_active_until)
+        profile.shop_expiry_notice_sent_at = now
         sent += 1
     if sent:
         db.commit()

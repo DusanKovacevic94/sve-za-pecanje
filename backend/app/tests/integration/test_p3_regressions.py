@@ -82,6 +82,7 @@ def test_contact_rate_limit_blocks_fourth_submission(client, monkeypatch):
     sent = []
     rate_limit._buckets.clear()
     monkeypatch.setattr(rate_limit.settings, "rate_limit_enabled", True)
+    monkeypatch.setattr(rate_limit, "_redis_check", lambda *args, **kwargs: False)
     monkeypatch.setattr(contact, "send_email", lambda *args, **kwargs: sent.append((args, kwargs)) or True)
 
     payload = {

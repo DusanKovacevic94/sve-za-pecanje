@@ -50,14 +50,49 @@ class EmailService:
         )
 
     def send_feature_started(self, recipient: User, listing_title: str, featured_until: datetime) -> None:
+        self.send_promotion_started(recipient, listing_title, "Isticanje oglasa", featured_until)
+
+    def send_promotion_started(
+        self,
+        recipient: User,
+        listing_title: str,
+        promotion_label: str,
+        ends_at: datetime | None,
+    ) -> None:
+        unsubscribe_url = self._unsubscribe_url(recipient)
+        until_text = f" i traje do {ends_at.strftime('%d.%m.%Y')}" if ends_at else ""
+        enqueue_email(
+            self.db,
+            recipient.email,
+            f'{promotion_label} za oglas "{listing_title}" je aktivna',
+            (
+                f'{promotion_label} za oglas "{listing_title}" je aktivirana{until_text}.\n\n'
+                f"Odjava od email notifikacija: {unsubscribe_url}"
+            ),
+        )
+
+    def send_shop_subscription_started(self, recipient: User, shop_name: str, ends_at: datetime) -> None:
         unsubscribe_url = self._unsubscribe_url(recipient)
         enqueue_email(
             self.db,
             recipient.email,
-            f'Isticanje oglasa "{listing_title}" je aktivno',
+            f'Prodavnica "{shop_name}" je aktivna',
             (
-                f'Isticanje oglasa "{listing_title}" je aktivirano i traje do '
-                f"{featured_until.strftime('%d.%m.%Y')}.\n\n"
+                f'Pretplata za prodavnicu "{shop_name}" je aktivirana i traje do {ends_at.strftime("%d.%m.%Y")}.\n\n'
+                f"Prodavnicu možete urediti na {settings.app_url}/nalog/prodavnica.\n"
+                f"Odjava od email notifikacija: {unsubscribe_url}"
+            ),
+        )
+
+    def send_shop_subscription_expiring(self, recipient: User, shop_name: str, ends_at: datetime) -> None:
+        unsubscribe_url = self._unsubscribe_url(recipient)
+        enqueue_email(
+            self.db,
+            recipient.email,
+            f'Pretplata za prodavnicu "{shop_name}" uskoro ističe',
+            (
+                f'Pretplata za prodavnicu "{shop_name}" ističe {ends_at.strftime("%d.%m.%Y")}. '
+                f"Produženje možete zatražiti na {settings.app_url}/nalog/prodavnica.\n\n"
                 f"Odjava od email notifikacija: {unsubscribe_url}"
             ),
         )

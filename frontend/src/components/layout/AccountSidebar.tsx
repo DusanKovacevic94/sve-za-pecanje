@@ -15,6 +15,7 @@ import { usePathname } from "next/navigation";
 const accountLinks = [
   { href: "/nalog", label: "Pregled", Icon: LayoutDashboard },
   { href: "/nalog/oglasi", label: "Moji oglasi", Icon: Store },
+  { href: "/nalog/prodavnica", label: "Prodavnica", Icon: Store },
   { href: "/nalog/poruke", label: "Poruke", Icon: MessageSquare },
   { href: "/nalog/omiljeni", label: "Omiljeni", Icon: Heart },
   { href: "/nalog/sacuvane-pretrage", label: "Sačuvane pretrage", Icon: Search },

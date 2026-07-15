@@ -7,6 +7,7 @@ const links = [
   ["/admin", "Pregled"],
   ["/admin/oglasi", "Oglasi"],
   ["/admin/istaknuto", "Istaknuto"],
+  ["/admin/prodavnice", "Prodavnice"],
   ["/admin/brendovi", "Brendovi"],
   ["/admin/kategorije", "Kategorije"],
   ["/admin/korisnici", "Korisnici"],

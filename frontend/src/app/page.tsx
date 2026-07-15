@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Bell, CheckCircle2, Search, ShieldCheck, SlidersHorizontal, Star, type LucideIcon } from "lucide-react";
 
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
@@ -7,17 +6,22 @@ import { Button } from "@/components/ui/Button";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { apiFetch, Category, ListingCard as ListingCardType } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 async function getHomeData() {
-  const [categories, listings] = await Promise.all([
+  const [categories, listings, homepageListings] = await Promise.all([
     apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
-    apiFetch<ListingCardType[]>("/listings?page_size=12", { next: { revalidate: 60 } }).catch(() => ({ data: [] }))
+    apiFetch<ListingCardType[]>("/listings?page_size=12", { next: { revalidate: 60 } }).catch(() => ({ data: [] })),
+    apiFetch<ListingCardType[]>("/promotions/homepage-listings", { next: { revalidate: 60 } }).catch(() => ({
+      data: [] as ListingCardType[]
+    }))
   ]);
-  return { categories: categories.data, listings: listings.data };
+  return { categories: categories.data, listings: listings.data, homepageListings: homepageListings.data };
 }
 
 export default async function HomePage() {
-  const { categories, listings } = await getHomeData();
-  const featuredListings = listings.filter((listing) => listing.is_featured).slice(0, 4);
+  const { categories, listings, homepageListings } = await getHomeData();
+  const featuredListings = (homepageListings.length ? homepageListings : listings.filter((listing) => listing.is_featured)).slice(0, 4);
   const latestListings = listings.filter((listing) => !listing.is_featured).slice(0, 8);
   const visibleLatest = latestListings.length ? latestListings : listings.slice(0, 8);
   const popularSearches = ["Shimano", "Daiwa", "feeder štap", "varalice", "mašinica 4000", "najlon 0.25"];
@@ -30,8 +34,8 @@ export default async function HomePage() {
   return (
     <>
       <section className="overflow-hidden bg-[linear-gradient(135deg,#0f352f_0%,#147d6b_58%,#dca542_150%)] text-white">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 md:grid-cols-[1.05fr_0.95fr] md:py-14">
-          <div className="self-center">
+        <div className="mx-auto max-w-7xl px-4 py-10 md:py-14">
+          <div className="max-w-3xl">
             <h1 className="max-w-3xl text-4xl font-black tracking-normal md:text-5xl">
               Sve Za Pecanje
             </h1>
@@ -65,17 +69,6 @@ export default async function HomePage() {
               <Button href="/postavi-oglas" variant="secondary">Postavi oglas</Button>
               <Button href="/oglasi" variant="ghost" className="text-white hover:bg-white/10">Pogledaj oglase</Button>
             </div>
-          </div>
-          <div className="relative min-h-[300px] overflow-hidden rounded-lg border border-white/15 bg-river-900/20 shadow-lift md:min-h-[380px]">
-            <Image
-              src="/images/hero-fishing-gear.png"
-              alt="Ribolovačka oprema pored reke"
-              fill
-              sizes="(min-width: 1024px) 560px, 100vw"
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,53,47,0.45),rgba(15,53,47,0.05)_45%,rgba(0,0,0,0.18))]" />
           </div>
         </div>
       </section>

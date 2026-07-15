@@ -47,7 +47,7 @@ def list_listings(request: Request, db: Session = Depends(get_db)):
 
 @router.get("/feature/packages")
 def feature_packages(db: Session = Depends(get_db)):
-    return data_response(FeatureService(db).list_packages())
+    return data_response(FeatureService(db).list_feature_packages())
 
 
 @router.get("/feature/requests")
@@ -108,7 +108,7 @@ def similar_listings(listing_id: str, db: Session = Depends(get_db)):
             Listing.category_id == listing.category_id,
             Listing.id != listing.id,
         )
-        .order_by(Listing.is_featured.desc(), Listing.created_at.desc())
+        .order_by(Listing.is_featured.desc(), func.coalesce(Listing.bumped_at, Listing.created_at).desc())
         .limit(4)
     ).all()
     return data_response([serialize_listing_card(row) for row in rows])
@@ -207,7 +207,7 @@ def create_feature_request(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    request = FeatureService(db).create_request(listing_id, user, payload.package_days)
+    request = FeatureService(db).create_request(listing_id, user, payload.package_days, payload.type)
     return data_response(serialize_feature_request(request))
 
 

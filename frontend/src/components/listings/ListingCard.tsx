@@ -1,4 +1,4 @@
-import { Camera, MapPin } from "lucide-react";
+import { Camera, MapPin, Store } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -32,6 +32,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
           )}
           <div className="absolute left-3 top-3 flex gap-2">
             {listing.is_featured ? <Badge tone="accent">Istaknuto</Badge> : null}
+            {listing.seller.shop_active ? <Badge>Prodavnica</Badge> : null}
             {listing.status === "sold" ? <Badge tone="sold">Prodato</Badge> : null}
           </div>
         </div>
@@ -63,9 +64,18 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
             </Badge>
           ))}
         </div>
-        <p className="text-xs text-slate-500">
-          {listing.seller.display_name ?? listing.seller.username} · {formatRelativeDate(listing.created_at)}
-        </p>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          {listing.seller.shop_active && listing.seller.shop_slug ? (
+            <Link href={`/prodavnice/${listing.seller.shop_slug}`} className="inline-flex items-center gap-1 font-semibold text-river-700 hover:text-river-600">
+              <Store size={13} aria-hidden />
+              {listing.seller.shop_name ?? listing.seller.display_name ?? listing.seller.username}
+            </Link>
+          ) : (
+            <span>{listing.seller.display_name ?? listing.seller.username}</span>
+          )}
+          <span>·</span>
+          <span>{formatRelativeDate(listing.created_at)}</span>
+        </div>
       </div>
     </article>
   );
