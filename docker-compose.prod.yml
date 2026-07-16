@@ -57,6 +57,7 @@ services:
       NEXT_PUBLIC_ANALYTICS_URL: ${NEXT_PUBLIC_ANALYTICS_URL:-}
       NEXT_PUBLIC_ANALYTICS_WEBSITE_ID: ${NEXT_PUBLIC_ANALYTICS_WEBSITE_ID:-}
       INTERNAL_API_URL: http://backend:8000/api/v1
+    user: nextjs
     command: node server.js
     restart: unless-stopped
     ports: !reset []
