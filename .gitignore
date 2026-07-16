@@ -39,6 +39,7 @@ ENV/
 
 # Node / Next.js
 node_modules/
+.pnpm-store/
 .next/
 out/
 dist/
