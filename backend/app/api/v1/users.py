@@ -14,7 +14,7 @@ from app.models.review import Review
 from app.models.user import User
 from app.schemas.user import ProfileUpdate
 from app.services.listing_service import serialize_listing_card
-from app.services.shop_service import ShopService, serialize_shop_profile
+from app.services.shop_service import serialize_shop_profile
 
 router = APIRouter(prefix="/users", tags=["users"])
 

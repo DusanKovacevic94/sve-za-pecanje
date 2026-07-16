@@ -9,7 +9,6 @@ from app.schemas.shop import ShopProfileUpdate, ShopSubscriptionCreate
 from app.services.shop_service import (
     ShopService,
     serialize_shop_detail,
-    serialize_shop_profile,
     serialize_shop_subscription_request,
     serialize_shop_summary,
 )
