@@ -1,5 +1,9 @@
 node_modules
+.pnpm-store
 .next
+playwright-report
+test-results
+*.tsbuildinfo
 .env*
 npm-debug.log*
 pnpm-debug.log*

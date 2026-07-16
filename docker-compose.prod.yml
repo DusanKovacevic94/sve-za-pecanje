@@ -84,7 +84,7 @@ services:
 
   backup:
     image: postgres:16-alpine
-    env_file: .env
+    env_file: ${APP_ENV_FILE:-.env}
     restart: unless-stopped
     depends_on:
       postgres:

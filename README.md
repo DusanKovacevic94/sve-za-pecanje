@@ -25,6 +25,7 @@ make migrate
 make seed
 make create-admin EMAIL=admin@example.com USERNAME=admin PASSWORD=Admin123!
 make test
+make validate-prod
 ```
 
 ## MVP Scope

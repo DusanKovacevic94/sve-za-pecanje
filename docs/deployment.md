@@ -12,7 +12,8 @@ Mailpit are development services and are removed by the production Compose overl
 3. Install Docker Engine and a recent Docker Compose plugin. The production overlay uses
    Compose's `!reset` tag to remove development port mappings.
 4. Open only SSH, HTTP, and HTTPS in the Hetzner firewall: `22`, `80`, `443`.
-5. Copy `.env.example` to `.env` and replace all secrets.
+5. Copy `.env.production.example` to `.env` and replace every placeholder. The real `.env`
+   remains unversioned on the VPS; never edit tracked application or Compose files there.
 6. Set production values:
 
 ```dotenv
@@ -40,13 +41,22 @@ HETZNER_STORAGE_SECRET_KEY=<secret>
 BACKUP_REMOTE=<rclone-remote>:sve-za-pecanje/postgres
 ```
 
-7. Start services:
+7. Validate the fully merged production configuration before building anything:
+
+```bash
+APP_ENV_FILE=.env make validate-prod
+```
+
+This rejects development build stages, users, bind mounts, published database/cache ports,
+development-only services, and local/non-HTTPS public API URLs.
+
+8. Start services:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
-8. Run migrations and seed shared data:
+9. Run migrations and seed shared data:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
@@ -54,7 +64,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend
 docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend python -m scripts.create_admin --email admin@example.com --username admin --password 'Admin123!'
 ```
 
-9. Confirm:
+10. Confirm:
 
 - `GET /health/live`
 - `GET /health/ready`
