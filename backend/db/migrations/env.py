@@ -19,7 +19,10 @@ target_metadata = Base.metadata
 def include_object(object, name, type_, reflected, compare_to):
     if reflected and type_ == "column" and name == "search_vector":
         return False
-    if reflected and type_ == "index" and name == "ix_listings_search_vector":
+    if reflected and type_ == "index" and name in {
+        "ix_listings_attributes_gin",
+        "ix_listings_search_vector",
+    }:
         return False
     return True
 
