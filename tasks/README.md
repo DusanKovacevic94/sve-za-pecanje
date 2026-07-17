@@ -88,3 +88,22 @@ Model: KupujemProdajem put (naplata vidljivosti, ne transakcija) — obrazložen
 
 - [ ] [038 — Kartično plaćanje za promocije i pretplate](038-card-payments.md)
 - [ ] [039 — Limiti besplatnih oglasa (tek posle likvidnosti!)](039-listing-quotas.md)
+
+---
+
+# Runda 5 — Kategorije i filteri (2026-07-17)
+
+Plan i katalog: [docs/category-filter-plan.md](../docs/category-filter-plan.md).
+
+## P1 — Strukturni podaci i pretraga
+
+- [x] [040 — Kompletan katalog atributa kategorija](040-category-attribute-catalog.md)
+- [x] [041 — Tipizirani dinamički atributi oglasa](041-typed-listing-attributes.md)
+- [x] [042 — Backend filter engine po kategoriji](042-category-filter-engine.md)
+- [x] [043 — Dinamički UI filtera kategorije](043-dynamic-filter-ui.md)
+
+## P2 — Paritet i taksonomija
+
+- [x] [044 — Paritet sačuvanih pretraga](044-saved-search-filter-parity.md)
+- [x] [045 — Kompletni globalni filteri](045-global-browse-filters.md)
+- [x] [046 — Taksonomija potkategorija](046-leaf-category-taxonomy.md)

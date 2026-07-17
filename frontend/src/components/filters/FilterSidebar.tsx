@@ -1,11 +1,84 @@
-import type { Category } from "@/lib/api";
+"use client";
+
+import type { ChangeEvent } from "react";
+
+import type { Brand, Category, City } from "@/lib/api";
 import { conditionOptions } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select } from "@/components/ui/Field";
 
-export function FilterSidebar({ categories, searchParams }: { categories: Category[]; searchParams: Record<string, string | string[] | undefined> }) {
+type SearchParams = Record<string, string | string[] | undefined>;
+
+function findCategory(categories: Category[], slug: string): Category | undefined {
+  for (const category of categories) {
+    if (category.slug === slug) return category;
+    const child = findCategory(category.children, slug);
+    if (child) return child;
+  }
+}
+
+function selectedValues(value: SearchParams[string]) {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+}
+
+function conditionMatches(searchParams: SearchParams, condition?: Record<string, string | string[]>) {
+  if (!condition) return true;
+  return Object.entries(condition).every(([key, expected]) => {
+    const actual = selectedValues(searchParams[`attributes[${key}]`]);
+    const allowed = Array.isArray(expected) ? expected : [expected];
+    return actual.some((value) => allowed.includes(value));
+  });
+}
+
+function conditionalData(condition?: Record<string, string | string[]>) {
+  if (!condition) return {};
+  const [key, expected] = Object.entries(condition)[0];
+  return {
+    "data-conditional-key": key,
+    "data-conditional-values": (Array.isArray(expected) ? expected : [expected]).join(",")
+  };
+}
+
+function clearCategoryAttributes(event: ChangeEvent<HTMLSelectElement>) {
+  const form = event.currentTarget.form;
+  form?.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[name^="attributes["]')
+    .forEach((control) => {
+      control.disabled = true;
+    });
+}
+
+function updateConditionalControls(event: ChangeEvent<HTMLSelectElement>) {
+  const key = event.currentTarget.name.match(/^attributes\[([^\]]+)\]$/)?.[1];
+  const form = event.currentTarget.form;
+  if (!key || !form) return;
+  form.querySelectorAll<HTMLElement>("[data-conditional-key]").forEach((container) => {
+    if (container.dataset.conditionalKey !== key) return;
+    const allowed = (container.dataset.conditionalValues ?? "").split(",");
+    const selected = Array.from(event.currentTarget.selectedOptions, (option) => option.value);
+    const visible = selected.some((value) => allowed.includes(value));
+    container.hidden = !visible;
+    container.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select")
+      .forEach((control) => {
+        control.disabled = !visible;
+      });
+  });
+}
+
+export function FilterSidebar({
+  categories,
+  brands,
+  cities,
+  searchParams
+}: {
+  categories: Category[];
+  brands: Brand[];
+  cities: City[];
+  searchParams: SearchParams;
+}) {
   const category = typeof searchParams.category === "string" ? searchParams.category : "";
   const sort = typeof searchParams.sort === "string" ? searchParams.sort : "";
+  const selectedCategory = findCategory(categories, category);
   return (
     <form action="/oglasi" className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
       {sort ? <input type="hidden" name="sort" value={sort} /> : null}
@@ -15,7 +88,7 @@ export function FilterSidebar({ categories, searchParams }: { categories: Catego
       </div>
       <div>
         <FieldLabel htmlFor="category">Kategorija</FieldLabel>
-        <Select id="category" name="category" defaultValue={category}>
+        <Select id="category" name="category" defaultValue={category} onChange={clearCategoryAttributes}>
           <option value="">Sve kategorije</option>
           {categories.map((item) => (
             <optgroup label={item.name_sr} key={item.id}>
@@ -48,8 +121,22 @@ export function FilterSidebar({ categories, searchParams }: { categories: Catego
         </Select>
       </div>
       <div>
+        <FieldLabel htmlFor="brand_id">Brend</FieldLabel>
+        <Select id="brand_id" name="brand_id" defaultValue={typeof searchParams.brand_id === "string" ? searchParams.brand_id : ""}>
+          <option value="">Svi brendovi</option>
+          {brands.map((brand) => (
+            <option value={brand.id} key={brand.id}>{brand.name}</option>
+          ))}
+        </Select>
+      </div>
+      <div>
         <FieldLabel htmlFor="city">Grad</FieldLabel>
-        <Input id="city" name="city" defaultValue={typeof searchParams.city === "string" ? searchParams.city : ""} placeholder="Beograd" />
+        <Select id="city" name="city" defaultValue={typeof searchParams.city === "string" ? searchParams.city : ""}>
+          <option value="">Svi gradovi</option>
+          {cities.map((city) => (
+            <option value={city.name} key={city.id}>{city.name}</option>
+          ))}
+        </Select>
       </div>
       <div>
         <FieldLabel htmlFor="condition">Stanje</FieldLabel>
@@ -62,6 +149,129 @@ export function FilterSidebar({ categories, searchParams }: { categories: Catego
           ))}
         </Select>
       </div>
+      <div>
+        <FieldLabel htmlFor="seller_type">Prodavac</FieldLabel>
+        <Select id="seller_type" name="seller_type" defaultValue={typeof searchParams.seller_type === "string" ? searchParams.seller_type : ""}>
+          <option value="">Svi prodavci</option>
+          <option value="private">Privatni prodavac</option>
+          <option value="shop">Prodavnica</option>
+        </Select>
+      </div>
+      <div>
+        <FieldLabel htmlFor="posted_within">Objavljeno</FieldLabel>
+        <Select id="posted_within" name="posted_within" defaultValue={typeof searchParams.posted_within === "string" ? searchParams.posted_within : ""}>
+          <option value="">Bilo kada</option>
+          <option value="24h">U poslednja 24 sata</option>
+          <option value="7d">U poslednjih 7 dana</option>
+          <option value="30d">U poslednjih 30 dana</option>
+        </Select>
+      </div>
+      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <input
+          type="checkbox"
+          name="with_images"
+          value="true"
+          defaultChecked={searchParams.with_images === "true"}
+        />
+        Samo oglasi sa slikom
+      </label>
+      {selectedCategory?.attributes.some((attribute) => attribute.filterable) ? (
+        <fieldset className="space-y-4 border-t border-slate-200 pt-4">
+          <legend className="text-base font-black">Detalji: {selectedCategory.name_sr}</legend>
+          {selectedCategory.attributes.filter(
+            (attribute) => attribute.filterable && conditionMatches(searchParams, attribute.validation.visible_when)
+          ).map((attribute) => {
+            const name = `attributes[${attribute.key}]`;
+            const filterMode = attribute.validation.filter_mode;
+            if (filterMode === "range") {
+              return (
+                <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
+                  <FieldLabel htmlFor={`attributes[${attribute.key}][min]`}>
+                    {attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}
+                  </FieldLabel>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input
+                      aria-label={`${attribute.label_sr} od`}
+                      name={`attributes[${attribute.key}][min]`}
+                      type="number"
+                      placeholder="Od"
+                      min={attribute.validation.min}
+                      max={attribute.validation.max}
+                      step={attribute.validation.step ?? 1}
+                      defaultValue={typeof searchParams[`attributes[${attribute.key}][min]`] === "string" ? searchParams[`attributes[${attribute.key}][min]`] : ""}
+                    />
+                    <Input
+                      aria-label={`${attribute.label_sr} do`}
+                      name={`attributes[${attribute.key}][max]`}
+                      type="number"
+                      placeholder="Do"
+                      min={attribute.validation.min}
+                      max={attribute.validation.max}
+                      step={attribute.validation.step ?? 1}
+                      defaultValue={typeof searchParams[`attributes[${attribute.key}][max]`] === "string" ? searchParams[`attributes[${attribute.key}][max]`] : ""}
+                    />
+                  </div>
+                </div>
+              );
+            }
+            if (attribute.field_type === "boolean" || filterMode === "boolean") {
+              return (
+                <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
+                  <FieldLabel htmlFor={name}>{attribute.label_sr}</FieldLabel>
+                  <Select
+                    id={name}
+                    name={name}
+                    defaultValue={typeof searchParams[name] === "string" ? searchParams[name] : ""}
+                    onChange={updateConditionalControls}
+                  >
+                    <option value="">Sve</option>
+                    <option value="true">Da</option>
+                    <option value="false">Ne</option>
+                  </Select>
+                </div>
+              );
+            }
+            if (attribute.options.options?.length) {
+              return (
+                <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
+                  <FieldLabel htmlFor={name}>{attribute.label_sr}</FieldLabel>
+                  <Select
+                    id={name}
+                    name={name}
+                    multiple
+                    className="min-h-28"
+                    defaultValue={selectedValues(searchParams[name])}
+                    onChange={updateConditionalControls}
+                  >
+                    {attribute.options.options.map((option) => (
+                      <option value={option.value} key={option.value}>{option.label_sr}</option>
+                    ))}
+                  </Select>
+                  <p className="mt-1 text-xs text-slate-500">Možete izabrati više stavki.</p>
+                </div>
+              );
+            }
+            return (
+              <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
+                <FieldLabel htmlFor={name}>{attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}</FieldLabel>
+                <Input
+                  id={name}
+                  name={name}
+                  defaultValue={typeof searchParams[name] === "string" ? searchParams[name] : ""}
+                />
+              </div>
+            );
+          })}
+        </fieldset>
+      ) : category ? (
+        <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
+          Za ovu kategoriju još nema posebnih filtera.
+        </p>
+      ) : (
+        <p className="rounded-md bg-river-50 p-3 text-sm text-river-800">
+          Izaberite kategoriju da biste videli specifične filtere.
+        </p>
+      )}
       <div className="grid gap-2">
         <Button type="submit" className="w-full">Primeni filtere</Button>
         <Button href="/oglasi" variant="ghost" className="w-full">Poništi sve</Button>

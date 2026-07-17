@@ -1,4 +1,5 @@
 import { SavedSearchManager, type SavedSearchItem } from "@/components/forms/SavedSearchManager";
+import type { Category } from "@/lib/api";
 import { serverApiFetch } from "@/lib/server-api";
 
 type PageProps = {
@@ -10,12 +11,13 @@ export default async function SavedSearchesPage({ searchParams }: PageProps) {
   const currentQuery = typeof params.q === "string" ? params.q : null;
   const currentFilters = Object.fromEntries(
     Object.entries(params)
-      .filter(([key, value]) => key !== "q" && key !== "page" && typeof value === "string" && value)
-      .map(([key, value]) => [key, value as string])
+      .filter(([key, value]) => key !== "q" && key !== "page" && (Array.isArray(value) ? value.length : Boolean(value)))
+      .map(([key, value]) => [key, value])
   );
-  const searches = await serverApiFetch<SavedSearchItem[]>("/saved-searches").catch(() => ({
-    data: [],
-  }));
+  const [searches, categories] = await Promise.all([
+    serverApiFetch<SavedSearchItem[]>("/saved-searches").catch(() => ({ data: [] })),
+    serverApiFetch<Category[]>("/categories").catch(() => ({ data: [] }))
+  ]);
   return (
     <div>
       <h1 className="text-3xl font-black">Sačuvane pretrage</h1>
@@ -24,6 +26,7 @@ export default async function SavedSearchesPage({ searchParams }: PageProps) {
           searches={searches.data}
           currentQuery={currentQuery}
           currentFilters={currentFilters}
+          categories={categories.data}
         />
       </div>
     </div>

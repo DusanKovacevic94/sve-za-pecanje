@@ -1,6 +1,5 @@
 import re
 from datetime import UTC, datetime, timedelta
-from decimal import Decimal
 from secrets import token_hex
 from typing import Any
 
@@ -11,7 +10,6 @@ from app.core.config import settings
 from app.core.responses import api_error
 from app.core.storage import delete_storage_object
 from app.models.analytics import AnalyticsEvent
-from app.models.brand import Brand
 from app.models.category import AttributeDefinition, Category
 from app.models.favorite import Favorite
 from app.models.image import ListingImage
@@ -20,7 +18,9 @@ from app.models.message import Conversation
 from app.models.user import User
 from app.schemas.listing import ListingCreate, ListingUpdate
 from app.models.profile import UserProfile
-from app.services.search_utils import apply_listing_search
+from app.services.attribute_service import validate_and_coerce_attributes
+from app.services.category_service import effective_loaded_attribute_definitions
+from app.services.filter_service import apply_listing_filters
 
 
 def slugify(value: str) -> str:
@@ -39,7 +39,7 @@ class ListingService:
     def create(self, seller: User, payload: ListingCreate) -> Listing:
         if not seller.email_verified_at:
             raise api_error("FORBIDDEN", "Potvrdite email adresu pre postavljanja oglasa.", 403)
-        self._validate_attributes(payload.category_id, payload.attributes)
+        attributes = validate_and_coerce_attributes(self.db, payload.category_id, payload.attributes)
         public_id = token_hex(4)
         listing = Listing(
             public_id=public_id,
@@ -58,7 +58,7 @@ class ListingService:
             municipality=payload.municipality,
             status="active" if settings.listing_review_mode == "auto" else "pending_review",
             expires_at=datetime.now(UTC) + timedelta(days=settings.listing_lifetime_days),
-            attributes=payload.attributes,
+            attributes=attributes,
             allow_messages=payload.allow_messages,
             phone_visible=payload.phone_visible,
         )
@@ -74,7 +74,12 @@ class ListingService:
             raise api_error("FORBIDDEN", "Nemate dozvolu za izmenu ovog oglasa.", 403)
         data = payload.model_dump(exclude_unset=True)
         if "attributes" in data and data["attributes"] is not None:
-            self._validate_attributes(listing.category_id, data["attributes"])
+            data["attributes"] = validate_and_coerce_attributes(
+                self.db,
+                listing.category_id,
+                data["attributes"],
+                enforce_required=False,
+            )
         major_fields = {"title", "description", "category_id", "price_amount", "attributes"}
         for key, value in data.items():
             setattr(listing, key, value)
@@ -87,10 +92,10 @@ class ListingService:
     def list_public(self, params: dict[str, Any]) -> tuple[list[Listing], int]:
         page = max(int(params.get("page", 1)), 1)
         page_size = min(max(int(params.get("page_size", 24)), 1), 48)
-        query = self._base_query().where(Listing.status == params.get("status", "active"))
-        query = self._apply_filters(query, params)
+        query = self._base_query().where(Listing.status == "active")
+        query, rank = apply_listing_filters(self.db, query, params)
         total = self.db.scalar(select(func.count()).select_from(query.subquery())) or 0
-        query = self._apply_sort(query, params.get("sort"))
+        query = self._apply_sort(query, params.get("sort"), rank)
         rows = self.db.scalars(query.offset((page - 1) * page_size).limit(page_size)).all()
         return list(rows), total
 
@@ -216,39 +221,16 @@ class ListingService:
         return select(Listing).options(
             selectinload(Listing.seller).selectinload(User.profile),
             selectinload(Listing.category).selectinload(Category.attributes),
+            selectinload(Listing.category)
+            .selectinload(Category.parent)
+            .selectinload(Category.attributes),
             selectinload(Listing.brand),
             selectinload(Listing.images),
         )
 
-    def _apply_filters(self, query: Select[tuple[Listing]], params: dict[str, Any]) -> Select[tuple[Listing]]:
-        q = params.get("q")
-        if q:
-            dialect_name = self.db.bind.dialect.name if self.db.bind is not None else "sqlite"
-            query = query.outerjoin(Brand)
-            query, rank = apply_listing_search(query, q, dialect_name, include_brand=True)
-            if rank is not None:
-                query = query.order_by(rank.desc())
-            self.track(None, "search_performed", "search", "public", {"q": q})
-        if params.get("category"):
-            query = query.join(Category, Listing.category_id == Category.id).where(
-                Category.slug == params["category"]
-            )
-        for key in ["condition", "currency", "city", "brand_id"]:
-            if params.get(key):
-                query = query.where(getattr(Listing, key) == params[key])
-        if params.get("price_min"):
-            query = query.where(Listing.price_amount >= Decimal(str(params["price_min"])))
-        if params.get("price_max"):
-            query = query.where(Listing.price_amount <= Decimal(str(params["price_max"])))
-        if params.get("with_images") in {"true", True}:
-            query = query.where(Listing.images.any())
-        for key, value in params.items():
-            if key.startswith("attributes[") and key.endswith("]") and value:
-                attr_key = key.removeprefix("attributes[").removesuffix("]")
-                query = query.where(Listing.attributes[attr_key].as_string() == str(value))
-        return query
-
-    def _apply_sort(self, query: Select[tuple[Listing]], sort: str | None) -> Select[tuple[Listing]]:
+    def _apply_sort(
+        self, query: Select[tuple[Listing]], sort: str | None, rank=None
+    ) -> Select[tuple[Listing]]:
         featured = Listing.is_featured.desc()
         freshness = func.coalesce(Listing.bumped_at, Listing.created_at).desc()
         if sort == "price_asc":
@@ -257,20 +239,9 @@ class ListingService:
             return query.order_by(featured, Listing.price_amount.desc())
         if sort == "most_viewed":
             return query.order_by(featured, Listing.view_count.desc())
+        if rank is not None and not sort:
+            return query.order_by(featured, rank.desc(), freshness)
         return query.order_by(featured, freshness)
-
-    def _validate_attributes(self, category_id: str, attributes: dict[str, Any]) -> None:
-        definitions = self.db.scalars(
-            select(AttributeDefinition).where(AttributeDefinition.category_id == category_id)
-        ).all()
-        missing = [definition.label_sr for definition in definitions if definition.required and not attributes.get(definition.key)]
-        if missing:
-            raise api_error(
-                "VALIDATION_ERROR",
-                "Nedostaju obavezna polja.",
-                422,
-                {"missing": missing},
-            )
 
     def track(
         self,
@@ -317,7 +288,7 @@ def _format_attribute_value(definition: AttributeDefinition, value: Any) -> str 
 def _display_attributes(listing: Listing) -> list[dict[str, str | None]]:
     if not listing.attributes:
         return []
-    definitions = sorted(listing.category.attributes, key=lambda item: item.sort_order)
+    definitions = effective_loaded_attribute_definitions(listing.category)
     values: list[dict[str, str | None]] = []
     for definition in definitions:
         value = listing.attributes.get(definition.key)

@@ -6,7 +6,7 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Select } from "@/components/ui/Field";
-import { apiFetch, Category, ListingCard as ListingCardType } from "@/lib/api";
+import { apiFetch, Brand, Category, City, ListingCard as ListingCardType } from "@/lib/api";
 import { conditionLabels } from "@/lib/format";
 
 type PageProps = {
@@ -29,6 +29,7 @@ function toQuery(
   Object.entries(params).forEach(([key, value]) => {
     if (remove.includes(key)) return;
     if (typeof value === "string" && value) query.set(key, value);
+    if (Array.isArray(value)) value.filter(Boolean).forEach((item) => query.append(key, item));
   });
   Object.entries(overrides).forEach(([key, value]) => {
     if (value) query.set(key, value);
@@ -37,8 +38,17 @@ function toQuery(
   return query.toString();
 }
 
-function activeFilters(params: Record<string, string | string[] | undefined>, categories: Category[]) {
-  const categoryMap = new Map(categories.flatMap((category) => [[category.slug, category.name_sr], ...category.children.map((child) => [child.slug, child.name_sr] as const)]));
+function allCategories(categories: Category[]): Category[] {
+  return categories.flatMap((category) => [category, ...allCategories(category.children)]);
+}
+
+function activeFilters(
+  params: Record<string, string | string[] | undefined>,
+  categories: Category[],
+  brands: Brand[]
+) {
+  const flattened = allCategories(categories);
+  const categoryMap = new Map(flattened.map((category) => [category.slug, category.name_sr]));
   const chips: { key: string; label: string; href: string }[] = [];
   const add = (key: string, label: string) => chips.push({ key, label, href: `/oglasi?${toQuery(params, { page: null }, [key])}` });
   if (typeof params.q === "string" && params.q) add("q", `Pretraga: ${params.q}`);
@@ -48,6 +58,33 @@ function activeFilters(params: Record<string, string | string[] | undefined>, ca
   if (typeof params.currency === "string" && params.currency) add("currency", params.currency);
   if (typeof params.city === "string" && params.city) add("city", params.city);
   if (typeof params.condition === "string" && params.condition) add("condition", conditionLabels[params.condition] ?? params.condition);
+  if (typeof params.brand_id === "string" && params.brand_id) {
+    add("brand_id", brands.find((brand) => brand.id === params.brand_id)?.name ?? "Izabrani brend");
+  }
+  if (params.with_images === "true") add("with_images", "Sa slikom");
+  if (params.seller_type === "shop") add("seller_type", "Prodavnica");
+  if (params.seller_type === "private") add("seller_type", "Privatni prodavac");
+  const postedLabels: Record<string, string> = {
+    "24h": "Poslednja 24 sata",
+    "7d": "Poslednjih 7 dana",
+    "30d": "Poslednjih 30 dana"
+  };
+  if (typeof params.posted_within === "string" && postedLabels[params.posted_within]) {
+    add("posted_within", postedLabels[params.posted_within]);
+  }
+  const selectedCategory = flattened.find((item) => item.slug === params.category);
+  Object.entries(params).forEach(([key, rawValue]) => {
+    const match = /^attributes\[([^\]]+)\](?:\[(min|max)\])?$/.exec(key);
+    if (!match || !rawValue) return;
+    const attribute = selectedCategory?.attributes.find((item) => item.key === match[1]);
+    const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+    const optionLabels = new Map(
+      attribute?.options.options?.map((option) => [option.value, option.label_sr]) ?? []
+    );
+    const valueLabel = values.map((value) => optionLabels.get(value) ?? (value === "true" ? "Da" : value === "false" ? "Ne" : value)).join(", ");
+    const bound = match[2] === "min" ? "od" : match[2] === "max" ? "do" : "";
+    add(key, `${attribute?.label_sr ?? match[1]}${bound ? ` ${bound}` : ""}: ${valueLabel}`);
+  });
   return chips;
 }
 
@@ -62,8 +99,14 @@ export const metadata = {
 
 export default async function BrowsePage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const [categories, listings] = await Promise.all([
+  const selectedCategorySlug = typeof params.category === "string" ? params.category : "";
+  const [categories, brands, cities, listings] = await Promise.all([
     apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
+    apiFetch<Brand[]>(
+      `/brands${selectedCategorySlug ? `?category=${encodeURIComponent(selectedCategorySlug)}` : ""}`,
+      { next: { revalidate: 3600 } }
+    ).catch(() => ({ data: [] })),
+    apiFetch<City[]>("/categories/cities", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
     apiFetch<ListingCardType[]>(`/listings?${toQuery(params)}`, { next: { revalidate: 60 } }).catch(() => ({
       data: [] as ListingCardType[],
       meta: { total: 0, page: 1, total_pages: 1 } as Record<string, unknown>
@@ -72,7 +115,7 @@ export default async function BrowsePage({ searchParams }: PageProps) {
   const total = Number(listings.meta?.total ?? listings.data.length);
   const page = Number(listings.meta?.page ?? 1);
   const totalPages = Number(listings.meta?.total_pages ?? 1);
-  const chips = activeFilters(params, categories.data);
+  const chips = activeFilters(params, categories.data, brands.data);
   const sort = typeof params.sort === "string" ? params.sort : "newest";
   const categoryLabel = typeof params.category === "string"
     ? chips.find((chip) => chip.key === "category")?.label
@@ -86,11 +129,13 @@ export default async function BrowsePage({ searchParams }: PageProps) {
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <form action="/oglasi" className="flex items-center gap-2">
-            {Object.entries(params).map(([key, value]) =>
-              typeof value === "string" && value && key !== "sort" && key !== "page" ? (
-                <input key={key} type="hidden" name={key} value={value} />
-              ) : null
-            )}
+            {Object.entries(params).flatMap(([key, value]) => {
+              if (key === "sort" || key === "page") return [];
+              const values = Array.isArray(value) ? value : value ? [value] : [];
+              return values.map((item, index) => (
+                <input key={`${key}-${index}`} type="hidden" name={key} value={item} />
+              ));
+            })}
             <Select name="sort" defaultValue={sort} aria-label="Sortiranje oglasa" className="min-w-44">
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -105,14 +150,14 @@ export default async function BrowsePage({ searchParams }: PageProps) {
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
         <aside className="hidden lg:block">
-          <FilterSidebar categories={categories.data} searchParams={params} />
+          <FilterSidebar categories={categories.data} brands={brands.data} cities={cities.data} searchParams={params} />
         </aside>
         <details className="lg:hidden">
           <summary className="focus-ring flex cursor-pointer items-center gap-2 rounded-md bg-white p-3 font-semibold shadow-soft">
             <SlidersHorizontal size={18} /> Filteri{chips.length ? ` (${chips.length})` : ""}
           </summary>
           <div className="mt-3">
-            <FilterSidebar categories={categories.data} searchParams={params} />
+            <FilterSidebar categories={categories.data} brands={brands.data} cities={cities.data} searchParams={params} />
           </div>
         </details>
         <section>

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Bell, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-import { apiFetch } from "@/lib/api";
+import { apiFetch, type Category } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -24,7 +24,11 @@ function searchUrl(search: Pick<SavedSearchItem, "query" | "filters">) {
   const params = new URLSearchParams();
   if (search.query) params.set("q", search.query);
   Object.entries(search.filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && String(value) !== "") {
+    if (Array.isArray(value)) {
+      value.filter((item) => item !== undefined && item !== null && String(item) !== "").forEach((item) => {
+        params.append(key, String(item));
+      });
+    } else if (value !== undefined && value !== null && String(value) !== "") {
       params.set(key, String(value));
     }
   });
@@ -32,21 +36,62 @@ function searchUrl(search: Pick<SavedSearchItem, "query" | "filters">) {
   return query ? `/oglasi?${query}` : "/oglasi";
 }
 
-function defaultName(query: string | null, filters: Record<string, string>) {
+function defaultName(query: string | null, filters: Record<string, string | string[] | undefined>) {
   if (query) return `Pretraga: ${query}`;
-  if (filters.category) return `Kategorija: ${filters.category}`;
+  if (typeof filters.category === "string" && filters.category) return `Kategorija: ${filters.category}`;
   const first = Object.values(filters).find(Boolean);
-  return first ? `Filter: ${first}` : "Moja pretraga";
+  return first ? `Filter: ${Array.isArray(first) ? first.join(", ") : first}` : "Moja pretraga";
+}
+
+function flattenCategories(categories: Category[]): Category[] {
+  return categories.flatMap((category) => [
+    category,
+    ...flattenCategories(category.children)
+  ]);
+}
+
+function filterSummary(filters: Record<string, unknown>, categories: Category[]) {
+  const values = (value: unknown) => Array.isArray(value) ? value.map(String) : [String(value)];
+  const category = flattenCategories(categories).find(
+    (item) => item.slug === filters.category
+  );
+  const globalLabels: Record<string, string> = {
+    price_min: "Cena od",
+    price_max: "Cena do",
+    currency: "Valuta",
+    city: "Grad",
+    condition: "Stanje",
+    brand_id: "Brend",
+    seller_type: "Prodavac",
+    posted_within: "Objavljeno",
+    with_images: "Sa slikom"
+  };
+  return Object.entries(filters).map(([key, value]) => {
+    if (key === "category") return `Kategorija: ${category?.name_sr ?? value}`;
+    const match = /^attributes\[([^\]]+)\](?:\[(min|max)\])?$/.exec(key);
+    if (match) {
+      const attribute = category?.attributes.find((item) => item.key === match[1]);
+      const optionLabels = new Map(
+        attribute?.options.options?.map((option) => [option.value, option.label_sr]) ?? []
+      );
+      const shown = values(value).map((item) => optionLabels.get(item) ?? item).join(", ");
+      const bound = match[2] === "min" ? " od" : match[2] === "max" ? " do" : "";
+      return `${attribute?.label_sr ?? match[1]}${bound}: ${shown}${attribute?.unit ? ` ${attribute.unit}` : ""}`;
+    }
+    return `${globalLabels[key] ?? key}: ${values(value).join(", ")}`;
+  });
 }
 
 export function SavedSearchManager({
   searches,
   currentQuery,
-  currentFilters
+  currentFilters,
+  categories
 }: {
   searches: SavedSearchItem[];
   currentQuery: string | null;
-  currentFilters: Record<string, string>;
+  currentFilters: Record<string, string | string[] | undefined>;
+  categories: Category[];
 }) {
   const router = useRouter();
   const [name, setName] = useState(defaultName(currentQuery, currentFilters));
@@ -125,6 +170,11 @@ export function SavedSearchManager({
                 <p className="mt-1 text-sm text-slate-600">
                   {search.query ?? "Bez ključne reči"} · {search.matching_count} rezultata
                 </p>
+                {Object.keys(search.filters).length ? (
+                  <p className="mt-2 text-xs text-slate-500">
+                    {filterSummary(search.filters, categories).join(" · ")}
+                  </p>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button href={searchUrl(search)} variant="secondary">

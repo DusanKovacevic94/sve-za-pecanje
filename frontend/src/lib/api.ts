@@ -70,10 +70,23 @@ export type AttributeDefinition = {
   field_type: string;
   unit: string | null;
   required: boolean;
+  filterable: boolean;
+  searchable: boolean;
   options: { options?: { value: string; label_sr: string }[] };
+  validation: {
+    min?: number;
+    max?: number;
+    step?: number;
+    filter_mode?: "exact" | "multi" | "range" | "boolean" | "none";
+    interval_end?: string;
+    visible_when?: Record<string, string | string[]>;
+    required_when?: Record<string, string | string[]>;
+  };
+  sort_order: number;
 };
 
 export type Brand = { id: string; name: string; slug: string };
+export type City = { id: string; name: string };
 
 export type AttributeDisplay = {
   key: string;

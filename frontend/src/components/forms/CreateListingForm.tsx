@@ -33,6 +33,26 @@ type ListingFormProps = {
   images?: ListingDetail["images"];
 };
 
+function conditionMatches(
+  values: Record<string, unknown>,
+  condition?: Record<string, string | string[]>
+) {
+  if (!condition) return true;
+  return Object.entries(condition).every(([key, expected]) => {
+    const actual = values[`attr_${key}`];
+    const actualValues = Array.isArray(actual) ? actual : [actual];
+    const allowed = Array.isArray(expected) ? expected : [expected];
+    return actualValues.some((value) => typeof value === "string" && allowed.includes(value));
+  });
+}
+
+function flattenCategories(categories: Category[]): Category[] {
+  return categories.flatMap((category) => [
+    category,
+    ...flattenCategories(category.children)
+  ]);
+}
+
 function getDefaultValues(categories: Category[], defaultValues?: ListingFormDefaults): ListingFormInput {
   const values: Record<string, unknown> = {
     currency: "RSD",
@@ -43,7 +63,7 @@ function getDefaultValues(categories: Category[], defaultValues?: ListingFormDef
     ...defaultValues
   };
   Object.entries(defaultValues?.attributes ?? {}).forEach(([key, value]) => {
-    values[`attr_${key}`] = Array.isArray(value) ? value.join(", ") : String(value);
+    values[`attr_${key}`] = Array.isArray(value) ? value : String(value);
   });
   delete values.attributes;
   return values as ListingFormInput;
@@ -53,8 +73,18 @@ function buildPayload(data: ListingFormOutput, category: Category | undefined, m
   const attributes: Record<string, unknown> = {};
   category?.attributes.forEach((attribute) => {
     const value = data[`attr_${attribute.key}`];
-    if (value !== undefined && value !== "") {
-      attributes[attribute.key] = value;
+    if (value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
+      if (attribute.field_type === "integer") {
+        attributes[attribute.key] = Number.parseInt(String(value), 10);
+      } else if (attribute.field_type === "decimal") {
+        attributes[attribute.key] = Number.parseFloat(String(value));
+      } else if (attribute.field_type === "boolean") {
+        attributes[attribute.key] = value === true || value === "true";
+      } else if (attribute.field_type === "multi_enum") {
+        attributes[attribute.key] = Array.isArray(value) ? value : [String(value)];
+      } else {
+        attributes[attribute.key] = value;
+      }
     }
   });
 
@@ -89,12 +119,18 @@ export function CreateListingForm({
   const isEdit = mode === "edit";
   const submitLabel = isEdit ? "Sačuvaj izmene" : "Pošalji na pregled";
   const initialValues = useMemo(() => getDefaultValues(categories, defaultValues), [categories, defaultValues]);
+  const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
   const { register, handleSubmit, formState, watch } = useForm<ListingFormInput, unknown, ListingFormOutput>({
     resolver: zodResolver(listingFormSchema),
-    defaultValues: initialValues
+    defaultValues: initialValues,
+    shouldUnregister: true
   });
   const categoryId = watch("category_id") || categories[0]?.id || "";
-  const selectedCategory = useMemo(() => categories.find((item) => item.id === categoryId), [categories, categoryId]);
+  const watchedValues = watch() as Record<string, unknown>;
+  const selectedCategory = useMemo(
+    () => categoryOptions.find((item) => item.id === categoryId),
+    [categoryOptions, categoryId]
+  );
 
   async function onSubmit(data: ListingFormOutput) {
     setMessage(null);
@@ -159,11 +195,16 @@ export function CreateListingForm({
             {...register("category_id")}
             disabled={isEdit}
           >
-            {categories.map((category) => (
+            {categories.flatMap((category) => [
               <option value={category.id} key={category.id}>
                 {category.name_sr}
-              </option>
-            ))}
+              </option>,
+              ...category.children.map((child) => (
+                <option value={child.id} key={child.id}>
+                  ↳ {child.name_sr}
+                </option>
+              ))
+            ])}
           </Select>
           <p className="mt-1 text-sm text-red-600">{formState.errors.category_id?.message}</p>
         </div>
@@ -229,13 +270,24 @@ export function CreateListingForm({
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
         <h2 className="text-xl font-black">3. Specifični detalji</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {selectedCategory?.attributes.map((attribute) => (
+          {selectedCategory?.attributes.filter(
+            (attribute) => conditionMatches(watchedValues, attribute.validation.visible_when)
+          ).map((attribute) => {
+            const conditionallyRequired = conditionMatches(
+              watchedValues,
+              attribute.validation.required_when
+            );
+            const required = attribute.required || (
+              Boolean(attribute.validation.required_when) && conditionallyRequired
+            );
+            const requireInput = required && !isEdit;
+            return (
             <div key={attribute.id}>
               <FieldLabel htmlFor={`attr_${attribute.key}`}>
-                {attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}
+                {attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}{required ? " *" : ""}
               </FieldLabel>
               {attribute.field_type === "enum" ? (
-                <Select id={`attr_${attribute.key}`} {...register(`attr_${attribute.key}`)}>
+                <Select id={`attr_${attribute.key}`} required={requireInput} {...register(`attr_${attribute.key}`)}>
                   <option value="">Izaberite</option>
                   {attribute.options.options?.map((option) => (
                     <option value={option.value} key={option.value}>
@@ -243,17 +295,43 @@ export function CreateListingForm({
                     </option>
                   ))}
                 </Select>
+              ) : attribute.field_type === "multi_enum" ? (
+                <>
+                  <Select
+                    id={`attr_${attribute.key}`}
+                    multiple
+                    className="min-h-32"
+                    required={requireInput}
+                    {...register(`attr_${attribute.key}`)}
+                  >
+                    {attribute.options.options?.map((option) => (
+                      <option value={option.value} key={option.value}>
+                        {option.label_sr}
+                      </option>
+                    ))}
+                  </Select>
+                  <p className="mt-1 text-xs text-slate-500">Možete izabrati više stavki.</p>
+                </>
               ) : attribute.field_type === "boolean" ? (
-                <Select id={`attr_${attribute.key}`} {...register(`attr_${attribute.key}`)}>
+                <Select id={`attr_${attribute.key}`} required={requireInput} {...register(`attr_${attribute.key}`)}>
                   <option value="">Nije navedeno</option>
                   <option value="true">Da</option>
                   <option value="false">Ne</option>
                 </Select>
               ) : (
-                <Input id={`attr_${attribute.key}`} {...register(`attr_${attribute.key}`)} />
+                <Input
+                  id={`attr_${attribute.key}`}
+                  type={attribute.field_type === "integer" || attribute.field_type === "decimal" ? "number" : "text"}
+                  min={attribute.validation.min}
+                  max={attribute.validation.max}
+                  step={attribute.validation.step ?? (attribute.field_type === "integer" ? 1 : undefined)}
+                  required={requireInput}
+                  {...register(`attr_${attribute.key}`)}
+                />
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

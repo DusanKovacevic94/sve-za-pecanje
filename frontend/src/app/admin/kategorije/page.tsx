@@ -25,6 +25,9 @@ export default async function AdminCategoriesPage() {
                     <p className="text-slate-600">
                       {attribute.key} · {attribute.field_type}
                       {attribute.required ? " · obavezno" : ""}
+                      {attribute.filterable ? ` · filter: ${attribute.validation.filter_mode ?? "exact"}` : " · bez filtera"}
+                      {attribute.validation.visible_when ? " · uslovno vidljivo" : ""}
+                      {attribute.validation.required_when ? " · uslovno obavezno" : ""}
                     </p>
                   </div>
                 ))}

@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, Numeric, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -34,7 +35,10 @@ class Listing(Base, TimestampMixin):
     city: Mapped[str] = mapped_column(String(120), index=True)
     municipality: Mapped[str | None] = mapped_column(String(120))
     status: Mapped[str] = mapped_column(String(30), default="pending_review", index=True)
-    attributes: Mapped[dict] = mapped_column(JSON, default=dict)
+    attributes: Mapped[dict] = mapped_column(
+        JSONB().with_variant(JSON, "sqlite"),
+        default=dict,
+    )
     allow_messages: Mapped[bool] = mapped_column(Boolean, default=True)
     phone_visible: Mapped[bool] = mapped_column(Boolean, default=False)
     is_featured: Mapped[bool] = mapped_column(Boolean, default=False, index=True)

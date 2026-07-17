@@ -24,6 +24,7 @@ from app.models.user import User as UserModel
 from app.models.category import Category
 from app.models.favorite import Favorite
 from app.services.feature_service import FeatureService, serialize_feature_request
+from app.services.filter_service import parse_query_params
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
@@ -34,7 +35,7 @@ def serialize_image(image) -> dict:
 
 @router.get("")
 def list_listings(request: Request, db: Session = Depends(get_db)):
-    params = dict(request.query_params)
+    params = parse_query_params(request.query_params)
     page = max(int(params.get("page", 1)), 1)
     page_size = min(max(int(params.get("page_size", 24)), 1), 48)
     listings, total = ListingService(db).list_public(params)

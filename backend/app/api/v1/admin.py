@@ -84,10 +84,17 @@ def admin_config(admin: User = Depends(require_admin)):
 def admin_categories(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     categories = db.scalars(
         select(Category)
-        .options(selectinload(Category.children), selectinload(Category.attributes))
+        .options(
+            selectinload(Category.children).selectinload(Category.attributes),
+            selectinload(Category.attributes),
+            selectinload(Category.parent).selectinload(Category.attributes),
+        )
         .order_by(Category.parent_id.nullsfirst(), Category.sort_order)
     ).all()
-    return data_response([serialize_category(category, include_children=False) for category in categories])
+    return data_response([
+        serialize_category(category, include_children=False)
+        for category in categories
+    ])
 
 
 @router.get("/brands")

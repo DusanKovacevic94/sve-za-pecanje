@@ -48,6 +48,7 @@ def create_saved_search(
             f"Možete imati najviše {MAX_SAVED_SEARCHES} sačuvanih pretraga.",
             400,
         )
+    matching_count = SearchService(db).matching_count(payload.query, payload.filters)
     item = SavedSearch(
         user_id=user.id,
         name=payload.name,
@@ -65,7 +66,7 @@ def create_saved_search(
             "query": item.query,
             "filters": item.filters,
             "notification_enabled": item.notification_enabled,
-            "matching_count": SearchService(db).matching_count(item.query, item.filters),
+            "matching_count": matching_count,
         }
     )
 

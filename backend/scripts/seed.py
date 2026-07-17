@@ -9,6 +9,8 @@ from app.models.listing import Listing
 from app.models.profile import UserProfile
 from app.models.user import User
 from app.core.security import hash_password
+from app.core.category_catalog import CATEGORY_ATTRIBUTES
+from app.core.category_taxonomy import LEAF_CATEGORIES
 from app.services.listing_service import slugify
 
 
@@ -86,48 +88,6 @@ CATEGORIES = [
     ("ostalo", "Ostalo", "Other"),
 ]
 
-ATTRIBUTES = {
-    "stapovi": [
-        ("rod_type", "Tip štapa", "enum", None, True, ["spinning", "feeder", "carp", "match", "fly", "telescopic", "baitcasting", "other"]),
-        ("length_cm", "Dužina", "integer", "cm", True, []),
-        ("casting_weight_min_g", "Težina bacanja od", "integer", "g", False, []),
-        ("casting_weight_max_g", "Težina bacanja do", "integer", "g", False, []),
-        ("sections", "Broj delova", "integer", None, False, []),
-        ("technique", "Tehnika", "multi_enum", None, False, ["spin", "feeder", "carp", "fly"]),
-    ],
-    "masinice": [
-        ("reel_type", "Tip mašinice", "enum", None, True, ["spinning", "baitcasting", "carp", "fly", "multiplier", "other"]),
-        ("reel_size", "Veličina", "string", None, True, []),
-        ("gear_ratio", "Prenos", "string", None, False, []),
-        ("max_drag_kg", "Maksimalna kočnica", "decimal", "kg", False, []),
-        ("handle_side", "Ručica", "enum", None, False, ["left", "right", "left_right"]),
-    ],
-    "varalice": [
-        ("lure_type", "Tip varalice", "enum", None, True, ["soft_plastic", "jig_head", "crankbait", "jerkbait", "spinner", "spoon", "topwater", "swimbait", "blade_bait", "other"]),
-        ("weight_g", "Težina", "decimal", "g", False, []),
-        ("length_mm", "Dužina", "integer", "mm", False, []),
-        ("buoyancy", "Plovnost", "enum", None, False, ["floating", "suspending", "slow_sinking", "sinking", "not_applicable"]),
-    ],
-    "elektronika": [
-        ("device_type", "Tip uređaja", "enum", None, True, ["fish_finder", "sonar", "gps", "battery", "charger", "transducer", "other"]),
-        ("screen_size_inches", "Veličina ekrana", "decimal", "in", False, []),
-        ("gps_included", "GPS", "boolean", None, False, []),
-        ("transducer_included", "Sonda uključena", "boolean", None, False, []),
-    ],
-    "camci-i-oprema": [
-        ("boat_type", "Tip plovila", "enum", None, True, ["inflatable", "aluminum", "kayak", "belly_boat", "electric_motor", "accessory", "other"]),
-        ("length_cm", "Dužina", "integer", "cm", False, []),
-        ("material", "Materijal", "string", None, False, []),
-        ("registration_required", "Registracija potrebna", "boolean", None, False, []),
-    ],
-    "odeca-i-obuca": [
-        ("clothing_type", "Tip", "enum", None, True, ["waders", "boots", "jacket", "glasses", "gloves", "other"]),
-        ("size", "Veličina", "string", None, False, []),
-        ("shoe_size_eu", "Broj obuće", "integer", None, False, []),
-        ("waterproof", "Vodootporno", "boolean", None, False, []),
-    ],
-}
-
 DEMO_LISTINGS = [
     ("Shimano Stradic FL 2500", "masinice", "Shimano", "Stradic FL 2500", 140, "EUR", "Beograd", {"reel_type": "spinning", "reel_size": "2500", "gear_ratio": "6.0:1"}),
     ("Daiwa Legalis LT 3000", "masinice", "Daiwa", "Legalis LT 3000", 9500, "RSD", "Novi Sad", {"reel_type": "spinning", "reel_size": "3000"}),
@@ -142,11 +102,28 @@ DEMO_LISTINGS = [
 ]
 
 
-def ensure_category(db, slug: str, name_sr: str, name_en: str, sort_order: int) -> Category:
+def ensure_category(
+    db,
+    slug: str,
+    name_sr: str,
+    name_en: str,
+    sort_order: int,
+    parent_id: str | None = None,
+) -> Category:
     category = db.scalar(select(Category).where(Category.slug == slug))
     if category:
+        category.name_sr = name_sr
+        category.name_en = name_en
+        category.sort_order = sort_order
+        category.parent_id = parent_id
         return category
-    category = Category(slug=slug, name_sr=name_sr, name_en=name_en, sort_order=sort_order)
+    category = Category(
+        slug=slug,
+        name_sr=name_sr,
+        name_en=name_en,
+        sort_order=sort_order,
+        parent_id=parent_id,
+    )
     db.add(category)
     db.flush()
     return category
@@ -158,29 +135,49 @@ def main() -> None:
         category_by_slug: dict[str, Category] = {}
         for index, (slug, name_sr, name_en) in enumerate(CATEGORIES):
             category_by_slug[slug] = ensure_category(db, slug, name_sr, name_en, index)
+        leaf_order: dict[str, int] = {}
+        for item in LEAF_CATEGORIES:
+            parent = category_by_slug[item["parent_slug"]]
+            sort_order = leaf_order.get(parent.slug, 0)
+            category_by_slug[item["slug"]] = ensure_category(
+                db,
+                item["slug"],
+                item["name_sr"],
+                item["name_en"],
+                sort_order,
+                parent.id,
+            )
+            leaf_order[parent.slug] = sort_order + 1
 
-        for slug, definitions in ATTRIBUTES.items():
+        for slug, definitions in CATEGORY_ATTRIBUTES.items():
             category = category_by_slug[slug]
-            for index, (key, label, field_type, unit, required, options) in enumerate(definitions):
+            for index, definition in enumerate(definitions):
                 existing = db.scalar(
                     select(AttributeDefinition).where(
                         AttributeDefinition.category_id == category.id,
-                        AttributeDefinition.key == key,
+                        AttributeDefinition.key == definition["key"],
                     )
                 )
-                if not existing:
+                values = {
+                    "label_sr": definition["label_sr"],
+                    "field_type": definition["field_type"],
+                    "unit": definition["unit"],
+                    "required": definition["required"],
+                    "filterable": definition["filterable"],
+                    "searchable": definition["searchable"],
+                    "options": definition["options"],
+                    "validation": definition["validation"],
+                    "sort_order": index,
+                }
+                if existing:
+                    for key, value in values.items():
+                        setattr(existing, key, value)
+                else:
                     db.add(
                         AttributeDefinition(
                             category_id=category.id,
-                            key=key,
-                            label_sr=label,
-                            field_type=field_type,
-                            unit=unit,
-                            required=required,
-                            filterable=True,
-                            searchable=field_type in {"string", "enum"},
-                            options={"options": [{"value": value, "label_sr": value} for value in options]},
-                            sort_order=index,
+                            key=definition["key"],
+                            **values,
                         )
                     )
 
@@ -219,11 +216,21 @@ def main() -> None:
             if db.scalar(select(Listing).where(Listing.title == title)):
                 continue
             public_id = slugify(title)[0:4] + str(len(title))
+            listing_category_slug = next(
+                (
+                    item["slug"]
+                    for item in LEAF_CATEGORIES
+                    if item["parent_slug"] == category_slug
+                    and attributes.get(item["discriminator_key"])
+                    in item["discriminator_values"]
+                ),
+                category_slug,
+            )
             db.add(
                 Listing(
                     public_id=public_id,
                     seller_id=seller.id,
-                    category_id=category_by_slug[category_slug].id,
+                    category_id=category_by_slug[listing_category_slug].id,
                     brand_id=brand_by_name[brand_name].id if brand_name else None,
                     model=model,
                     title=title,
@@ -245,4 +252,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
