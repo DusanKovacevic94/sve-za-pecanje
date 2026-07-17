@@ -42,6 +42,24 @@ function allCategories(categories: Category[]): Category[] {
   return categories.flatMap((category) => [category, ...allCategories(category.children)]);
 }
 
+function values(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value : value ? [value] : [];
+}
+
+function hrefWithoutValue(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+  removedValue: string
+) {
+  const current = values(params[key]).filter((value) => value !== removedValue);
+  const next = {
+    ...params,
+    [key]: current.length > 1 ? current : current[0],
+    page: undefined
+  };
+  return `/oglasi?${toQuery(next)}`;
+}
+
 function activeFilters(
   params: Record<string, string | string[] | undefined>,
   categories: Category[],
@@ -49,18 +67,35 @@ function activeFilters(
 ) {
   const flattened = allCategories(categories);
   const categoryMap = new Map(flattened.map((category) => [category.slug, category.name_sr]));
-  const chips: { key: string; label: string; href: string }[] = [];
-  const add = (key: string, label: string) => chips.push({ key, label, href: `/oglasi?${toQuery(params, { page: null }, [key])}` });
+  const chips: { id: string; key: string; label: string; href: string }[] = [];
+  const add = (key: string, label: string) => chips.push({
+    id: key,
+    key,
+    label,
+    href: `/oglasi?${toQuery(params, { page: null }, [key])}`
+  });
   if (typeof params.q === "string" && params.q) add("q", `Pretraga: ${params.q}`);
-  if (typeof params.category === "string" && params.category) add("category", categoryMap.get(params.category) ?? params.category);
+  values(params.category).forEach((slug) => {
+    chips.push({
+      id: `category-${slug}`,
+      key: "category",
+      label: categoryMap.get(slug) ?? slug,
+      href: hrefWithoutValue(params, "category", slug)
+    });
+  });
   if (typeof params.price_min === "string" && params.price_min) add("price_min", `Od ${params.price_min}`);
   if (typeof params.price_max === "string" && params.price_max) add("price_max", `Do ${params.price_max}`);
   if (typeof params.currency === "string" && params.currency) add("currency", params.currency);
   if (typeof params.city === "string" && params.city) add("city", params.city);
   if (typeof params.condition === "string" && params.condition) add("condition", conditionLabels[params.condition] ?? params.condition);
-  if (typeof params.brand_id === "string" && params.brand_id) {
-    add("brand_id", brands.find((brand) => brand.id === params.brand_id)?.name ?? "Izabrani brend");
-  }
+  values(params.brand_id).forEach((brandId) => {
+    chips.push({
+      id: `brand-${brandId}`,
+      key: "brand_id",
+      label: brands.find((brand) => brand.id === brandId)?.name ?? "Izabrani brend",
+      href: hrefWithoutValue(params, "brand_id", brandId)
+    });
+  });
   if (params.with_images === "true") add("with_images", "Sa slikom");
   if (params.seller_type === "shop") add("seller_type", "Prodavnica");
   if (params.seller_type === "private") add("seller_type", "Privatni prodavac");
@@ -72,7 +107,17 @@ function activeFilters(
   if (typeof params.posted_within === "string" && postedLabels[params.posted_within]) {
     add("posted_within", postedLabels[params.posted_within]);
   }
-  const selectedCategory = flattened.find((item) => item.slug === params.category);
+  const selectedCategories = values(params.category)
+    .map((slug) => flattened.find((item) => item.slug === slug))
+    .filter((item): item is Category => Boolean(item));
+  const rootIds = new Set(
+    selectedCategories.map((item) => item.parent_id ?? item.id)
+  );
+  const selectedCategory = selectedCategories.length === 1
+    ? selectedCategories[0]
+    : rootIds.size === 1
+      ? flattened.find((item) => item.id === [...rootIds][0])
+      : undefined;
   Object.entries(params).forEach(([key, rawValue]) => {
     const match = /^attributes\[([^\]]+)\](?:\[(min|max)\])?$/.exec(key);
     if (!match || !rawValue) return;
@@ -99,11 +144,14 @@ export const metadata = {
 
 export default async function BrowsePage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const selectedCategorySlug = typeof params.category === "string" ? params.category : "";
+  const selectedCategorySlugs = values(params.category);
+  const brandParams = new URLSearchParams();
+  selectedCategorySlugs.forEach((slug) => brandParams.append("category", slug));
+  values(params.brand_id).forEach((id) => brandParams.append("include", id));
   const [categories, brands, cities, listings] = await Promise.all([
     apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
     apiFetch<Brand[]>(
-      `/brands${selectedCategorySlug ? `?category=${encodeURIComponent(selectedCategorySlug)}` : ""}`,
+      `/brands${brandParams.size ? `?${brandParams.toString()}` : ""}`,
       { next: { revalidate: 3600 } }
     ).catch(() => ({ data: [] })),
     apiFetch<City[]>("/categories/cities", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
@@ -117,14 +165,17 @@ export default async function BrowsePage({ searchParams }: PageProps) {
   const totalPages = Number(listings.meta?.total_pages ?? 1);
   const chips = activeFilters(params, categories.data, brands.data);
   const sort = typeof params.sort === "string" ? params.sort : "newest";
-  const categoryLabel = typeof params.category === "string"
-    ? chips.find((chip) => chip.key === "category")?.label
-    : null;
+  const categoryChips = chips.filter((chip) => chip.key === "category");
+  const heading = categoryChips.length === 1
+    ? `${categoryChips[0].label} oglasi`
+    : categoryChips.length > 1
+      ? `Oglasi u ${categoryChips.length} ${categoryChips.length < 5 ? "kategorije" : "kategorija"}`
+      : "Oglasi za ribolovnu opremu";
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-black">{categoryLabel ? `${categoryLabel} oglasi` : "Oglasi za ribolovnu opremu"}</h1>
+          <h1 className="text-3xl font-black">{heading}</h1>
           <p className="mt-2 text-slate-600">{total} rezultata za izabrane filtere</p>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
@@ -164,7 +215,7 @@ export default async function BrowsePage({ searchParams }: PageProps) {
           {chips.length ? (
             <div className="mb-4 flex flex-wrap items-center gap-2">
               {chips.map((chip) => (
-                <Link key={chip.key} href={chip.href} className="focus-ring rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-soft hover:text-river-700">
+                <Link key={chip.id} href={chip.href} className="focus-ring rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-soft hover:text-river-700">
                   {chip.label} ×
                 </Link>
               ))}

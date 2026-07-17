@@ -17,6 +17,12 @@ function findCategory(categories: Category[], slug: string): Category | undefine
   }
 }
 
+function rootCategory(categories: Category[], category: Category) {
+  return categories.find(
+    (root) => root.id === category.id || root.children.some((child) => child.id === category.id)
+  );
+}
+
 function selectedValues(value: SearchParams[string]) {
   if (Array.isArray(value)) return value;
   return value ? [value] : [];
@@ -40,12 +46,43 @@ function conditionalData(condition?: Record<string, string | string[]>) {
   };
 }
 
-function clearCategoryAttributes(event: ChangeEvent<HTMLSelectElement>) {
+function clearCategoryAttributes(event: ChangeEvent<HTMLInputElement>) {
   const form = event.currentTarget.form;
   form?.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[name^="attributes["]')
     .forEach((control) => {
       control.disabled = true;
     });
+}
+
+function updateCategoryChoice(event: ChangeEvent<HTMLInputElement>) {
+  const input = event.currentTarget;
+  const form = input.form;
+  const root = input.dataset.categoryRoot;
+  if (input.checked && form && root) {
+    const choices = form.querySelectorAll<HTMLInputElement>(
+      `input[name="category"][data-category-root="${root}"]`
+    );
+    choices.forEach((choice) => {
+      if (choice === input) return;
+      if (
+        input.dataset.categoryLevel === "parent"
+        || choice.dataset.categoryLevel === "parent"
+      ) {
+        choice.checked = false;
+      }
+    });
+  }
+  clearCategoryAttributes(event);
+}
+
+function choiceSummary(
+  selected: string[],
+  labels: Map<string, string>,
+  emptyLabel: string
+) {
+  if (!selected.length) return emptyLabel;
+  if (selected.length === 1) return labels.get(selected[0]) ?? selected[0];
+  return `${labels.get(selected[0]) ?? selected[0]} + još ${selected.length - 1}`;
 }
 
 function updateConditionalControls(event: ChangeEvent<HTMLSelectElement>) {
@@ -76,9 +113,29 @@ export function FilterSidebar({
   cities: City[];
   searchParams: SearchParams;
 }) {
-  const category = typeof searchParams.category === "string" ? searchParams.category : "";
+  const selectedCategorySlugs = selectedValues(searchParams.category);
+  const selectedBrandIds = selectedValues(searchParams.brand_id);
   const sort = typeof searchParams.sort === "string" ? searchParams.sort : "";
-  const selectedCategory = findCategory(categories, category);
+  const selectedCategories = selectedCategorySlugs
+    .map((slug) => findCategory(categories, slug))
+    .filter((item): item is Category => Boolean(item));
+  const selectedRoots = new Set(
+    selectedCategories
+      .map((item) => rootCategory(categories, item)?.id)
+      .filter(Boolean)
+  );
+  const selectedCategory = selectedCategories.length === 1
+    ? selectedCategories[0]
+    : selectedRoots.size === 1
+      ? categories.find((item) => selectedRoots.has(item.id))
+      : undefined;
+  const categoryLabels = new Map(
+    categories.flatMap((item) => [
+      [item.slug, item.name_sr] as const,
+      ...item.children.map((child) => [child.slug, child.name_sr] as const)
+    ])
+  );
+  const brandLabels = new Map(brands.map((brand) => [brand.id, brand.name]));
   return (
     <form action="/oglasi" className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
       {sort ? <input type="hidden" name="sort" value={sort} /> : null}
@@ -86,22 +143,54 @@ export function FilterSidebar({
         <FieldLabel htmlFor="q">Pretraga</FieldLabel>
         <Input id="q" name="q" defaultValue={typeof searchParams.q === "string" ? searchParams.q : ""} placeholder="Shimano, štap, varalice..." />
       </div>
-      <div>
-        <FieldLabel htmlFor="category">Kategorija</FieldLabel>
-        <Select id="category" name="category" defaultValue={category} onChange={clearCategoryAttributes}>
-          <option value="">Sve kategorije</option>
-          {categories.map((item) => (
-            <optgroup label={item.name_sr} key={item.id}>
-              <option value={item.slug}>{item.name_sr}</option>
-              {item.children.map((child) => (
-                <option value={child.slug} key={child.id}>
-                  {child.name_sr}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </Select>
-      </div>
+      <fieldset>
+        <legend className="text-sm font-semibold text-slate-800">Kategorije</legend>
+        <details id="category-filter-options" className="group mt-1 rounded-lg border border-slate-200 bg-white">
+          <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm">
+            <span className="truncate">
+              {choiceSummary(selectedCategorySlugs, categoryLabels, "Sve kategorije")}
+            </span>
+            <span aria-hidden className="ml-2 text-slate-400 transition group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="max-h-80 space-y-3 overflow-y-auto border-t border-slate-100 p-3">
+            {categories.map((item) => (
+              <div key={item.id}>
+                <label className="flex cursor-pointer items-center gap-2 font-semibold text-slate-800">
+                  <input
+                    type="checkbox"
+                    name="category"
+                    value={item.slug}
+                    data-category-root={item.id}
+                    data-category-level="parent"
+                    defaultChecked={selectedCategorySlugs.includes(item.slug)}
+                    onChange={updateCategoryChoice}
+                  />
+                  {item.name_sr}
+                </label>
+                {item.children.length ? (
+                  <div className="mt-2 space-y-2 border-l border-slate-200 pl-5">
+                    {item.children.map((child) => (
+                      <label key={child.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          name="category"
+                          value={child.slug}
+                          data-category-root={item.id}
+                          data-category-level="child"
+                          defaultChecked={selectedCategorySlugs.includes(child.slug)}
+                          onChange={updateCategoryChoice}
+                        />
+                        {child.name_sr}
+                      </label>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </details>
+        <p className="mt-1 text-xs text-slate-500">Možete izabrati više kategorija.</p>
+      </fieldset>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <FieldLabel htmlFor="price_min">Cena od</FieldLabel>
@@ -120,15 +209,31 @@ export function FilterSidebar({
           <option value="EUR">EUR</option>
         </Select>
       </div>
-      <div>
-        <FieldLabel htmlFor="brand_id">Brend</FieldLabel>
-        <Select id="brand_id" name="brand_id" defaultValue={typeof searchParams.brand_id === "string" ? searchParams.brand_id : ""}>
-          <option value="">Svi brendovi</option>
-          {brands.map((brand) => (
-            <option value={brand.id} key={brand.id}>{brand.name}</option>
-          ))}
-        </Select>
-      </div>
+      <fieldset>
+        <legend className="text-sm font-semibold text-slate-800">Brendovi</legend>
+        <details id="brand-filter-options" className="group mt-1 rounded-lg border border-slate-200 bg-white">
+          <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm">
+            <span className="truncate">
+              {choiceSummary(selectedBrandIds, brandLabels, "Svi brendovi")}
+            </span>
+            <span aria-hidden className="ml-2 text-slate-400 transition group-open:rotate-180">⌄</span>
+          </summary>
+          <div className="max-h-64 space-y-2 overflow-y-auto border-t border-slate-100 p-3">
+            {brands.map((brand) => (
+              <label key={brand.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  name="brand_id"
+                  value={brand.id}
+                  defaultChecked={selectedBrandIds.includes(brand.id)}
+                />
+                {brand.name}
+              </label>
+            ))}
+          </div>
+        </details>
+        <p className="mt-1 text-xs text-slate-500">Izabrani brendovi se kombinuju.</p>
+      </fieldset>
       <div>
         <FieldLabel htmlFor="city">Grad</FieldLabel>
         <Select id="city" name="city" defaultValue={typeof searchParams.city === "string" ? searchParams.city : ""}>
@@ -263,9 +368,11 @@ export function FilterSidebar({
             );
           })}
         </fieldset>
-      ) : category ? (
+      ) : selectedCategorySlugs.length ? (
         <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
-          Za ovu kategoriju još nema posebnih filtera.
+          {selectedRoots.size > 1
+            ? "Specifični filteri su dostupni kada izabrane kategorije pripadaju istoj glavnoj kategoriji."
+            : "Za ovu kategoriju još nema posebnih filtera."}
         </p>
       ) : (
         <p className="rounded-md bg-river-50 p-3 text-sm text-river-800">

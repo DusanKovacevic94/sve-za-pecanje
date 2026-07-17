@@ -1,4 +1,5 @@
 from app.models.category import AttributeDefinition
+from app.models.brand import Brand
 from app.services.attribute_service import validate_and_coerce_attributes
 from app.services.search_service import SearchService
 
@@ -159,6 +160,8 @@ def test_parent_category_includes_leaf_and_saved_search_matches(client, db, fact
     rods = factories.category(slug="stapovi", name="Štapovi")
     leaf = factories.category(slug="spin-stapovi", name="Spin štapovi")
     leaf.parent_id = rods.id
+    second_leaf = factories.category(slug="feeder-stapovi", name="Feeder štapovi")
+    second_leaf.parent_id = rods.id
     db.commit()
     add_definition(
         db,
@@ -180,20 +183,66 @@ def test_parent_category_includes_leaf_and_saved_search_matches(client, db, fact
     )
     parent_listing = factories.listing(seller, rods)
     leaf_listing = factories.listing(seller, leaf)
+    second_leaf_listing = factories.listing(seller, second_leaf)
 
     parent_response = client.get("/api/v1/listings", params={"category": "stapovi"})
     leaf_response = client.get("/api/v1/listings", params={"category": "spin-stapovi"})
+    multi_leaf_response = client.get(
+        "/api/v1/listings",
+        params=[
+            ("category", "spin-stapovi"),
+            ("category", "feeder-stapovi"),
+        ],
+    )
     matching_count = SearchService(db).matching_count(None, {"category": "stapovi"})
     categories = client.get("/api/v1/categories").json()["data"]
-    serialized_leaf = categories[0]["children"][0]
+    serialized_leaf = next(
+        item for item in categories[0]["children"] if item["slug"] == "spin-stapovi"
+    )
 
     assert {item["id"] for item in parent_response.json()["data"]} == {
         parent_listing.id,
         leaf_listing.id,
+        second_leaf_listing.id,
     }
     assert [item["id"] for item in leaf_response.json()["data"]] == [leaf_listing.id]
-    assert matching_count == 2
+    assert {item["id"] for item in multi_leaf_response.json()["data"]} == {
+        leaf_listing.id,
+        second_leaf_listing.id,
+    }
+    assert matching_count == 3
     assert [item["key"] for item in serialized_leaf["attributes"]] == ["length_cm"]
+
+
+def test_repeated_brand_filters_use_or_semantics(client, db, factories):
+    seller = factories.user()
+    category = factories.category()
+    first_brand = Brand(name="Prvi", slug="prvi")
+    second_brand = Brand(name="Drugi", slug="drugi")
+    third_brand = Brand(name="Treći", slug="treci")
+    db.add_all([first_brand, second_brand, third_brand])
+    db.commit()
+    first = factories.listing(seller, category)
+    second = factories.listing(seller, category)
+    excluded = factories.listing(seller, category)
+    first.brand_id = first_brand.id
+    second.brand_id = second_brand.id
+    excluded.brand_id = third_brand.id
+    db.commit()
+
+    response = client.get(
+        "/api/v1/listings",
+        params=[
+            ("brand_id", first_brand.id),
+            ("brand_id", second_brand.id),
+        ],
+    )
+
+    assert response.status_code == 200
+    assert {item["id"] for item in response.json()["data"]} == {
+        first.id,
+        second.id,
+    }
 
 
 def test_attribute_validation_coerces_types_and_applies_conditions(db, factories):

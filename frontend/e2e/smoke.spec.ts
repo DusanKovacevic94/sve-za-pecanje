@@ -25,6 +25,9 @@ test("category filters preserve repeated values and clear stale attributes", asy
 
   await filters.getByLabel("Tip štapa").selectOption(["spinning", "feeder"]);
   await filters.getByLabel("Dužina od", { exact: true }).fill("200");
+  await filters.locator("#brand-filter-options summary").click();
+  await filters.getByRole("checkbox", { name: "Shimano", exact: true }).check();
+  await filters.getByRole("checkbox", { name: "Daiwa", exact: true }).check();
   await filters.getByRole("button", { name: "Primeni filtere" }).click();
 
   let url = new URL(page.url());
@@ -33,6 +36,7 @@ test("category filters preserve repeated values and clear stale attributes", asy
     "feeder"
   ]);
   expect(url.searchParams.get("attributes[length_cm][min]")).toBe("200");
+  expect(url.searchParams.getAll("brand_id")).toHaveLength(2);
 
   await page.getByLabel("Sortiranje oglasa").selectOption("price_asc");
   await page.getByRole("button", { name: "Sortiraj" }).click();
@@ -41,10 +45,17 @@ test("category filters preserve repeated values and clear stale attributes", asy
     "spinning",
     "feeder"
   ]);
+  expect(url.searchParams.getAll("brand_id")).toHaveLength(2);
 
-  await filters.getByLabel("Kategorija").selectOption("masinice");
+  await filters.locator("#category-filter-options summary").click();
+  await filters.getByRole("checkbox", { name: "Štapovi", exact: true }).uncheck();
+  await filters.getByRole("checkbox", { name: "Spin mašinice", exact: true }).check();
+  await filters.getByRole("checkbox", { name: "Šaranske mašinice", exact: true }).check();
   await filters.getByRole("button", { name: "Primeni filtere" }).click();
   url = new URL(page.url());
-  expect(url.searchParams.get("category")).toBe("masinice");
+  expect(url.searchParams.getAll("category")).toEqual([
+    "spin-masinice",
+    "saranske-masinice"
+  ]);
   expect([...url.searchParams.keys()].some((key) => key.startsWith("attributes["))).toBe(false);
 });

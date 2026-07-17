@@ -55,6 +55,7 @@ export async function apiFetch<T>(path: string, init?: ApiFetchInit): Promise<Ap
 
 export type Category = {
   id: string;
+  parent_id: string | null;
   slug: string;
   name_sr: string;
   active_count: number;

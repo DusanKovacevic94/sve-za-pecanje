@@ -39,6 +39,9 @@ function searchUrl(search: Pick<SavedSearchItem, "query" | "filters">) {
 function defaultName(query: string | null, filters: Record<string, string | string[] | undefined>) {
   if (query) return `Pretraga: ${query}`;
   if (typeof filters.category === "string" && filters.category) return `Kategorija: ${filters.category}`;
+  if (Array.isArray(filters.category) && filters.category.length) {
+    return `Kategorije: ${filters.category.length}`;
+  }
   const first = Object.values(filters).find(Boolean);
   return first ? `Filter: ${Array.isArray(first) ? first.join(", ") : first}` : "Moja pretraga";
 }
@@ -52,9 +55,18 @@ function flattenCategories(categories: Category[]): Category[] {
 
 function filterSummary(filters: Record<string, unknown>, categories: Category[]) {
   const values = (value: unknown) => Array.isArray(value) ? value.map(String) : [String(value)];
-  const category = flattenCategories(categories).find(
-    (item) => item.slug === filters.category
+  const flattened = flattenCategories(categories);
+  const selectedCategories = values(filters.category)
+    .map((slug) => flattened.find((item) => item.slug === slug))
+    .filter((item): item is Category => Boolean(item));
+  const rootIds = new Set(
+    selectedCategories.map((item) => item.parent_id ?? item.id)
   );
+  const category = selectedCategories.length === 1
+    ? selectedCategories[0]
+    : rootIds.size === 1
+      ? flattened.find((item) => item.id === [...rootIds][0])
+      : undefined;
   const globalLabels: Record<string, string> = {
     price_min: "Cena od",
     price_max: "Cena do",
@@ -67,7 +79,12 @@ function filterSummary(filters: Record<string, unknown>, categories: Category[])
     with_images: "Sa slikom"
   };
   return Object.entries(filters).map(([key, value]) => {
-    if (key === "category") return `Kategorija: ${category?.name_sr ?? value}`;
+    if (key === "category") {
+      const labels = values(value).map(
+        (slug) => flattened.find((item) => item.slug === slug)?.name_sr ?? slug
+      );
+      return `Kategorije: ${labels.join(", ")}`;
+    }
     const match = /^attributes\[([^\]]+)\](?:\[(min|max)\])?$/.exec(key);
     if (match) {
       const attribute = category?.attributes.find((item) => item.key === match[1]);

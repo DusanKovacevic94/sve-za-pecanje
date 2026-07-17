@@ -73,18 +73,36 @@ def apply_listing_filters(
         statement = statement.outerjoin(Brand, Listing.brand_id == Brand.id)
         statement, rank = apply_listing_search(statement, query, dialect, include_brand=True)
 
-    category_slug = str(filters.get("category") or "")
+    category_slugs = _values(filters.get("category"))
+    selected_categories: list[Category] = []
     category = None
-    if category_slug:
-        category = db.scalar(select(Category).where(Category.slug == category_slug))
-        if not category:
+    if category_slugs:
+        rows = list(
+            db.scalars(select(Category).where(Category.slug.in_(category_slugs))).all()
+        )
+        by_slug = {item.slug: item for item in rows}
+        missing = [slug for slug in category_slugs if slug not in by_slug]
+        if missing:
             raise api_error("NOT_FOUND", "Kategorija nije pronađena.", 404)
+        selected_categories = [by_slug[slug] for slug in category_slugs]
+        selected_ids = {item.id for item in selected_categories}
         descendant_ids = list(
-            db.scalars(select(Category.id).where(Category.parent_id == category.id)).all()
+            db.scalars(
+                select(Category.id).where(Category.parent_id.in_(selected_ids))
+            ).all()
         )
         statement = statement.where(
-            Listing.category_id.in_([category.id, *descendant_ids])
+            Listing.category_id.in_([*selected_ids, *descendant_ids])
         )
+        root_ids = {
+            item.parent_id or item.id for item in selected_categories
+        }
+        if len(root_ids) == 1:
+            category = (
+                selected_categories[0]
+                if len(selected_categories) == 1
+                else db.get(Category, next(iter(root_ids)))
+            )
     for key in ("condition", "currency", "city", "brand_id"):
         values = _values(filters.get(key))
         if values:
@@ -115,13 +133,18 @@ def apply_listing_filters(
     exact, ranges = _attribute_filters(filters)
     if not exact and not ranges:
         return statement, rank
-    if not category_slug:
+    if not category_slugs:
         raise api_error(
             "VALIDATION_ERROR",
             "Izaberite kategoriju pre korišćenja specifičnih filtera.",
             422,
         )
-    assert category is not None
+    if category is None:
+        raise api_error(
+            "VALIDATION_ERROR",
+            "Specifični filteri zahtevaju kategorije iz iste glavne grupe.",
+            422,
+        )
     definitions = {
         item.key: item for item in effective_attribute_definitions(db, category)
     }
@@ -140,11 +163,12 @@ def apply_listing_filters(
         return statement, rank
 
     filter_context: dict[str, Any] = dict(exact)
-    leaf = LEAF_BY_SLUG.get(category.slug)
-    if leaf and len(leaf["discriminator_values"]) == 1:
-        filter_context[leaf["discriminator_key"]] = [
-            leaf["discriminator_values"][0]
-        ]
+    for selected_category in selected_categories:
+        leaf = LEAF_BY_SLUG.get(selected_category.slug)
+        if leaf and leaf["discriminator_key"] not in filter_context:
+            filter_context.setdefault(leaf["discriminator_key"], []).extend(
+                leaf["discriminator_values"]
+            )
     for key in set(exact) | set(ranges):
         definition = definitions.get(key)
         if not definition or not definition.filterable:
