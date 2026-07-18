@@ -107,3 +107,34 @@ Plan i katalog: [docs/category-filter-plan.md](../docs/category-filter-plan.md).
 - [x] [044 — Paritet sačuvanih pretraga](044-saved-search-filter-parity.md)
 - [x] [045 — Kompletni globalni filteri](045-global-browse-filters.md)
 - [x] [046 — Taksonomija potkategorija](046-leaf-category-taxonomy.md)
+
+---
+
+# Round 6 — Soft launch: trust, liquidity, and growth (2026-07-18)
+
+Plan: [docs/soft-launch-roadmap.md](../docs/soft-launch-roadmap.md).
+
+Tasks in this round are written in English. Literal user-facing copy remains Serbian Latin.
+Order: establish measurement and release safety, improve seller/buyer activation, add trust
+and retention, then address account governance and sustainable SEO.
+
+## P1 — Measurement, safety, and activation
+
+- [ ] [047 — Marketplace health metrics and liquidity dashboard](047-marketplace-health-metrics.md)
+- [ ] [048 — Critical marketplace journey and release gate](048-critical-marketplace-e2e.md)
+- [ ] [049 — Adaptive anti-abuse and moderation risk queue](049-adaptive-anti-abuse.md)
+- [ ] [050 — Listing drafts, autosave, and quality checklist](050-listing-drafts-autosave.md)
+- [ ] [051 — Price flexibility, delivery options, and reservation state](051-listing-handoff-options.md)
+- [ ] [052 — Search suggestions, typo recovery, and better empty results](052-search-discovery.md)
+
+## P1 — Trust, retention, and account controls
+
+- [ ] [053 — In-app notification center](053-in-app-notifications.md)
+- [ ] [055 — SMS-ready phone verification and visible trust signals](055-phone-verification-trust.md)
+- [ ] [056 — Blocking, muting, and conversation reporting](056-conversation-safety.md)
+- [ ] [057 — Account sessions, data export, and account closure](057-account-security-privacy.md)
+
+## P2 — Retention and sustainable acquisition
+
+- [ ] [054 — Follow sellers and shops](054-seller-following.md)
+- [ ] [058 — Faceted SEO policy and curated landing pages](058-faceted-seo-landing-pages.md)
