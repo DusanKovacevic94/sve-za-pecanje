@@ -7,6 +7,7 @@ from app.core.responses import api_error
 from app.models.listing import Listing
 from app.models.message import Conversation, Message
 from app.models.user import User
+from app.services.analytics_service import AnalyticsService
 
 
 class MessageService:
@@ -107,6 +108,14 @@ class MessageService:
             )
             self.db.add(conversation)
             self.db.flush()
+            AnalyticsService(self.db).track(
+                "conversation_started",
+                sender.id,
+                entity_type="conversation",
+                entity_id=conversation.id,
+                category_id=listing.category_id,
+                properties={"listing_id": listing.id},
+            )
         return self._append_message(conversation, sender, body, listing)
 
     def reply(self, conversation_id: str, sender: User, body: str) -> Conversation:

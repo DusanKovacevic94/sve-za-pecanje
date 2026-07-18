@@ -7,8 +7,10 @@ from app.core.responses import data_response
 from app.db.session import get_db
 from app.models.saved_search import SavedSearch
 from app.models.user import User
+from app.models.category import Category
 from app.schemas.search import SavedSearchCreate
 from app.services.search_service import SearchService
+from app.services.analytics_service import AnalyticsService
 
 router = APIRouter(prefix="/saved-searches", tags=["saved-searches"])
 MAX_SAVED_SEARCHES = 20
@@ -57,6 +59,22 @@ def create_saved_search(
         notification_enabled=payload.notification_enabled,
     )
     db.add(item)
+    db.flush()
+    raw_categories = payload.filters.get("category")
+    category_slug = raw_categories if isinstance(raw_categories, str) else None
+    category = (
+        db.scalar(select(Category).where(Category.slug == category_slug))
+        if category_slug
+        else None
+    )
+    AnalyticsService(db).track(
+        "saved_search_created",
+        user.id,
+        entity_type="saved_search",
+        entity_id=item.id,
+        category_id=category.id if category else None,
+        properties={"has_query": bool(payload.query), "filter_count": len(payload.filters)},
+    )
     db.commit()
     db.refresh(item)
     return data_response(

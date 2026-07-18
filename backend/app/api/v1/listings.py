@@ -25,6 +25,7 @@ from app.models.category import Category
 from app.models.favorite import Favorite
 from app.services.feature_service import FeatureService, serialize_feature_request
 from app.services.filter_service import parse_query_params
+from app.services.analytics_service import AnalyticsService
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
@@ -265,19 +266,29 @@ def report_listing(
     from sqlalchemy import select
 
     report = db.scalar(select(Report).where(Report.reporter_id == user.id, Report.listing_id == listing_id))
+    created = report is None
     if report:
         report.reason = payload.reason
         report.description = payload.description
         report.status = "open"
     else:
-        db.add(
-            Report(
-                reporter_id=user.id,
-                listing_id=listing_id,
-                reported_user_id=listing.seller_id,
-                reason=payload.reason,
-                description=payload.description,
-            )
+        report = Report(
+            reporter_id=user.id,
+            listing_id=listing_id,
+            reported_user_id=listing.seller_id,
+            reason=payload.reason,
+            description=payload.description,
+        )
+        db.add(report)
+        db.flush()
+    if created:
+        AnalyticsService(db).track(
+            "report_created",
+            user.id,
+            entity_type="report",
+            entity_id=report.id,
+            category_id=listing.category_id,
+            properties={"reason": payload.reason},
         )
     db.commit()
     return data_response({"message": "Prijava je poslata administratorima."})

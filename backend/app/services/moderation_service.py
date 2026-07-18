@@ -11,6 +11,7 @@ from app.models.report import Report
 from app.models.email_outbox import EmailOutbox
 from app.models.user import User
 from app.services.email_service import EmailService
+from app.services.analytics_service import AnalyticsService
 
 
 class ModerationService:
@@ -55,6 +56,14 @@ class ModerationService:
         listing.approved_by_admin_id = admin.id
         listing.rejection_reason = None
         self.audit(admin, "listing.approved", "listing", listing.id)
+        AnalyticsService(self.db).track(
+            "listing_approved",
+            admin.id,
+            {"review_mode": "manual"},
+            entity_type="listing",
+            entity_id=listing.id,
+            category_id=listing.category_id,
+        )
         EmailService(self.db).send_listing_approved(listing.seller.email, listing.title)
         self.db.commit()
         self.db.refresh(listing)

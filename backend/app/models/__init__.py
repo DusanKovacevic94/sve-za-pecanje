@@ -1,4 +1,4 @@
-from app.models.analytics import AnalyticsEvent
+from app.models.analytics import AnalyticsEvent, MarketplaceMetricDaily
 from app.models.audit import AuditLog
 from app.models.auth_session import AuthSession
 from app.models.brand import Brand
@@ -18,6 +18,7 @@ from app.models.user import User
 
 __all__ = [
     "AnalyticsEvent",
+    "MarketplaceMetricDaily",
     "AuditLog",
     "AuthSession",
     "AttributeDefinition",

@@ -1,10 +1,12 @@
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
-from sqlalchemy import delete
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.models.analytics import AnalyticsEvent
+from app.models.analytics import AnalyticsEvent, MarketplaceMetricDaily
+from app.services.analytics_service import build_marketplace_metrics_range
 from app.services.view_service import flush_view_counts
 
 
@@ -14,6 +16,36 @@ def flush_listing_view_counts(db: Session) -> int:
 
 def delete_old_analytics_events(db: Session) -> int:
     cutoff = datetime.now(UTC) - timedelta(days=settings.analytics_retention_days)
-    result = db.execute(delete(AnalyticsEvent).where(AnalyticsEvent.created_at < cutoff))
+    event_result = db.execute(
+        delete(AnalyticsEvent)
+        .where(AnalyticsEvent.created_at < cutoff)
+        .execution_options(synchronize_session=False)
+    )
+    aggregate_cutoff = (
+        datetime.now(ZoneInfo("Europe/Belgrade")).date()
+        - timedelta(days=settings.analytics_aggregate_retention_days)
+    )
+    aggregate_result = db.execute(
+        delete(MarketplaceMetricDaily).where(
+            MarketplaceMetricDaily.metric_date < aggregate_cutoff
+        ).execution_options(synchronize_session=False)
+    )
     db.commit()
-    return int(result.rowcount or 0)
+    return int(event_result.rowcount or 0) + int(aggregate_result.rowcount or 0)
+
+
+def refresh_marketplace_metrics(db: Session) -> int:
+    latest_update = db.scalar(select(func.max(MarketplaceMetricDaily.updated_at)))
+    now = datetime.now(UTC)
+    if latest_update:
+        latest_update = (
+            latest_update
+            if latest_update.tzinfo
+            else latest_update.replace(tzinfo=UTC)
+        )
+        if latest_update >= now - timedelta(
+            minutes=settings.analytics_rollup_interval_minutes
+        ):
+            return 0
+    today = datetime.now(ZoneInfo("Europe/Belgrade")).date()
+    return build_marketplace_metrics_range(db, today - timedelta(days=1), today)

@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import settings
 from app.core.responses import api_error
 from app.core.storage import delete_storage_object
-from app.models.analytics import AnalyticsEvent
 from app.models.category import AttributeDefinition, Category
 from app.models.favorite import Favorite
 from app.models.image import ListingImage
@@ -19,6 +18,7 @@ from app.models.user import User
 from app.schemas.listing import ListingCreate, ListingUpdate
 from app.models.profile import UserProfile
 from app.services.attribute_service import validate_and_coerce_attributes
+from app.services.analytics_service import AnalyticsService
 from app.services.category_service import effective_loaded_attribute_definitions
 from app.services.filter_service import apply_listing_filters
 
@@ -41,6 +41,8 @@ class ListingService:
             raise api_error("FORBIDDEN", "Potvrdite email adresu pre postavljanja oglasa.", 403)
         attributes = validate_and_coerce_attributes(self.db, payload.category_id, payload.attributes)
         public_id = token_hex(4)
+        now = datetime.now(UTC)
+        automatically_approved = settings.listing_review_mode == "auto"
         listing = Listing(
             public_id=public_id,
             seller_id=seller.id,
@@ -56,15 +58,32 @@ class ListingService:
             currency=payload.currency,
             city=payload.city,
             municipality=payload.municipality,
-            status="active" if settings.listing_review_mode == "auto" else "pending_review",
-            expires_at=datetime.now(UTC) + timedelta(days=settings.listing_lifetime_days),
+            status="active" if automatically_approved else "pending_review",
+            approved_at=now if automatically_approved else None,
+            expires_at=now + timedelta(days=settings.listing_lifetime_days),
             attributes=attributes,
             allow_messages=payload.allow_messages,
             phone_visible=payload.phone_visible,
         )
         self.db.add(listing)
         self.db.flush()
-        self.track(seller.id, "listing_created", "listing", listing.id)
+        self.track(
+            seller.id,
+            "listing_published",
+            "listing",
+            listing.id,
+            category_id=listing.category_id,
+            properties={"status": listing.status},
+        )
+        if automatically_approved:
+            self.track(
+                seller.id,
+                "listing_approved",
+                "listing",
+                listing.id,
+                category_id=listing.category_id,
+                properties={"review_mode": "auto"},
+            )
         self.db.commit()
         self.db.refresh(listing)
         return listing
@@ -123,7 +142,13 @@ class ListingService:
         if not exists:
             self.db.add(Favorite(user_id=user.id, listing_id=listing_id))
             listing.favorite_count += 1
-            self.track(user.id, "favorite_added", "listing", listing_id)
+            self.track(
+                user.id,
+                "favorite_added",
+                "listing",
+                listing_id,
+                category_id=listing.category_id,
+            )
             self.db.commit()
 
     def unfavorite(self, listing_id: str, user: User) -> None:
@@ -153,7 +178,13 @@ class ListingService:
         listing.status = "sold"
         listing.sold_at = datetime.now(UTC)
         listing.sold_to_user_id = sold_to_user_id
-        self.track(actor.id, "listing_marked_sold", "listing", listing.id)
+        self.track(
+            actor.id,
+            "listing_marked_sold",
+            "listing",
+            listing.id,
+            category_id=listing.category_id,
+        )
         self.db.commit()
         self.db.refresh(listing)
         return listing
@@ -250,15 +281,15 @@ class ListingService:
         entity_type: str,
         entity_id: str,
         properties: dict | None = None,
+        category_id: str | None = None,
     ) -> None:
-        self.db.add(
-            AnalyticsEvent(
-                user_id=user_id,
-                event_name=event_name,
-                entity_type=entity_type,
-                entity_id=entity_id,
-                properties=properties or {},
-            )
+        AnalyticsService(self.db).track(
+            event_name,
+            user_id,
+            properties,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            category_id=category_id,
         )
 
 

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.listing import Listing
+from app.services.analytics_service import AnalyticsService
 
 _dedupe: dict[str, datetime] = {}
 _redis_client: Any | None = None
@@ -56,7 +57,13 @@ def _viewer_key(listing_id: str, user_id: str | None, ip: str, user_agent: str |
     return f"listing-view:{digest}"
 
 
-def _fallback_track(db: Session, listing_id: str, dedupe_key: str, now: datetime) -> bool:
+def _fallback_track(
+    db: Session,
+    listing_id: str,
+    dedupe_key: str,
+    now: datetime,
+    user_id: str | None = None,
+) -> bool:
     stale = [key for key, expires_at in _dedupe.items() if expires_at < now]
     for key in stale:
         del _dedupe[key]
@@ -67,6 +74,13 @@ def _fallback_track(db: Session, listing_id: str, dedupe_key: str, now: datetime
     if not listing:
         return False
     listing.view_count += 1
+    AnalyticsService(db).track(
+        "listing_viewed",
+        user_id,
+        entity_type="listing",
+        entity_id=listing.id,
+        category_id=listing.category_id,
+    )
     db.commit()
     return True
 
@@ -84,15 +98,25 @@ def track_listing_view(
     dedupe_key = _viewer_key(listing_id, user_id, ip, user_agent)
     client = _get_redis_client(now)
     if client is None:
-        return _fallback_track(db, listing_id, dedupe_key, now)
+        return _fallback_track(db, listing_id, dedupe_key, now, user_id)
     try:
         inserted = client.set(dedupe_key, "1", nx=True, ex=settings.view_dedupe_seconds)
         if not inserted:
             return False
         client.incr(f"listing-view-count:{listing_id}")
+        listing = db.get(Listing, listing_id)
+        if listing:
+            AnalyticsService(db).track(
+                "listing_viewed",
+                user_id,
+                entity_type="listing",
+                entity_id=listing.id,
+                category_id=listing.category_id,
+            )
+            db.commit()
         return True
     except Exception:
-        return _fallback_track(db, listing_id, dedupe_key, now)
+        return _fallback_track(db, listing_id, dedupe_key, now, user_id)
 
 
 def flush_view_counts(db: Session, limit: int = 500) -> int:

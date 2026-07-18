@@ -58,6 +58,8 @@ class Settings(BaseSettings):
     worker_interval_seconds: int = 60
     view_dedupe_seconds: int = 3600
     analytics_retention_days: int = 90
+    analytics_aggregate_retention_days: int = 730
+    analytics_rollup_interval_minutes: int = 15
     worker_heartbeat_key: str = "worker:heartbeat"
     worker_heartbeat_max_age_seconds: int = 300
     max_listing_images: int = 10

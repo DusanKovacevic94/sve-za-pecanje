@@ -27,6 +27,9 @@ Task 047 establishes the baseline used to evaluate later work. Task 048 protects
 marketplace journey before new listing and messaging states are introduced. Task 049 adds
 proportionate abuse controls without challenging every legitimate visitor.
 
+Metric formulas and the event contract are documented in
+[marketplace-metrics.md](marketplace-metrics.md).
+
 ### Wave 2 — Seller and buyer activation
 
 4. [050 — Listing drafts, autosave, and quality checklist](../tasks/050-listing-drafts-autosave.md)

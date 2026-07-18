@@ -6,7 +6,11 @@ from app.core.config import settings
 from app.core.logging import configure_logging
 from app.core.sentry import init_sentry
 from app.db.session import SessionLocal
-from app.tasks.analytics_tasks import delete_old_analytics_events, flush_listing_view_counts
+from app.tasks.analytics_tasks import (
+    delete_old_analytics_events,
+    flush_listing_view_counts,
+    refresh_marketplace_metrics,
+)
 from app.tasks.email_tasks import process_email_outbox
 from app.tasks.image_tasks import cleanup_orphan_local_uploads
 from app.tasks.listing_tasks import archive_expired_listings, clear_expired_featured_listings
@@ -35,6 +39,7 @@ def run_task(name: str, func) -> int:
 def run_cycle() -> None:
     run_task("email_outbox", process_email_outbox)
     run_task("flush_listing_view_counts", flush_listing_view_counts)
+    run_task("refresh_marketplace_metrics", refresh_marketplace_metrics)
     run_task("archive_expired_listings", archive_expired_listings)
     run_task("clear_expired_featured_listings", clear_expired_featured_listings)
     run_task("saved_search_digests", send_saved_search_digests)

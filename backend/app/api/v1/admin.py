@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, Query
+import csv
+from io import StringIO
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -23,6 +25,7 @@ from app.schemas.admin import (
     SuspendUserRequest,
 )
 from app.services.listing_service import serialize_listing_detail, slugify
+from app.services.analytics_service import marketplace_dashboard
 from app.services.moderation_service import ModerationService
 from app.services.feature_service import FeatureService, serialize_feature_request
 from app.services.shop_service import (
@@ -62,6 +65,71 @@ def unique_brand_slug(db: Session, name: str, current_id: str | None = None) -> 
 @router.get("/dashboard")
 def dashboard(admin: User = Depends(require_admin), db: Session = Depends(get_db)):
     return data_response(ModerationService(db).dashboard())
+
+
+@router.get("/analytics/marketplace")
+def marketplace_analytics(
+    days: int = Query(default=30),
+    category_id: str | None = Query(default=None),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    if days not in {7, 30, 90}:
+        raise api_error(
+            "VALIDATION_ERROR", "Period mora biti 7, 30 ili 90 dana.", 422
+        )
+    if category_id and not db.get(Category, category_id):
+        raise api_error("NOT_FOUND", "Kategorija nije pronađena.", 404)
+    return data_response(
+        marketplace_dashboard(db, days=days, category_id=category_id)
+    )
+
+
+@router.get("/analytics/marketplace.csv")
+def marketplace_analytics_csv(
+    days: int = Query(default=30),
+    category_id: str | None = Query(default=None),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    if days not in {7, 30, 90}:
+        raise api_error(
+            "VALIDATION_ERROR", "Period mora biti 7, 30 ili 90 dana.", 422
+        )
+    if category_id and not db.get(Category, category_id):
+        raise api_error("NOT_FOUND", "Kategorija nije pronađena.", 404)
+    result = marketplace_dashboard(db, days=days, category_id=category_id)
+    output = StringIO()
+    fieldnames = [
+        "date",
+        "active_listings",
+        "new_approved_listings",
+        "unique_active_sellers",
+        "photo_quality_rate",
+        "searches",
+        "zero_result_rate",
+        "listing_views",
+        "conversations_started",
+        "contact_conversion_rate",
+        "sold_listings",
+        "sold_within_30_days_rate",
+        "median_days_to_sale",
+        "reports",
+        "report_rate_per_1000_views",
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction="ignore")
+    writer.writeheader()
+    writer.writerows(result["series"])
+    suffix = f"-{category_id}" if category_id else ""
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="marketplace-metrics-{days}d{suffix}.csv"'
+            )
+        },
+    )
 
 
 @router.get("/config")

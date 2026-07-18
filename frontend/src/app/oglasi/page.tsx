@@ -1,6 +1,7 @@
 import { SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 
+import { MarketplaceSearchTracker } from "@/components/analytics/MarketplaceSearchTracker";
 import { FilterSidebar } from "@/components/filters/FilterSidebar";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { Button } from "@/components/ui/Button";
@@ -165,6 +166,12 @@ export default async function BrowsePage({ searchParams }: PageProps) {
   const totalPages = Number(listings.meta?.total_pages ?? 1);
   const chips = activeFilters(params, categories.data, brands.data);
   const sort = typeof params.sort === "string" ? params.sort : "newest";
+  const selectedCategories = allCategories(categories.data).filter((category) =>
+    selectedCategorySlugs.includes(category.slug)
+  );
+  const analyticsCategoryId = selectedCategories.length === 1
+    ? selectedCategories[0].id
+    : null;
   const categoryChips = chips.filter((chip) => chip.key === "category");
   const heading = categoryChips.length === 1
     ? `${categoryChips[0].label} oglasi`
@@ -173,6 +180,13 @@ export default async function BrowsePage({ searchParams }: PageProps) {
       : "Oglasi za ribolovnu opremu";
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
+      <MarketplaceSearchTracker
+        query={typeof params.q === "string" ? params.q : null}
+        resultCount={total}
+        filterCount={chips.length}
+        page={page}
+        categoryId={analyticsCategoryId}
+      />
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <h1 className="text-3xl font-black">{heading}</h1>
