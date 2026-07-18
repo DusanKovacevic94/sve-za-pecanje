@@ -1,6 +1,6 @@
 # 048 — Critical marketplace journey and release gate
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Problem
@@ -14,26 +14,26 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Add reusable Playwright fixtures for visitor, seller, buyer, and administrator roles
-- [ ] Add deterministic test adapters for email, image storage, and background jobs without
+- [x] Add reusable Playwright fixtures for visitor, seller, buyer, and administrator roles
+- [x] Add deterministic test adapters for email, image storage, and background jobs without
   exposing a test-only route in production
-- [ ] Make test data isolated per test and safe for parallel execution
-- [ ] Cover seller registration, email verification, sign-in, listing creation, image
+- [x] Make test data isolated per test and safe for parallel execution
+- [x] Cover seller registration, email verification, sign-in, listing creation, image
   upload/reordering, and submission for moderation
-- [ ] Cover administrator approval followed by public listing visibility
-- [ ] Cover buyer search, category and brand multi-selection, dynamic attributes, favorites,
+- [x] Cover administrator approval followed by public listing visibility
+- [x] Cover buyer search, category and brand multi-selection, dynamic attributes, favorites,
   saved searches, and the first message
-- [ ] Cover seller reply, unread-state clearing, buyer selection, mark-sold, and eligible
+- [x] Cover seller reply, unread-state clearing, buyer selection, mark-sold, and eligible
   reviews
-- [ ] Cover listing or conversation reporting and administrator resolution
-- [ ] Add a regression for the earlier category control: a parent category appears once as
+- [x] Cover listing or conversation reporting and administrator resolution
+- [x] Add a regression for the earlier category control: a parent category appears once as
   a selectable choice, group labels are not duplicated as misleading options, and multiple
   category/brand values survive submit, reload, chip removal, and saved-search restoration
-- [ ] Run the critical suite on every pull request and save traces/screenshots only on
+- [x] Run the critical suite on every pull request and save traces/screenshots only on
   failure
-- [ ] Add a non-mutating post-deployment smoke command for readiness, homepage, browse,
+- [x] Add a non-mutating post-deployment smoke command for readiness, homepage, browse,
   listing detail, and login pages
-- [ ] Replace any inaccurate E2E claims in existing documentation with the scenarios that
+- [x] Replace any inaccurate E2E claims in existing documentation with the scenarios that
   are actually enforced
 
 ## Acceptance criteria

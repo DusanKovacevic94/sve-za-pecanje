@@ -72,6 +72,42 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend
 - Registration email appears in provider logs
 - Admin can approve/reject listings
 
+Run the non-mutating post-deployment smoke from the repository checkout:
+
+```bash
+python3 ops/smoke_deployment.py \
+  --app-url https://svezapecanje.rs \
+  --api-url https://svezapecanje.rs
+```
+
+It checks readiness, homepage, browse, login, the public listing API, and one public
+listing detail page. It does not sign in or change data and exits non-zero on failure.
+Run it after every deployment before considering the release healthy.
+
+## E2E release gate
+
+The local Playwright suite starts isolated backend and frontend processes, recreates its
+SQLite database, uses local `/tmp` image storage, queues email without contacting a
+provider, and runs manual listing moderation through the real admin API. No production
+email or object-storage credentials are needed.
+
+Run the complete suite locally with one command:
+
+```bash
+cd frontend
+pnpm test:e2e
+```
+
+Run only the critical registration-to-sale journey while developing:
+
+```bash
+cd frontend
+pnpm test:e2e:critical
+```
+
+CI runs the complete suite three consecutive times with Playwright retries disabled.
+Traces, screenshots, and video are retained and uploaded only when a run fails.
+
 ## Caddy
 
 The production Compose override adds a `caddy` service using `ops/caddy/Caddyfile`.

@@ -38,6 +38,17 @@ const nextConfig = {
   output: "standalone",
   images: {
     remotePatterns
+  },
+  async rewrites() {
+    const internalApiUrl = process.env.INTERNAL_API_URL;
+    if (!internalApiUrl) return [];
+    const backendOrigin = new URL(internalApiUrl).origin;
+    return [
+      {
+        source: "/uploads/:path*",
+        destination: `${backendOrigin}/uploads/:path*`
+      }
+    ];
   }
 };
 

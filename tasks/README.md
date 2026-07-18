@@ -121,7 +121,7 @@ and retention, then address account governance and sustainable SEO.
 ## P1 — Measurement, safety, and activation
 
 - [x] [047 — Marketplace health metrics and liquidity dashboard](047-marketplace-health-metrics.md)
-- [ ] [048 — Critical marketplace journey and release gate](048-critical-marketplace-e2e.md)
+- [x] [048 — Critical marketplace journey and release gate](048-critical-marketplace-e2e.md)
 - [ ] [049 — Adaptive anti-abuse and moderation risk queue](049-adaptive-anti-abuse.md)
 - [ ] [050 — Listing drafts, autosave, and quality checklist](050-listing-drafts-autosave.md)
 - [ ] [051 — Price flexibility, delivery options, and reservation state](051-listing-handoff-options.md)

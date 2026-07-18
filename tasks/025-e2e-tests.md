@@ -26,3 +26,12 @@ Backend ima 18 testova, ali poruke, moderacija, ocene, prijave, favoriti i worke
 - `frontend/` (novi `playwright.config.ts`, `e2e/`)
 - `backend/app/tests/` (novi integration testovi)
 - `.github/workflows/ci.yml`
+
+## Follow-up correction (2026-07-18)
+
+The original completion record overstated the Playwright coverage. Task 025 delivered
+the Playwright setup, basic page smoke checks, filter URL coverage, backend service
+tests, and CI integration; it did not yet enforce the complete registration-to-sale
+browser journey listed above. The full journey, deterministic test adapters, manual
+moderation, release repetitions, failure artifacts, and post-deployment smoke command
+are implemented and tracked by [task 048](048-critical-marketplace-e2e.md).

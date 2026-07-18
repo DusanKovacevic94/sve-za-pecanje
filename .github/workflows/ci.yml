@@ -72,7 +72,18 @@ jobs:
       - run: pnpm lint
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
-      - run: pnpm test:e2e
+      - name: Run Playwright release gate three times without retries
+        run: pnpm test:e2e --repeat-each=3
+      - name: Upload Playwright failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-failure-artifacts
+          path: |
+            frontend/test-results
+            frontend/playwright-report
+          if-no-files-found: ignore
+          retention-days: 7
 
   production-images:
     runs-on: ubuntu-latest
