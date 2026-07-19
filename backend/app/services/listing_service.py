@@ -3,7 +3,9 @@ from datetime import UTC, datetime, timedelta
 from secrets import token_hex
 from typing import Any
 
+from pydantic import ValidationError
 from sqlalchemy import Select, func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.config import settings
@@ -15,12 +17,20 @@ from app.models.image import ListingImage
 from app.models.listing import Listing
 from app.models.message import Conversation
 from app.models.user import User
-from app.schemas.listing import ListingCreate, ListingUpdate
+from app.schemas.listing import (
+    ListingCreate,
+    ListingDraftCreate,
+    ListingDraftUpdate,
+    ListingUpdate,
+)
 from app.models.profile import UserProfile
 from app.services.attribute_service import validate_and_coerce_attributes
 from app.services.analytics_service import AnalyticsService
 from app.services.category_service import effective_loaded_attribute_definitions
 from app.services.filter_service import apply_listing_filters
+
+DRAFT_RETENTION_DAYS = 90
+DRAFT_WARNING_DAYS = 7
 
 
 def slugify(value: str) -> str:
@@ -37,8 +47,7 @@ class ListingService:
         self.db = db
 
     def create(self, seller: User, payload: ListingCreate) -> Listing:
-        if not seller.email_verified_at:
-            raise api_error("FORBIDDEN", "Potvrdite email adresu pre postavljanja oglasa.", 403)
+        self._ensure_seller_can_publish(seller)
         attributes = validate_and_coerce_attributes(self.db, payload.category_id, payload.attributes)
         public_id = token_hex(4)
         now = datetime.now(UTC)
@@ -91,9 +100,214 @@ class ListingService:
         RiskService(self.db).fingerprint_listing(listing)
         return listing
 
+    def create_draft(self, seller: User, payload: ListingDraftCreate) -> Listing:
+        self._ensure_seller_can_publish(seller)
+        existing = self.db.scalar(
+            self._base_query().where(
+                Listing.seller_id == seller.id,
+                Listing.draft_client_id == payload.client_draft_id,
+            )
+        )
+        if existing:
+            if existing.status != "draft":
+                raise api_error(
+                    "DRAFT_ALREADY_PUBLISHED",
+                    "Ova verzija nacrta je već objavljena.",
+                    409,
+                    {"listing_id": existing.id},
+                )
+            return existing
+        if not self.db.get(Category, payload.category_id):
+            raise api_error("VALIDATION_ERROR", "Izaberite važeću kategoriju.", 422)
+        now = datetime.now(UTC)
+        public_id = token_hex(4)
+        listing = Listing(
+            public_id=public_id,
+            seller_id=seller.id,
+            category_id=payload.category_id,
+            brand_id=payload.brand_id,
+            brand_name_custom=payload.brand_name_custom,
+            model=payload.model,
+            title=payload.title,
+            slug=f"nacrt-{public_id}",
+            description=payload.description,
+            condition=payload.condition,
+            price_amount=payload.price_amount,
+            currency=payload.currency,
+            city=payload.city,
+            municipality=payload.municipality,
+            status="draft",
+            attributes=payload.attributes,
+            allow_messages=payload.allow_messages,
+            phone_visible=payload.phone_visible,
+            draft_client_id=payload.client_draft_id,
+            draft_version=1,
+            draft_last_saved_at=now,
+            expires_at=None,
+        )
+        self.db.add(listing)
+        try:
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            existing = self.db.scalar(
+                self._base_query().where(
+                    Listing.seller_id == seller.id,
+                    Listing.draft_client_id == payload.client_draft_id,
+                )
+            )
+            if existing and existing.status == "draft":
+                return existing
+            raise
+        return self.get_owned_or_admin(listing.id, seller)
+
+    def update_draft(
+        self,
+        listing: Listing,
+        payload: ListingDraftUpdate,
+        actor: User,
+    ) -> Listing:
+        listing = self._lock_listing(listing.id)
+        self._ensure_draft_owner(listing, actor)
+        if listing.draft_version != payload.expected_version:
+            raise api_error(
+                "AUTOSAVE_CONFLICT",
+                "Nacrt je izmenjen u drugoj sesiji.",
+                409,
+                {
+                    "server_version": listing.draft_version,
+                    "server_updated_at": (
+                        listing.draft_last_saved_at.isoformat()
+                        if listing.draft_last_saved_at
+                        else None
+                    ),
+                },
+            )
+        data = payload.model_dump(exclude_unset=True, exclude={"expected_version"})
+        category_id = data.get("category_id")
+        if "category_id" in data and not category_id:
+            raise api_error("VALIDATION_ERROR", "Izaberite važeću kategoriju.", 422)
+        if category_id and not self.db.get(Category, category_id):
+            raise api_error("VALIDATION_ERROR", "Izaberite važeću kategoriju.", 422)
+        draft_defaults: dict[str, Any] = {
+            "title": "",
+            "description": "",
+            "condition": "",
+            "price_amount": 0,
+            "currency": "RSD",
+            "city": "",
+            "attributes": {},
+            "allow_messages": True,
+            "phone_visible": False,
+        }
+        for key, default in draft_defaults.items():
+            if key in data and data[key] is None:
+                data[key] = default
+        for key, value in data.items():
+            setattr(listing, key, value)
+        listing.draft_version += 1
+        listing.draft_last_saved_at = datetime.now(UTC)
+        self.db.commit()
+        return self.get_owned_or_admin(listing.id, actor)
+
+    def publish_draft(self, listing: Listing, actor: User, expected_version: int) -> Listing:
+        listing = self._lock_listing(listing.id)
+        self._ensure_draft_owner(listing, actor)
+        if listing.draft_version != expected_version:
+            raise api_error(
+                "AUTOSAVE_CONFLICT",
+                "Nacrt je izmenjen u drugoj sesiji. Osvežite stranicu pre objave.",
+                409,
+                {"server_version": listing.draft_version},
+            )
+        try:
+            payload = ListingCreate.model_validate(
+                {
+                    "category_id": listing.category_id,
+                    "title": listing.title,
+                    "description": listing.description,
+                    "brand_id": listing.brand_id,
+                    "brand_name_custom": listing.brand_name_custom,
+                    "model": listing.model,
+                    "condition": listing.condition,
+                    "price_amount": listing.price_amount,
+                    "currency": listing.currency,
+                    "city": listing.city,
+                    "municipality": listing.municipality,
+                    "allow_messages": listing.allow_messages,
+                    "phone_visible": listing.phone_visible,
+                    "attributes": listing.attributes,
+                }
+            )
+        except ValidationError as error:
+            fields = sorted(
+                {
+                    str(item["loc"][0])
+                    for item in error.errors()
+                    if item.get("loc")
+                }
+            )
+            raise api_error(
+                "VALIDATION_ERROR",
+                "Dovršite obavezna polja pre slanja oglasa.",
+                422,
+                {"fields": fields},
+            ) from error
+        attributes = validate_and_coerce_attributes(
+            self.db,
+            payload.category_id,
+            payload.attributes,
+        )
+        now = datetime.now(UTC)
+        automatically_approved = settings.listing_review_mode == "auto"
+        listing.attributes = attributes
+        listing.slug = f"{slugify(payload.title)}-{listing.public_id}"
+        listing.status = "active" if automatically_approved else "pending_review"
+        listing.approved_at = now if automatically_approved else None
+        listing.expires_at = now + timedelta(days=settings.listing_lifetime_days)
+        listing.draft_last_saved_at = None
+        listing.draft_version += 1
+        self.track(
+            actor.id,
+            "listing_published",
+            "listing",
+            listing.id,
+            category_id=listing.category_id,
+            properties={"status": listing.status, "from_draft": True},
+        )
+        if automatically_approved:
+            self.track(
+                actor.id,
+                "listing_approved",
+                "listing",
+                listing.id,
+                category_id=listing.category_id,
+                properties={"review_mode": "auto", "from_draft": True},
+            )
+        self.db.commit()
+        published = self.get_owned_or_admin(listing.id, actor)
+        from app.services.risk_service import RiskService
+
+        RiskService(self.db).fingerprint_listing(published)
+        return published
+
+    def delete_draft(self, listing: Listing, actor: User) -> None:
+        self._ensure_draft_owner(listing, actor)
+        storage_keys = [image.storage_key for image in listing.images]
+        self.db.delete(listing)
+        self.db.commit()
+        for storage_key in storage_keys:
+            delete_storage_object(storage_key)
+
     def update(self, listing: Listing, payload: ListingUpdate, actor: User) -> Listing:
         if listing.seller_id != actor.id and actor.role not in {"admin", "super_admin"}:
             raise api_error("FORBIDDEN", "Nemate dozvolu za izmenu ovog oglasa.", 403)
+        if listing.status == "draft":
+            raise api_error(
+                "VALIDATION_ERROR",
+                "Nacrt se čuva preko autosave operacije.",
+                400,
+            )
         data = payload.model_dump(exclude_unset=True)
         if "attributes" in data and data["attributes"] is not None:
             data["attributes"] = validate_and_coerce_attributes(
@@ -125,7 +339,12 @@ class ListingService:
         return list(rows), total
 
     def get_by_slug(self, slug: str) -> Listing:
-        listing = self.db.scalar(self._base_query().where(Listing.slug == slug))
+        listing = self.db.scalar(
+            self._base_query().where(
+                Listing.slug == slug,
+                Listing.status.not_in({"draft", "deleted"}),
+            )
+        )
         if not listing:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
         return listing
@@ -140,7 +359,7 @@ class ListingService:
 
     def favorite(self, listing_id: str, user: User) -> None:
         listing = self.db.get(Listing, listing_id)
-        if not listing:
+        if not listing or listing.status != "active":
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
         exists = self.db.scalar(
             select(Favorite).where(Favorite.user_id == user.id, Favorite.listing_id == listing_id)
@@ -171,6 +390,8 @@ class ListingService:
     def mark_sold(self, listing: Listing, actor: User, sold_to_user_id: str | None = None) -> Listing:
         if listing.seller_id != actor.id and actor.role not in {"admin", "super_admin"}:
             raise api_error("FORBIDDEN", "Samo prodavac ili admin može označiti oglas kao prodat.", 403)
+        if listing.status == "draft":
+            raise api_error("VALIDATION_ERROR", "Nacrt još nije objavljen.", 400)
         if sold_to_user_id:
             buyer_conversation = self.db.scalar(
                 select(Conversation.id).where(
@@ -196,6 +417,8 @@ class ListingService:
         return listing
 
     def archive(self, listing: Listing) -> Listing:
+        if listing.status == "draft":
+            raise api_error("VALIDATION_ERROR", "Nacrt obrišite iz liste nacrta.", 400)
         listing.status = "archived"
         self.db.commit()
         self.db.refresh(listing)
@@ -214,11 +437,14 @@ class ListingService:
         self.db.add(image)
         if listing.status == "active":
             listing.status = "pending_review"
+        elif listing.status == "draft":
+            listing.draft_last_saved_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(image)
-        from app.services.risk_service import RiskService
+        if listing.status != "draft":
+            from app.services.risk_service import RiskService
 
-        RiskService(self.db).fingerprint_listing(listing)
+            RiskService(self.db).fingerprint_listing(listing)
         return image
 
     def delete_image(self, listing: Listing, image_id: str) -> None:
@@ -231,16 +457,21 @@ class ListingService:
         for index, item in enumerate(sorted(remaining, key=lambda row: row.sort_order)):
             item.sort_order = index
             item.is_cover = item.is_cover or (was_cover and index == 0)
+        if listing.status == "draft":
+            listing.draft_last_saved_at = datetime.now(UTC)
         self.db.commit()
         delete_storage_object(storage_key)
-        from app.services.risk_service import RiskService
+        if listing.status != "draft":
+            from app.services.risk_service import RiskService
 
-        RiskService(self.db).fingerprint_listing(listing)
+            RiskService(self.db).fingerprint_listing(listing)
 
     def set_cover_image(self, listing: Listing, image_id: str) -> ListingImage:
         image = self._get_listing_image(listing, image_id)
         for item in listing.images:
             item.is_cover = item.id == image.id
+        if listing.status == "draft":
+            listing.draft_last_saved_at = datetime.now(UTC)
         self.db.commit()
         self.db.refresh(image)
         return image
@@ -251,6 +482,8 @@ class ListingService:
             raise api_error("VALIDATION_ERROR", "Redosled mora sadržati sve slike oglasa.", 400)
         for index, image_id in enumerate(image_ids):
             current[image_id].sort_order = index
+        if listing.status == "draft":
+            listing.draft_last_saved_at = datetime.now(UTC)
         self.db.commit()
         return sorted(current.values(), key=lambda image: image.sort_order)
 
@@ -259,6 +492,31 @@ class ListingService:
         if not image or image.listing_id != listing.id:
             raise api_error("NOT_FOUND", "Slika nije pronađena.", 404)
         return image
+
+    def _ensure_seller_can_publish(self, seller: User) -> None:
+        if not seller.email_verified_at:
+            raise api_error(
+                "FORBIDDEN",
+                "Potvrdite email adresu pre postavljanja oglasa.",
+                403,
+            )
+
+    def _ensure_draft_owner(self, listing: Listing, actor: User) -> None:
+        if listing.seller_id != actor.id and actor.role not in {"admin", "super_admin"}:
+            raise api_error("FORBIDDEN", "Nemate dozvolu za ovaj nacrt.", 403)
+        if listing.status != "draft":
+            raise api_error("DRAFT_NOT_EDITABLE", "Ovaj nacrt više nije dostupan.", 409)
+
+    def _lock_listing(self, listing_id: str) -> Listing:
+        listing = self.db.scalar(
+            self._base_query()
+            .where(Listing.id == listing_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        if not listing:
+            raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
+        return listing
 
     def _base_query(self) -> Select[tuple[Listing]]:
         return select(Listing).options(
@@ -361,6 +619,17 @@ def serialize_listing_card(listing: Listing) -> dict:
     seller_profile = listing.seller.profile if listing.seller else None
     seller_shop_active = _is_shop_active(seller_profile)
     display_attributes = _display_attributes(listing)
+    draft_saved_at = listing.draft_last_saved_at or listing.updated_at
+    draft_expires_at = (
+        draft_saved_at + timedelta(days=DRAFT_RETENTION_DAYS)
+        if listing.status == "draft" and draft_saved_at
+        else None
+    )
+    draft_expires_soon = bool(
+        draft_expires_at
+        and _as_utc(draft_expires_at)
+        <= datetime.now(UTC) + timedelta(days=DRAFT_WARNING_DAYS)
+    )
     return {
         "id": listing.id,
         "public_id": listing.public_id,
@@ -399,6 +668,9 @@ def serialize_listing_card(listing: Listing) -> dict:
         "favorite_count": listing.favorite_count,
         "created_at": listing.created_at,
         "updated_at": listing.updated_at,
+        "draft_version": listing.draft_version,
+        "draft_expires_at": draft_expires_at,
+        "draft_expires_soon": draft_expires_soon,
     }
 
 
@@ -438,3 +710,9 @@ def serialize_listing_detail(
         }
     )
     return data
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)

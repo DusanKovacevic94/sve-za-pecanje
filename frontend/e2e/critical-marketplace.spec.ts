@@ -36,6 +36,9 @@ test("registration-to-sale marketplace journey", async ({
     await sellerPage.goto("/postavi-oglas");
     await sellerPage.getByLabel("Kategorija").selectOption({ label: "↳ Spin štapovi" });
     await sellerPage.getByLabel("Naslov").fill(listingTitle);
+    await expect(sellerPage.getByText("Sačuvano", { exact: true })).toBeVisible();
+    await sellerPage.reload();
+    await expect(sellerPage.getByLabel("Naslov")).toHaveValue(listingTitle);
     await sellerPage
       .getByLabel("Opis")
       .fill("Detaljan E2E opis Shimano spin štapa, očuvanog i spremnog za pecanje.");
@@ -49,6 +52,9 @@ test("registration-to-sale marketplace journey", async ({
       await rodType.selectOption("spinning");
     }
     await sellerPage.getByLabel(/Dužina/).fill("240");
+    const draftFileInput = sellerPage.getByLabel("Dodaj sliku");
+    await draftFileInput.setInputFiles({ name: "front.png", mimeType: "image/png", buffer: validPng });
+    await expect(sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article")).toHaveCount(1);
     await sellerPage.getByRole("button", { name: "Pošalji na pregled" }).click();
     await expect(sellerPage).toHaveURL(/\/oglasi\/[^/?]+$/);
     listingSlug = new URL(sellerPage.url()).pathname.split("/").at(-1) ?? "";
@@ -65,12 +71,12 @@ test("registration-to-sale marketplace journey", async ({
 
     await editLink.click();
     const fileInput = sellerPage.getByLabel("Dodaj sliku");
-    await fileInput.setInputFiles({ name: "front.png", mimeType: "image/png", buffer: validPng });
-    await expect(sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article")).toHaveCount(1);
     await fileInput.setInputFiles({ name: "detail.png", mimeType: "image/png", buffer: validPng });
+    await expect(sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article")).toHaveCount(2);
+    await fileInput.setInputFiles({ name: "condition.png", mimeType: "image/png", buffer: validPng });
 
     const imageCards = sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article");
-    await expect(imageCards).toHaveCount(2);
+    await expect(imageCards).toHaveCount(3);
     await imageCards.nth(1).getByRole("button", { name: "Postavi kao naslovnu" }).click();
     await expect(imageCards.nth(1).getByText("Naslovna")).toBeVisible();
     await imageCards.nth(1).getByRole("button", { name: "Pomeri gore" }).click();

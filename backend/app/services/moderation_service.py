@@ -42,7 +42,10 @@ class ModerationService:
             )
             or 0,
             "listings_last_7_days": self.db.scalar(
-                select(func.count(Listing.id)).where(Listing.created_at >= seven_days_ago)
+                select(func.count(Listing.id)).where(
+                    Listing.created_at >= seven_days_ago,
+                    Listing.status != "draft",
+                )
             )
             or 0,
             "failed_emails": self.db.scalar(select(func.count(EmailOutbox.id)).where(EmailOutbox.status == "failed"))
@@ -51,6 +54,8 @@ class ModerationService:
 
     def approve_listing(self, listing_id: str, admin: User) -> Listing:
         listing = self._get_listing(listing_id)
+        if listing.status == "draft":
+            raise api_error("VALIDATION_ERROR", "Nacrt prvo mora biti objavljen.", 400)
         listing.status = "active"
         listing.approved_at = datetime.now(UTC)
         listing.approved_by_admin_id = admin.id
@@ -71,6 +76,8 @@ class ModerationService:
 
     def reject_listing(self, listing_id: str, admin: User, reason: str) -> Listing:
         listing = self._get_listing(listing_id)
+        if listing.status == "draft":
+            raise api_error("VALIDATION_ERROR", "Nacrt prvo mora biti objavljen.", 400)
         listing.status = "rejected"
         listing.rejection_reason = reason
         self.audit(
@@ -90,6 +97,8 @@ class ModerationService:
 
     def feature_listing(self, listing_id: str, admin: User, featured_until: datetime) -> Listing:
         listing = self._get_listing(listing_id)
+        if listing.status == "draft":
+            raise api_error("VALIDATION_ERROR", "Nacrt prvo mora biti objavljen.", 400)
         listing.is_featured = True
         listing.featured_until = featured_until
         self.audit(admin, "listing.featured", "listing", listing.id)

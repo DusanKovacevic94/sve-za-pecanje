@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Archive, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Archive, CheckCircle2, CloudOff, LoaderCircle, Save } from "lucide-react";
 import { z } from "zod";
 
 import type { Brand, BuyerCandidate, Category, ListingDetail } from "@/lib/api";
@@ -15,6 +15,7 @@ import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
 import { ListingImageManager } from "@/components/forms/ListingImageManager";
+import { ListingQualityChecklist } from "@/components/forms/ListingQualityChecklist";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 const listingFormSchema = listingSchema.passthrough();
@@ -32,6 +33,7 @@ type ListingFormProps = {
   listingId?: string;
   defaultValues?: ListingFormDefaults;
   images?: ListingDetail["images"];
+  resumeDraft?: ListingDetail | null;
 };
 
 function conditionMatches(
@@ -70,7 +72,11 @@ function getDefaultValues(categories: Category[], defaultValues?: ListingFormDef
   return values as ListingFormInput;
 }
 
-function buildPayload(data: ListingFormOutput, category: Category | undefined, mode: "create" | "edit") {
+function buildPayload(
+  data: Record<string, unknown>,
+  category: Category | undefined,
+  mode: "create" | "edit"
+) {
   const attributes: Record<string, unknown> = {};
   category?.attributes.forEach((attribute) => {
     const value = data[`attr_${attribute.key}`];
@@ -100,11 +106,35 @@ function buildPayload(data: ListingFormOutput, category: Category | undefined, m
       payload[key] = null;
     }
   });
+  if (mode === "create" && (payload.price_amount === "" || payload.price_amount === undefined)) {
+    payload.price_amount = 0;
+  }
   if (mode === "edit") {
     delete payload.category_id;
   }
   return payload;
 }
+
+function listingDefaults(listing: ListingDetail): ListingFormDefaults {
+  return {
+    category_id: listing.category.id,
+    title: listing.title,
+    description: listing.description,
+    brand_id: listing.brand?.id ?? "",
+    brand_name_custom: listing.brand_name_custom ?? "",
+    model: listing.model ?? "",
+    condition: listing.condition,
+    price_amount: Number(listing.price_amount) || undefined,
+    currency: listing.currency === "EUR" ? "EUR" : "RSD",
+    city: listing.city,
+    municipality: listing.municipality ?? "",
+    allow_messages: listing.allow_messages,
+    phone_visible: listing.phone_visible,
+    attributes: listing.attributes
+  };
+}
+
+type SaveState = "idle" | "saving" | "saved" | "offline" | "error" | "conflict";
 
 export function CreateListingForm({
   categories,
@@ -112,7 +142,8 @@ export function CreateListingForm({
   mode = "create",
   listingId,
   defaultValues,
-  images = []
+  images = [],
+  resumeDraft = null
 }: ListingFormProps) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -120,11 +151,31 @@ export function CreateListingForm({
   const [challengeRequired, setChallengeRequired] = useState(false);
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const [challengeKey, setChallengeKey] = useState(0);
+  const [draftId, setDraftId] = useState<string | null>(resumeDraft?.id ?? null);
+  const [draftImages, setDraftImages] = useState<ListingDetail["images"]>(
+    resumeDraft?.images ?? images
+  );
+  const [saveState, setSaveState] = useState<SaveState>(resumeDraft ? "saved" : "idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const isEdit = mode === "edit";
   const submitLabel = isEdit ? "Sačuvaj izmene" : "Pošalji na pregled";
-  const initialValues = useMemo(() => getDefaultValues(categories, defaultValues), [categories, defaultValues]);
+  const initialValues = useMemo(
+    () => getDefaultValues(
+      categories,
+      resumeDraft ? listingDefaults(resumeDraft) : defaultValues
+    ),
+    [categories, defaultValues, resumeDraft]
+  );
   const categoryOptions = useMemo(() => flattenCategories(categories), [categories]);
-  const { register, handleSubmit, formState, watch } = useForm<ListingFormInput, unknown, ListingFormOutput>({
+  const {
+    register,
+    handleSubmit,
+    formState,
+    watch,
+    getValues,
+    reset
+  } = useForm<ListingFormInput, unknown, ListingFormOutput>({
     resolver: zodResolver(listingFormSchema),
     defaultValues: initialValues,
     shouldUnregister: true
@@ -135,17 +186,261 @@ export function CreateListingForm({
     () => categoryOptions.find((item) => item.id === categoryId),
     [categoryOptions, categoryId]
   );
+  const draftIdRef = useRef<string | null>(resumeDraft?.id ?? null);
+  const draftVersionRef = useRef(resumeDraft?.draft_version ?? 0);
+  const clientDraftIdRef = useRef("");
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const savePromiseRef = useRef<Promise<string | null> | null>(null);
+  const pendingSaveRef = useRef(false);
+  const unsavedRef = useRef(false);
+  const hydratingRef = useRef(false);
+
+  const markUnsaved = useCallback((value: boolean) => {
+    unsavedRef.current = value;
+    setHasUnsavedChanges(value);
+  }, []);
+  const handleImagesChange = useCallback((nextImages: ListingDetail["images"]) => {
+    setDraftImages(nextImages);
+  }, []);
+
+  const persistDraft = useCallback(async (force = false): Promise<string | null> => {
+    if (isEdit) return listingId ?? null;
+    if (!force && !unsavedRef.current) return draftIdRef.current;
+    if (autosaveTimerRef.current) {
+      clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    if (!navigator.onLine) {
+      setSaveState("offline");
+      setSaveError("Nema internet veze. Izmene su ostale u formularu.");
+      markUnsaved(true);
+      return draftIdRef.current;
+    }
+    if (savePromiseRef.current) {
+      pendingSaveRef.current = true;
+      await savePromiseRef.current;
+      return draftIdRef.current;
+    }
+
+    const values = getValues() as Record<string, unknown>;
+    const activeCategory = categoryOptions.find(
+      (item) => item.id === String(values.category_id ?? "")
+    );
+    const payload = buildPayload(values, activeCategory, "create");
+    const savedSnapshot = JSON.stringify(values);
+
+    const operation = (async () => {
+      setSaveState("saving");
+      setSaveError(null);
+      try {
+        let response;
+        if (draftIdRef.current) {
+          response = await apiFetch<ListingDetail>(`/listings/drafts/${draftIdRef.current}`, {
+            method: "PATCH",
+            body: JSON.stringify({
+              ...payload,
+              expected_version: draftVersionRef.current
+            })
+          });
+        } else {
+          if (!clientDraftIdRef.current) {
+            clientDraftIdRef.current = crypto.randomUUID();
+          }
+          response = await apiFetch<ListingDetail>("/listings/drafts", {
+            method: "POST",
+            body: JSON.stringify({
+              ...payload,
+              client_draft_id: clientDraftIdRef.current
+            })
+          });
+        }
+        draftIdRef.current = response.data.id;
+        draftVersionRef.current = response.data.draft_version;
+        setDraftId(response.data.id);
+        setDraftImages(response.data.images);
+        window.localStorage.setItem("szp-active-listing-draft", response.data.id);
+        window.history.replaceState(
+          window.history.state,
+          "",
+          `/postavi-oglas?draft=${response.data.id}`
+        );
+        if (JSON.stringify(getValues()) === savedSnapshot && !pendingSaveRef.current) {
+          markUnsaved(false);
+          setSaveState("saved");
+        } else {
+          markUnsaved(true);
+          pendingSaveRef.current = true;
+        }
+        return response.data.id;
+      } catch (error) {
+        markUnsaved(true);
+        if (error instanceof ApiError && error.code === "AUTOSAVE_CONFLICT") {
+          setSaveState("conflict");
+          setSaveError("Nacrt je promenjen u drugoj sesiji. Učitajte verziju sa servera.");
+        } else if (error instanceof ApiError && error.status === 401) {
+          setSaveState("error");
+          setSaveError("Sesija je istekla. Prijavite se ponovo; podaci su ostali u formularu.");
+        } else {
+          setSaveState(navigator.onLine ? "error" : "offline");
+          setSaveError(
+            navigator.onLine
+              ? "Nacrt nije sačuvan. Pokušavamo ponovo nakon sledeće izmene."
+              : "Nema internet veze. Izmene su ostale u formularu."
+          );
+        }
+        return null;
+      }
+    })();
+
+    savePromiseRef.current = operation;
+    try {
+      return await operation;
+    } finally {
+      savePromiseRef.current = null;
+      if (pendingSaveRef.current) {
+        pendingSaveRef.current = false;
+        if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+        autosaveTimerRef.current = setTimeout(() => void persistDraft(), 50);
+      }
+    }
+  }, [categoryOptions, getValues, isEdit, listingId, markUnsaved]);
+
+  const loadDraft = useCallback(async (id: string) => {
+    hydratingRef.current = true;
+    setSaveError(null);
+    try {
+      const response = await apiFetch<ListingDetail>(`/listings/${id}/edit`);
+      if (response.data.status !== "draft") {
+        window.localStorage.removeItem("szp-active-listing-draft");
+        return;
+      }
+      draftIdRef.current = response.data.id;
+      draftVersionRef.current = response.data.draft_version;
+      setDraftId(response.data.id);
+      setDraftImages(response.data.images);
+      reset(getDefaultValues(categories, listingDefaults(response.data)));
+      markUnsaved(false);
+      setSaveState("saved");
+      window.localStorage.setItem("szp-active-listing-draft", response.data.id);
+      window.history.replaceState(
+        window.history.state,
+        "",
+        `/postavi-oglas?draft=${response.data.id}`
+      );
+    } catch (error) {
+      if (error instanceof ApiError && [403, 404, 409].includes(error.status)) {
+        window.localStorage.removeItem("szp-active-listing-draft");
+        window.history.replaceState(window.history.state, "", "/postavi-oglas");
+      } else {
+        setSaveState("error");
+        setSaveError("Sačuvani nacrt trenutno nije moguće učitati.");
+      }
+    } finally {
+      hydratingRef.current = false;
+    }
+  }, [categories, markUnsaved, reset]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    clientDraftIdRef.current = crypto.randomUUID();
+    if (resumeDraft) {
+      window.localStorage.setItem("szp-active-listing-draft", resumeDraft.id);
+      return;
+    }
+    const queryId = new URLSearchParams(window.location.search).get("draft");
+    const storedId = window.localStorage.getItem("szp-active-listing-draft");
+    const existingId = queryId ?? storedId;
+    if (existingId) {
+      void loadDraft(existingId);
+    }
+  }, [isEdit, loadDraft, resumeDraft]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    const subscription = watch((_values, event) => {
+      if (hydratingRef.current || event.type !== "change") return;
+      markUnsaved(true);
+      setSaveError(null);
+      if (!navigator.onLine) {
+        setSaveState("offline");
+        setSaveError("Nema internet veze. Izmene su ostale u formularu.");
+        return;
+      }
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = setTimeout(() => void persistDraft(), 900);
+    });
+    return () => {
+      subscription.unsubscribe();
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [isEdit, markUnsaved, persistDraft, watch]);
+
+  useEffect(() => {
+    if (isEdit) return;
+    const onOnline = () => {
+      if (unsavedRef.current) void persistDraft(true);
+    };
+    const onOffline = () => {
+      if (unsavedRef.current) {
+        setSaveState("offline");
+        setSaveError("Nema internet veze. Izmene su ostale u formularu.");
+      }
+    };
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, [isEdit, persistDraft]);
+
+  useEffect(() => {
+    if (isEdit || !hasUnsavedChanges) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    const onDocumentClick = (event: MouseEvent) => {
+      const target = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!target || target.getAttribute("target") === "_blank") return;
+      if (!window.confirm("Izmene još nisu sačuvane. Napustiti stranicu?")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onDocumentClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("click", onDocumentClick, true);
+    };
+  }, [hasUnsavedChanges, isEdit]);
 
   async function onSubmit(data: ListingFormOutput) {
     setMessage(null);
-    const payload = buildPayload(data, selectedCategory, mode);
-    if (!isEdit) payload.turnstile_token = challengeToken;
     try {
-      const response = await apiFetch<ListingDetail>(isEdit ? `/listings/${listingId}` : "/listings", {
-        method: isEdit ? "PATCH" : "POST",
-        body: JSON.stringify(payload)
-      });
-      if (!isEdit) {
+      let response;
+      if (isEdit) {
+        const payload = buildPayload(data, selectedCategory, mode);
+        response = await apiFetch<ListingDetail>(`/listings/${listingId}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload)
+        });
+      } else {
+        const savedDraftId = await persistDraft(true);
+        if (!savedDraftId) {
+          setMessage("Oglas nije poslat jer nacrt nije sačuvan.");
+          return;
+        }
+        response = await apiFetch<ListingDetail>(`/listings/drafts/${savedDraftId}/publish`, {
+          method: "POST",
+          body: JSON.stringify({
+            expected_version: draftVersionRef.current,
+            turnstile_token: challengeToken
+          })
+        });
+        markUnsaved(false);
+        window.localStorage.removeItem("szp-active-listing-draft");
         trackEvent("listing_created", { listing_id: response.data.id });
       }
       router.push(`/oglasi/${response.data.slug}`);
@@ -199,6 +494,56 @@ export function CreateListingForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {!isEdit ? (
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${
+            saveState === "error" || saveState === "conflict"
+              ? "border-red-200 bg-red-50 text-red-800"
+              : saveState === "offline"
+                ? "border-amber-200 bg-amber-50 text-amber-900"
+                : "border-river-100 bg-river-50 text-river-900"
+          }`}
+          role="status"
+          aria-live="polite"
+        >
+          <span className="inline-flex items-center gap-2 font-semibold">
+            {saveState === "saving" ? <LoaderCircle className="animate-spin" size={17} /> : null}
+            {saveState === "saved" ? <Save size={17} /> : null}
+            {saveState === "offline" ? <CloudOff size={17} /> : null}
+            {saveState === "error" || saveState === "conflict" ? <AlertTriangle size={17} /> : null}
+            {saveState === "saving"
+              ? "Čuvanje…"
+              : saveState === "saved"
+                ? "Sačuvano"
+                : saveState === "offline"
+                  ? "Nema interneta"
+                  : saveState === "conflict"
+                    ? "Izmena sa drugog uređaja"
+                    : saveState === "error"
+                      ? "Greška pri čuvanju"
+                      : "Nacrt će se automatski sačuvati nakon prve izmene"}
+          </span>
+          {saveState === "error" || saveState === "offline" ? (
+            <Button type="button" variant="secondary" onClick={() => void persistDraft(true)}>
+              Pokušaj ponovo
+            </Button>
+          ) : null}
+          {saveState === "conflict" && draftId ? (
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                if (window.confirm("Učitati verziju sa servera i odbaciti lokalne izmene?")) {
+                  void loadDraft(draftId);
+                }
+              }}
+            >
+              Učitaj sa servera
+            </Button>
+          ) : null}
+          {saveError ? <span className="w-full text-xs">{saveError}</span> : null}
+        </div>
+      ) : null}
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
         <h2 className="text-xl font-black">1. Kategorija</h2>
         <div className="mt-4">
@@ -364,7 +709,19 @@ export function CreateListingForm({
           </p>
         </div>
       </section>
-      {isEdit && listingId ? <ListingImageManager listingId={listingId} initialImages={images} /> : null}
+      <ListingImageManager
+        listingId={isEdit ? listingId : draftId ?? undefined}
+        initialImages={isEdit ? images : draftImages}
+        ensureListingId={isEdit ? undefined : () => persistDraft(true)}
+        onImagesChange={isEdit ? undefined : handleImagesChange}
+      />
+      {!isEdit ? (
+        <ListingQualityChecklist
+          values={watchedValues}
+          category={selectedCategory}
+          images={draftImages}
+        />
+      ) : null}
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
       {challengeRequired ? (
         <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />

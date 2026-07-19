@@ -1,4 +1,5 @@
 import { ListingCard } from "@/components/listings/ListingCard";
+import { DraftListingCard } from "@/components/listings/DraftListingCard";
 import { OwnerListingActions } from "@/components/listings/ListingActions";
 import { FeatureRequestPanel } from "@/components/listings/FeatureRequestPanel";
 import { Button } from "@/components/ui/Button";
@@ -13,6 +14,8 @@ export default async function MyListingsPage() {
   }));
   const packages = await serverApiFetch<PromotionPackage[]>("/promotions/packages").catch(() => ({ data: [] }));
   const requests = await serverApiFetch<FeatureRequest[]>("/listings/feature/requests").catch(() => ({ data: [] }));
+  const drafts = listings.data.filter((listing) => listing.status === "draft");
+  const publishedListings = listings.data.filter((listing) => listing.status !== "draft");
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -24,9 +27,26 @@ export default async function MyListingsPage() {
         instrukcijama za plaćanje, a kao poziv na broj unesite ID zahteva. Admin potvrđuje isticanje po evidentiranoj
         uplati.
       </div>
-      {listings.data.length ? (
+      {drafts.length ? (
+        <section className="mt-8">
+          <div>
+            <h2 className="text-2xl font-black">Nacrti</h2>
+            <p className="mt-1 text-sm text-slate-600">
+              Privatni su i ne ulaze u pretragu dok ih ne pošaljete na pregled.
+            </p>
+          </div>
+          <div className="mt-4 grid gap-5 lg:grid-cols-2">
+            {drafts.map((listing) => (
+              <DraftListingCard key={listing.id} listing={listing} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+      {publishedListings.length ? (
+        <section className="mt-8">
+          {drafts.length ? <h2 className="text-2xl font-black">Objavljeni oglasi</h2> : null}
         <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-          {listings.data.map((listing) => (
+          {publishedListings.map((listing) => (
             <div key={listing.id} className="space-y-3">
               <ListingCard listing={listing} />
               <div className="grid grid-cols-3 gap-2 rounded-lg border border-slate-200 bg-white p-3 text-center text-xs font-semibold text-slate-600 shadow-soft">
@@ -41,7 +61,8 @@ export default async function MyListingsPage() {
             </div>
           ))}
         </div>
-      ) : (
+        </section>
+      ) : !drafts.length ? (
         <div className="mt-6">
           <EmptyState
             title="Još nemate postavljenih oglasa"
@@ -49,7 +70,7 @@ export default async function MyListingsPage() {
             action={{ href: "/postavi-oglas", label: "Postavi oglas" }}
           />
         </div>
-      )}
+      ) : null}
       {requests.data.length ? (
         <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
           <h2 className="text-xl font-black">Zahtevi za promocije</h2>

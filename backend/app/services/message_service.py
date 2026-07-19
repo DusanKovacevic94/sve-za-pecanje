@@ -87,8 +87,8 @@ class MessageService:
         listing = self.db.get(Listing, listing_id)
         if not listing:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
-        if listing.status == "sold":
-            raise api_error("LISTING_NOT_ACTIVE", "Ovaj oglas je označen kao prodat.", 400)
+        if listing.status != "active":
+            raise api_error("LISTING_NOT_ACTIVE", "Oglas nije dostupan za poruke.", 400)
         if listing.seller_id == sender.id:
             raise api_error("VALIDATION_ERROR", "Ne možete poslati poruku za sopstveni oglas.", 400)
         if not listing.allow_messages:
@@ -121,7 +121,7 @@ class MessageService:
     def reply(self, conversation_id: str, sender: User, body: str) -> Conversation:
         conversation = self.get_conversation(conversation_id, sender)
         listing = self.db.get(Listing, conversation.listing_id)
-        if listing and listing.status in {"sold", "archived", "deleted"}:
+        if listing and listing.status != "active":
             raise api_error("LISTING_NOT_ACTIVE", "Nije moguće poslati poruku za ovaj oglas.", 400)
         return self._append_message(conversation, sender, body, listing)
 

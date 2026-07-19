@@ -123,7 +123,7 @@ and retention, then address account governance and sustainable SEO.
 - [x] [047 — Marketplace health metrics and liquidity dashboard](047-marketplace-health-metrics.md)
 - [x] [048 — Critical marketplace journey and release gate](048-critical-marketplace-e2e.md)
 - [x] [049 — Adaptive anti-abuse and moderation risk queue](049-adaptive-anti-abuse.md)
-- [ ] [050 — Listing drafts, autosave, and quality checklist](050-listing-drafts-autosave.md)
+- [x] [050 — Listing drafts, autosave, and quality checklist](050-listing-drafts-autosave.md)
 - [ ] [051 — Price flexibility, delivery options, and reservation state](051-listing-handoff-options.md)
 - [ ] [052 — Search suggestions, typo recovery, and better empty results](052-search-discovery.md)
 

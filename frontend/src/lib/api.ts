@@ -150,6 +150,9 @@ export type ListingCard = {
   is_favorited?: boolean;
   created_at: string;
   updated_at: string;
+  draft_version: number;
+  draft_expires_at: string | null;
+  draft_expires_soon: boolean;
 };
 
 export type ListingDetail = ListingCard & {

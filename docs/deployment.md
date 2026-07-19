@@ -257,3 +257,10 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend
 
 Deleting a listing image removes the backing storage object. The worker also removes
 stale local orphan files when local storage is used in development.
+
+## Listing Drafts
+
+Apply migration `0012_listing_drafts` before deploying the autosave-enabled frontend. No
+environment changes are required. The worker permanently removes drafts that have not
+been touched for 90 days; see
+[listing drafts and autosave](listing-drafts.md) for lifecycle and privacy guarantees.

@@ -325,6 +325,8 @@ def admin_listings(
     )
     if status:
         statement = statement.where(Listing.status == status)
+    else:
+        statement = statement.where(Listing.status != "draft")
     listings = db.scalars(statement.order_by(Listing.created_at.desc()).limit(100)).all()
     return data_response([serialize_listing_detail(listing) for listing in listings])
 

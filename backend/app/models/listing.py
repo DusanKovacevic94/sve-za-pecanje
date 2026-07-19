@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, Numeric, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -18,6 +18,13 @@ if TYPE_CHECKING:
 
 class Listing(Base, TimestampMixin):
     __tablename__ = "listings"
+    __table_args__ = (
+        UniqueConstraint(
+            "seller_id",
+            "draft_client_id",
+            name="uq_listing_seller_draft_client",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
     public_id: Mapped[str] = mapped_column(String(18), unique=True, index=True)
@@ -54,6 +61,9 @@ class Listing(Base, TimestampMixin):
     approved_by_admin_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     expiry_notice_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    draft_client_id: Mapped[str | None] = mapped_column(String(100))
+    draft_version: Mapped[int] = mapped_column(Integer, default=0)
+    draft_last_saved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
     seller: Mapped["User"] = relationship(foreign_keys=[seller_id], back_populates="listings")
     category: Mapped["Category"] = relationship()

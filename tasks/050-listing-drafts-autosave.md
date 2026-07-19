@@ -1,6 +1,6 @@
 # 050 — Listing drafts, autosave, and quality checklist
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Problem
@@ -13,27 +13,27 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Add a private `draft` listing status excluded from moderation, public browse, direct
+- [x] Add a private `draft` listing status excluded from moderation, public browse, direct
   public detail, expiration, quotas, promotions, analytics supply counts, sitemap, and
   notifications
-- [ ] Add draft-specific create, partial-update, publish, and delete operations
-- [ ] Keep the existing complete-listing create operation working for backward compatibility
-- [ ] Create the server draft after the first meaningful form change or immediately before
+- [x] Add draft-specific create, partial-update, publish, and delete operations
+- [x] Keep the existing complete-listing create operation working for backward compatibility
+- [x] Create the server draft after the first meaningful form change or immediately before
   the first image upload; use a client draft ID or idempotency key to prevent duplicates
-- [ ] Debounce autosave and display explicit `Čuvanje…`, `Sačuvano`, offline, and save-error
+- [x] Debounce autosave and display explicit `Čuvanje…`, `Sačuvano`, offline, and save-error
   states
-- [ ] Warn on navigation only when local changes have not reached the server
-- [ ] Allow drafts to be resumed or deleted from `Moji oglasi`, visually separated from
+- [x] Warn on navigation only when local changes have not reached the server
+- [x] Allow drafts to be resumed or deleted from `Moji oglasi`, visually separated from
   pending, active, sold, and archived listings
-- [ ] Validate the complete listing only when publishing, then move it through the existing
+- [x] Validate the complete listing only when publishing, then move it through the existing
   moderation flow
-- [ ] Add a non-blocking listing-quality checklist for cover image, at least three images,
+- [x] Add a non-blocking listing-quality checklist for cover image, at least three images,
   leaf category, brand/model, useful description, location, delivery information, and
   important category attributes
-- [ ] Show specific improvement suggestions without initially using the score for ranking
-- [ ] Remove untouched drafts after 90 days and show an in-product warning during the final
+- [x] Show specific improvement suggestions without initially using the score for ranking
+- [x] Remove untouched drafts after 90 days and show an in-product warning during the final
   seven days
-- [ ] Add ownership, idempotency, autosave conflict, session expiry, image upload, publish,
+- [x] Add ownership, idempotency, autosave conflict, session expiry, image upload, publish,
   stale-draft cleanup, and E2E tests
 
 ## Acceptance criteria

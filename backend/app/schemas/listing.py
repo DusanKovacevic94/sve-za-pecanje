@@ -62,6 +62,47 @@ class ListingUpdate(BaseModel):
     attributes: dict | None = None
 
 
+class ListingDraftCreate(BaseModel):
+    client_draft_id: str = Field(min_length=8, max_length=100)
+    category_id: str
+    title: str = Field(default="", max_length=120)
+    description: str = Field(default="", max_length=5000)
+    brand_id: str | None = None
+    brand_name_custom: str | None = Field(default=None, max_length=120)
+    model: str | None = Field(default=None, max_length=120)
+    condition: str = ""
+    price_amount: Decimal = Field(default=Decimal("0"), ge=0)
+    currency: str = "RSD"
+    city: str = Field(default="", max_length=120)
+    municipality: str | None = Field(default=None, max_length=120)
+    allow_messages: bool = True
+    phone_visible: bool = False
+    attributes: dict = Field(default_factory=dict)
+
+
+class ListingDraftUpdate(BaseModel):
+    expected_version: int = Field(ge=0)
+    category_id: str | None = None
+    title: str | None = Field(default=None, max_length=120)
+    description: str | None = Field(default=None, max_length=5000)
+    brand_id: str | None = None
+    brand_name_custom: str | None = Field(default=None, max_length=120)
+    model: str | None = Field(default=None, max_length=120)
+    condition: str | None = Field(default=None, max_length=40)
+    price_amount: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, max_length=3)
+    city: str | None = Field(default=None, max_length=120)
+    municipality: str | None = Field(default=None, max_length=120)
+    allow_messages: bool | None = None
+    phone_visible: bool | None = None
+    attributes: dict | None = None
+
+
+class ListingDraftPublish(BaseModel):
+    expected_version: int = Field(ge=0)
+    turnstile_token: str | None = Field(default=None, max_length=2048)
+
+
 class ListingImageOut(BaseModel):
     id: str
     url: str

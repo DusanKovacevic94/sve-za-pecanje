@@ -7,7 +7,16 @@ from app.core.rate_limit import check_rate_limit
 from app.core.responses import api_error, data_response
 from app.db.session import get_db
 from app.models.user import User
-from app.schemas.listing import FeatureRequestCreate, ListingCreate, ListingUpdate, MarkSoldRequest, ReorderImagesRequest
+from app.schemas.listing import (
+    FeatureRequestCreate,
+    ListingCreate,
+    ListingDraftCreate,
+    ListingDraftPublish,
+    ListingDraftUpdate,
+    ListingUpdate,
+    MarkSoldRequest,
+    ReorderImagesRequest,
+)
 from app.schemas.report import ReportCreate
 from app.services.image_service import ImageService
 from app.services.listing_service import (
@@ -58,6 +67,71 @@ def my_feature_requests(user: User = Depends(get_current_user), db: Session = De
     return data_response([serialize_feature_request(request) for request in requests])
 
 
+@router.post("/drafts")
+def create_listing_draft(
+    payload: ListingDraftCreate,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_rate_limit(request, f"listing-draft:{user.id}", 30, 24 * 60 * 60)
+    listing = ListingService(db).create_draft(user, payload)
+    return data_response(serialize_listing_detail(listing))
+
+
+@router.patch("/drafts/{listing_id}")
+def update_listing_draft(
+    listing_id: str,
+    payload: ListingDraftUpdate,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    return data_response(
+        serialize_listing_detail(service.update_draft(listing, payload, user))
+    )
+
+
+@router.post("/drafts/{listing_id}/publish")
+def publish_listing_draft(
+    listing_id: str,
+    payload: ListingDraftPublish,
+    request: Request,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    check_rate_limit(request, f"listing-create:{user.id}", 10, 24 * 60 * 60)
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    from app.services.risk_service import RiskService
+
+    risk = RiskService(db)
+    risk.enforce(
+        "listing_publish",
+        request,
+        user.id,
+        payload.turnstile_token,
+        "user",
+        user.id,
+    )
+    risk.record_action("listing_publish", request, user.id)
+    published = service.publish_draft(listing, user, payload.expected_version)
+    return data_response(serialize_listing_detail(published))
+
+
+@router.delete("/drafts/{listing_id}")
+def delete_listing_draft(
+    listing_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    service.delete_draft(listing, user)
+    return data_response({"message": "Nacrt je obrisan."})
+
+
 @router.get("/{slug}")
 def get_listing(
     slug: str,
@@ -95,7 +169,7 @@ def get_listing(
 @router.get("/{listing_id}/similar")
 def similar_listings(listing_id: str, db: Session = Depends(get_db)):
     listing = db.get(Listing, listing_id)
-    if not listing:
+    if not listing or listing.status != "active":
         raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
     rows = db.scalars(
         select(Listing)
@@ -273,7 +347,7 @@ def report_listing(
     db: Session = Depends(get_db),
 ):
     listing = db.get(Listing, listing_id)
-    if not listing:
+    if not listing or listing.status != "active":
         raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
     from sqlalchemy import select
 

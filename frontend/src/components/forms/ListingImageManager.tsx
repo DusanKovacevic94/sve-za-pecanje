@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -13,28 +13,46 @@ type ListingImage = ListingDetail["images"][number];
 
 export function ListingImageManager({
   listingId,
-  initialImages
+  initialImages,
+  ensureListingId,
+  onImagesChange
 }: {
-  listingId: string;
+  listingId?: string;
   initialImages: ListingImage[];
+  ensureListingId?: () => Promise<string | null>;
+  onImagesChange?: (images: ListingImage[]) => void;
 }) {
   const router = useRouter();
   const [images, setImages] = useState(() => [...initialImages].sort((a, b) => a.sort_order - b.sort_order));
   const [message, setMessage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  useEffect(() => {
+    const next = [...initialImages].sort((a, b) => a.sort_order - b.sort_order);
+    setImages(next);
+  }, [initialImages]);
+
+  function updateImages(next: ListingImage[]) {
+    setImages(next);
+    onImagesChange?.(next);
+  }
+
   async function uploadImage(file: File | undefined) {
     if (!file) return;
     setMessage(null);
     setIsUploading(true);
     try {
+      const targetListingId = listingId ?? await ensureListingId?.();
+      if (!targetListingId) {
+        throw new Error("Nacrt nije sačuvan. Pokušajte ponovo.");
+      }
       const formData = new FormData();
       formData.append("upload", file);
-      const response = await apiFetch<ListingImage>(`/listings/${listingId}/images`, {
+      const response = await apiFetch<ListingImage>(`/listings/${targetListingId}/images`, {
         method: "POST",
         body: formData
       });
-      setImages((current) => [...current, response.data].sort((a, b) => a.sort_order - b.sort_order));
+      updateImages([...images, response.data].sort((a, b) => a.sort_order - b.sort_order));
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Slika nije uploadovana.");
@@ -44,11 +62,12 @@ export function ListingImageManager({
   }
 
   async function deleteImage(imageId: string) {
+    if (!listingId) return;
     if (!window.confirm("Obrisati sliku?")) return;
     setMessage(null);
     try {
       await apiFetch<{ message: string }>(`/listings/${listingId}/images/${imageId}`, { method: "DELETE" });
-      setImages((current) => current.filter((image) => image.id !== imageId));
+      updateImages(images.filter((image) => image.id !== imageId));
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Slika nije obrisana.");
@@ -56,10 +75,11 @@ export function ListingImageManager({
   }
 
   async function setCover(imageId: string) {
+    if (!listingId) return;
     setMessage(null);
     try {
       await apiFetch<ListingImage>(`/listings/${listingId}/images/${imageId}/cover`, { method: "POST" });
-      setImages((current) => current.map((image) => ({ ...image, is_cover: image.id === imageId })));
+      updateImages(images.map((image) => ({ ...image, is_cover: image.id === imageId })));
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Naslovna slika nije promenjena.");
@@ -67,19 +87,20 @@ export function ListingImageManager({
   }
 
   async function moveImage(imageId: string, direction: -1 | 1) {
+    if (!listingId) return;
     const index = images.findIndex((image) => image.id === imageId);
     const nextIndex = index + direction;
     if (index < 0 || nextIndex < 0 || nextIndex >= images.length) return;
     const next = [...images];
     [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
-    setImages(next.map((image, sort_order) => ({ ...image, sort_order })));
+    updateImages(next.map((image, sort_order) => ({ ...image, sort_order })));
     setMessage(null);
     try {
       const response = await apiFetch<ListingImage[]>(`/listings/${listingId}/images/reorder`, {
         method: "PATCH",
         body: JSON.stringify({ image_ids: next.map((image) => image.id) })
       });
-      setImages(response.data);
+      updateImages(response.data);
       router.refresh();
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Redosled nije sačuvan.");

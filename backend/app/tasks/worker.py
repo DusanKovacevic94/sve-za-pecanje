@@ -14,7 +14,11 @@ from app.tasks.analytics_tasks import (
 from app.tasks.abuse_tasks import purge_expired_abuse_signals
 from app.tasks.email_tasks import process_email_outbox
 from app.tasks.image_tasks import cleanup_orphan_local_uploads
-from app.tasks.listing_tasks import archive_expired_listings, clear_expired_featured_listings
+from app.tasks.listing_tasks import (
+    archive_expired_listings,
+    clear_expired_featured_listings,
+    delete_stale_listing_drafts,
+)
 from app.tasks.notification_tasks import (
     send_listing_expiry_reminders,
     send_shop_subscription_expiry_reminders,
@@ -43,6 +47,7 @@ def run_cycle() -> None:
     run_task("refresh_marketplace_metrics", refresh_marketplace_metrics)
     run_task("archive_expired_listings", archive_expired_listings)
     run_task("clear_expired_featured_listings", clear_expired_featured_listings)
+    run_task("delete_stale_listing_drafts", delete_stale_listing_drafts)
     run_task("saved_search_digests", send_saved_search_digests)
     run_task("delete_old_analytics_events", delete_old_analytics_events)
     run_task("purge_expired_abuse_signals", purge_expired_abuse_signals)
