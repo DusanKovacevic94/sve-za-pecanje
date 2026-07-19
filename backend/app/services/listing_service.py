@@ -86,6 +86,9 @@ class ListingService:
             )
         self.db.commit()
         self.db.refresh(listing)
+        from app.services.risk_service import RiskService
+
+        RiskService(self.db).fingerprint_listing(listing)
         return listing
 
     def update(self, listing: Listing, payload: ListingUpdate, actor: User) -> Listing:
@@ -106,6 +109,9 @@ class ListingService:
             listing.status = "pending_review"
         self.db.commit()
         self.db.refresh(listing)
+        from app.services.risk_service import RiskService
+
+        RiskService(self.db).fingerprint_listing(listing)
         return listing
 
     def list_public(self, params: dict[str, Any]) -> tuple[list[Listing], int]:
@@ -210,6 +216,9 @@ class ListingService:
             listing.status = "pending_review"
         self.db.commit()
         self.db.refresh(image)
+        from app.services.risk_service import RiskService
+
+        RiskService(self.db).fingerprint_listing(listing)
         return image
 
     def delete_image(self, listing: Listing, image_id: str) -> None:
@@ -224,6 +233,9 @@ class ListingService:
             item.is_cover = item.is_cover or (was_cover and index == 0)
         self.db.commit()
         delete_storage_object(storage_key)
+        from app.services.risk_service import RiskService
+
+        RiskService(self.db).fingerprint_listing(listing)
 
     def set_cover_image(self, listing: Listing, image_id: str) -> ListingImage:
         image = self._get_listing_image(listing, image_id)

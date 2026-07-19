@@ -4,7 +4,12 @@ export const serverApiUrl = process.env.INTERNAL_API_URL ?? publicApiUrl;
 export type ApiResponse<T> = { data: T; meta?: Record<string, unknown> };
 
 export class ApiError extends Error {
-  constructor(message: string, public readonly status: number) {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly code: string = "ERROR",
+    public readonly details: Record<string, unknown> = {}
+  ) {
     super(message);
     this.name = "ApiError";
   }
@@ -45,7 +50,12 @@ export async function apiFetch<T>(path: string, init?: ApiFetchInit): Promise<Ap
     });
     const json = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new ApiError(json?.error?.message ?? "Došlo je do greške.", response.status);
+      throw new ApiError(
+        json?.error?.message ?? "Došlo je do greške.",
+        response.status,
+        json?.error?.code,
+        json?.error?.details
+      );
     }
     return json;
   } finally {

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Request
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.api.v1.deps import get_current_user
@@ -6,6 +7,7 @@ from app.core.rate_limit import check_rate_limit
 from app.core.responses import data_response
 from app.db.session import get_db
 from app.models.user import User
+from app.models.message import Conversation
 from app.schemas.message import MessageCreate
 from app.services.message_service import MessageService, serialize_conversation
 
@@ -64,6 +66,25 @@ def send_listing_message(
     db: Session = Depends(get_db),
 ):
     check_rate_limit(request, f"message:{user.id}", 20, 60 * 60)
+    existing = db.scalar(
+        select(Conversation.id).where(
+            Conversation.listing_id == listing_id,
+            Conversation.buyer_id == user.id,
+        )
+    )
+    if not existing:
+        from app.services.risk_service import RiskService
+
+        risk = RiskService(db)
+        risk.enforce(
+            "first_message",
+            request,
+            user.id,
+            payload.turnstile_token,
+            "user",
+            user.id,
+        )
+        risk.record_action("first_message", request, user.id, "listing", listing_id)
     conversation = MessageService(db).send_for_listing(listing_id, user, payload.body)
     return data_response(serialize_conversation(conversation, user))
 

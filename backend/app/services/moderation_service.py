@@ -73,10 +73,19 @@ class ModerationService:
         listing = self._get_listing(listing_id)
         listing.status = "rejected"
         listing.rejection_reason = reason
-        self.audit(admin, "listing.rejected", "listing", listing.id, {"reason": reason})
+        self.audit(
+            admin,
+            "listing.rejected",
+            "listing",
+            listing.id,
+            {"reason": reason, "seller_id": listing.seller_id},
+        )
         EmailService(self.db).send_listing_rejected(listing.seller.email, listing.title, reason)
         self.db.commit()
         self.db.refresh(listing)
+        from app.services.risk_service import RiskService
+
+        RiskService(self.db).record_rejection_history(listing)
         return listing
 
     def feature_listing(self, listing_id: str, admin: User, featured_until: datetime) -> Listing:

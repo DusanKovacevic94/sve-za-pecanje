@@ -9,6 +9,7 @@ from app.models.favorite import Favorite
 from app.models.image import ListingImage
 from app.models.listing import Listing
 from app.models.message import Conversation, Message
+from app.models.moderation_case import AbuseSignal, ListingFingerprint, ModerationCase
 from app.models.profile import UserProfile
 from app.models.report import Report
 from app.models.review import Review
@@ -33,6 +34,9 @@ __all__ = [
     "Listing",
     "ListingImage",
     "Message",
+    "AbuseSignal",
+    "ListingFingerprint",
+    "ModerationCase",
     "Report",
     "Review",
     "SavedSearch",

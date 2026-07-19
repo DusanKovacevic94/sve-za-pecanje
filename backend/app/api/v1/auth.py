@@ -24,12 +24,22 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register")
 def register(payload: RegisterRequest, request: Request, db: Session = Depends(get_db)):
     check_rate_limit(request, "auth-register", 10, 60 * 60)
+    from app.services.risk_service import RiskService
+
+    risk = RiskService(db)
+    risk.enforce("registration_attempt", request, token=payload.turnstile_token)
+    risk.record_action("registration_attempt", request)
     user = AuthService(db).register(payload)
     return data_response({"user": serialize_auth_user(user)})
 
 
 @router.post("/login")
-def login(payload: LoginRequest, response: Response, db: Session = Depends(get_db)):
+def login(payload: LoginRequest, response: Response, request: Request, db: Session = Depends(get_db)):
+    from app.services.risk_service import RiskService
+
+    risk = RiskService(db)
+    risk.enforce("login_attempt", request, token=payload.turnstile_token)
+    risk.record_action("login_attempt", request)
     user, token = AuthService(db).login(payload.email, payload.password)
     response.set_cookie(
         settings.session_cookie_name,
@@ -80,6 +90,11 @@ def resend_verification(
 @router.post("/forgot-password")
 def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
     check_rate_limit(request, "auth-forgot-password", 5, 60 * 60)
+    from app.services.risk_service import RiskService
+
+    risk = RiskService(db)
+    risk.enforce("reset_attempt", request, token=payload.turnstile_token)
+    risk.record_action("reset_attempt", request)
     AuthService(db).start_password_reset(payload.email)
     return data_response({"message": "Ako nalog postoji, poslali smo instrukcije za reset lozinke."})
 
@@ -87,5 +102,10 @@ def forgot_password(payload: ForgotPasswordRequest, request: Request, db: Sessio
 @router.post("/reset-password")
 def reset_password(payload: ResetPasswordRequest, request: Request, db: Session = Depends(get_db)):
     check_rate_limit(request, "auth-reset-password", 10, 60 * 60)
+    from app.services.risk_service import RiskService
+
+    risk = RiskService(db)
+    risk.enforce("reset_attempt", request, token=payload.turnstile_token)
+    risk.record_action("reset_attempt", request)
     AuthService(db).reset_password(payload.token, payload.new_password)
     return data_response({"message": "Lozinka je promenjena."})

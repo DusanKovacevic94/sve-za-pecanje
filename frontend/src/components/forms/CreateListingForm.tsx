@@ -8,13 +8,14 @@ import { Archive, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
 
 import type { Brand, BuyerCandidate, Category, ListingDetail } from "@/lib/api";
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { conditionOptions } from "@/lib/format";
 import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
 import { ListingImageManager } from "@/components/forms/ListingImageManager";
+import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 const listingFormSchema = listingSchema.passthrough();
 
@@ -116,6 +117,9 @@ export function CreateListingForm({
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [challengeRequired, setChallengeRequired] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [challengeKey, setChallengeKey] = useState(0);
   const isEdit = mode === "edit";
   const submitLabel = isEdit ? "Sačuvaj izmene" : "Pošalji na pregled";
   const initialValues = useMemo(() => getDefaultValues(categories, defaultValues), [categories, defaultValues]);
@@ -135,6 +139,7 @@ export function CreateListingForm({
   async function onSubmit(data: ListingFormOutput) {
     setMessage(null);
     const payload = buildPayload(data, selectedCategory, mode);
+    if (!isEdit) payload.turnstile_token = challengeToken;
     try {
       const response = await apiFetch<ListingDetail>(isEdit ? `/listings/${listingId}` : "/listings", {
         method: isEdit ? "PATCH" : "POST",
@@ -146,6 +151,14 @@ export function CreateListingForm({
       router.push(`/oglasi/${response.data.slug}`);
       router.refresh();
     } catch (error) {
+      if (
+        error instanceof ApiError
+        && ["challenge_required", "challenge_unavailable"].includes(error.code)
+      ) {
+        setChallengeRequired(true);
+        setChallengeToken(null);
+        setChallengeKey((value) => value + 1);
+      }
       setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
     }
   }
@@ -353,6 +366,9 @@ export function CreateListingForm({
       </section>
       {isEdit && listingId ? <ListingImageManager listingId={listingId} initialImages={images} /> : null}
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {challengeRequired ? (
+        <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
+      ) : null}
       <Button type="submit" disabled={formState.isSubmitting} className="w-full md:w-auto">
         {submitLabel}
       </Button>

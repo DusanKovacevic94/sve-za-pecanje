@@ -1,3 +1,4 @@
+from hashlib import sha256
 from pathlib import Path
 from posixpath import join as join_storage_path
 from uuid import uuid4
@@ -19,7 +20,7 @@ def store_listing_image(public_id: str, upload: UploadFile) -> dict[str, object]
     relative_key = f"listings/{public_id}/{image_id}/{OUTPUT_FILENAME}"
 
     if settings.use_s3_storage:
-        return store_listing_image_s3(
+        result = store_listing_image_s3(
             object_storage_key(relative_key),
             image_bytes,
             width,
@@ -27,15 +28,18 @@ def store_listing_image(public_id: str, upload: UploadFile) -> dict[str, object]
             upload.filename or "upload",
         )
 
-    return store_listing_image_local(
-        public_id,
-        image_id,
-        relative_key,
-        image_bytes,
-        width,
-        height,
-        upload.filename or "upload",
-    )
+    else:
+        result = store_listing_image_local(
+            public_id,
+            image_id,
+            relative_key,
+            image_bytes,
+            width,
+            height,
+            upload.filename or "upload",
+        )
+    result["content_hash"] = sha256(image_bytes).hexdigest()
+    return result
 
 
 def process_listing_image(upload: UploadFile) -> tuple[str, bytes, int, int]:

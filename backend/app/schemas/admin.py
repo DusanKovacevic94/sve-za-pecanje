@@ -56,6 +56,20 @@ class ResolveReportRequest(BaseModel):
     resolution_note: str | None = None
 
 
+class ModerationCaseBulkRequest(BaseModel):
+    case_ids: list[str] = Field(min_length=1, max_length=100)
+    action: Literal["clear", "approve", "reject"]
+    note: str | None = Field(default=None, max_length=2000)
+
+
+class ModerationCaseNoteRequest(BaseModel):
+    note: str = Field(min_length=1, max_length=2000)
+
+
+class ModerationCaseAssignRequest(BaseModel):
+    assigned: bool = True
+
+
 class BrandCreateRequest(BaseModel):
     name: str = Field(min_length=2, max_length=120)
     aliases: list[str] = Field(default_factory=list, max_length=20)

@@ -23,6 +23,7 @@ class ListingImage(Base):
     width: Mapped[int | None] = mapped_column()
     height: Mapped[int | None] = mapped_column()
     size_bytes: Mapped[int | None] = mapped_column()
+    content_hash: Mapped[str | None] = mapped_column(String(64), index=True)
     sort_order: Mapped[int] = mapped_column(default=0)
     is_cover: Mapped[bool] = mapped_column(Boolean, default=False)
 

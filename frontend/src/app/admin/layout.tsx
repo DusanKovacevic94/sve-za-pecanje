@@ -12,6 +12,7 @@ const links = [
   ["/admin/kategorije", "Kategorije"],
   ["/admin/korisnici", "Korisnici"],
   ["/admin/prijave", "Prijave"],
+  ["/admin/rizik", "Red rizika"],
   ["/admin/emailovi", "Emailovi"],
   ["/admin/podesavanja", "Podešavanja"]
 ];

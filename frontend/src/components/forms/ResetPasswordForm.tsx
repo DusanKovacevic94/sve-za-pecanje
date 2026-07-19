@@ -5,16 +5,20 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import { resetPasswordSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
+import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 type FormData = z.infer<typeof resetPasswordSchema>;
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [message, setMessage] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [challengeRequired, setChallengeRequired] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [challengeKey, setChallengeKey] = useState(0);
   const { register, handleSubmit, formState } = useForm<FormData>({
     resolver: zodResolver(resetPasswordSchema)
   });
@@ -24,10 +28,22 @@ export function ResetPasswordForm({ token }: { token: string }) {
     try {
       await apiFetch("/auth/reset-password", {
         method: "POST",
-        body: JSON.stringify({ token, new_password: data.new_password })
+        body: JSON.stringify({
+          token,
+          new_password: data.new_password,
+          turnstile_token: challengeToken
+        })
       });
       setDone(true);
     } catch (error) {
+      if (
+        error instanceof ApiError
+        && ["challenge_required", "challenge_unavailable"].includes(error.code)
+      ) {
+        setChallengeRequired(true);
+        setChallengeToken(null);
+        setChallengeKey((value) => value + 1);
+      }
       setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
     }
   }
@@ -58,6 +74,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <Button type="submit" disabled={formState.isSubmitting} className="w-full">
         Postavi novu lozinku
       </Button>
+      {challengeRequired ? (
+        <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
+      ) : null}
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
     </form>
   );

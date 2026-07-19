@@ -10,12 +10,16 @@ import { publicApiUrl } from "@/lib/api";
 import { loginSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
+import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 type FormData = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
+  const [challengeRequired, setChallengeRequired] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [challengeKey, setChallengeKey] = useState(0);
   const { register, handleSubmit, formState, watch } = useForm<FormData>({
     resolver: zodResolver(loginSchema)
   });
@@ -26,13 +30,18 @@ export function LoginForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify(data)
+      body: JSON.stringify({ ...data, turnstile_token: challengeToken })
     });
     const json = await response.json();
     if (response.ok) {
       router.push("/nalog");
       router.refresh();
     } else {
+      if (["challenge_required", "challenge_unavailable"].includes(json?.error?.code)) {
+        setChallengeRequired(true);
+        setChallengeToken(null);
+        setChallengeKey((value) => value + 1);
+      }
       setMessage(json?.error?.message ?? "Došlo je do greške.");
     }
   }
@@ -64,6 +73,9 @@ export function LoginForm() {
       <Button type="submit" disabled={formState.isSubmitting} className="w-full">
         Prijavi se
       </Button>
+      {challengeRequired ? (
+        <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
+      ) : null}
       <p className="text-sm">
         <a href="/zaboravljena-lozinka" className="focus-ring rounded font-semibold text-river-700">
           Zaboravili ste lozinku?

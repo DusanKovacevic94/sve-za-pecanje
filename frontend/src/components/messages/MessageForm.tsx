@@ -4,11 +4,12 @@ import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
-import { apiFetch, type Conversation } from "@/lib/api";
+import { ApiError, apiFetch, type Conversation } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 type MessageFormProps =
   | {
@@ -25,6 +26,9 @@ export function MessageForm(props: MessageFormProps) {
   const [body, setBody] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [challengeRequired, setChallengeRequired] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [challengeKey, setChallengeKey] = useState(0);
   const { pushToast } = useToast();
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
@@ -40,7 +44,10 @@ export function MessageForm(props: MessageFormProps) {
           : `/conversations/${props.conversationId}/messages`;
       const response = await apiFetch<Conversation>(path, {
         method: "POST",
-        body: JSON.stringify({ body: value })
+        body: JSON.stringify({
+          body: value,
+          turnstile_token: props.mode === "new" ? challengeToken : undefined
+        })
       });
       trackEvent("message_sent", { mode: props.mode });
       setBody("");
@@ -51,6 +58,14 @@ export function MessageForm(props: MessageFormProps) {
         router.refresh();
       }
     } catch (error) {
+      if (
+        error instanceof ApiError
+        && ["challenge_required", "challenge_unavailable"].includes(error.code)
+      ) {
+        setChallengeRequired(true);
+        setChallengeToken(null);
+        setChallengeKey((value) => value + 1);
+      }
       const errorMessage = error instanceof Error ? error.message : "Došlo je do greške.";
       setMessage(errorMessage);
       pushToast(errorMessage, "error");
@@ -73,6 +88,9 @@ export function MessageForm(props: MessageFormProps) {
           <Send size={18} /> Pošalji
         </Button>
       </div>
+      {challengeRequired ? (
+        <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
+      ) : null}
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
     </form>
   );

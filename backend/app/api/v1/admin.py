@@ -23,10 +23,14 @@ from app.schemas.admin import (
     ResolveFeatureRequest,
     ResolveReportRequest,
     SuspendUserRequest,
+    ModerationCaseAssignRequest,
+    ModerationCaseBulkRequest,
+    ModerationCaseNoteRequest,
 )
 from app.services.listing_service import serialize_listing_detail, slugify
 from app.services.analytics_service import marketplace_dashboard
 from app.services.moderation_service import ModerationService
+from app.services.moderation_case_service import ModerationCaseService, serialize_case
 from app.services.feature_service import FeatureService, serialize_feature_request
 from app.services.shop_service import (
     ShopService,
@@ -142,10 +146,80 @@ def admin_config(admin: User = Depends(require_admin)):
             "max_listing_images": settings.max_listing_images,
             "max_image_size_mb": settings.max_image_size_mb,
             "rate_limit_enabled": settings.rate_limit_enabled,
+            "turnstile_enabled": settings.turnstile_enabled,
             "storage_backend": settings.storage_backend,
             "use_s3_storage": settings.use_s3_storage,
         }
     )
+
+
+@router.get("/moderation-cases")
+def moderation_cases(
+    status: str | None = Query(default=None),
+    reason: str | None = Query(default=None),
+    entity_type: str | None = Query(default=None),
+    cursor: str | None = Query(default=None),
+    limit: int = Query(default=30, ge=1, le=100),
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    cases, next_cursor = ModerationCaseService(db).list_cases(
+        status=status,
+        reason=reason,
+        entity_type=entity_type,
+        cursor=cursor,
+        limit=limit,
+    )
+    return data_response(
+        [serialize_case(case, db) for case in cases],
+        {"next_cursor": next_cursor},
+    )
+
+
+@router.get("/moderation-cases/{case_id}/history")
+def moderation_case_history(
+    case_id: str,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return data_response(ModerationCaseService(db).related_history(case_id))
+
+
+@router.post("/moderation-cases/{case_id}/assign")
+def assign_moderation_case(
+    case_id: str,
+    payload: ModerationCaseAssignRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    case = ModerationCaseService(db).assign(case_id, admin, payload.assigned)
+    return data_response(serialize_case(case, db))
+
+
+@router.post("/moderation-cases/{case_id}/notes")
+def note_moderation_case(
+    case_id: str,
+    payload: ModerationCaseNoteRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    case = ModerationCaseService(db).add_note(case_id, admin, payload.note)
+    return data_response(serialize_case(case, db))
+
+
+@router.post("/moderation-cases/bulk")
+def bulk_moderation_cases(
+    payload: ModerationCaseBulkRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    cases = ModerationCaseService(db).bulk_action(
+        payload.case_ids,
+        admin,
+        payload.action,
+        payload.note,
+    )
+    return data_response([serialize_case(case, db) for case in cases])
 
 
 @router.get("/categories")

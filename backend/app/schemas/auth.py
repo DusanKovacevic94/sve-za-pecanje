@@ -8,6 +8,7 @@ class RegisterRequest(BaseModel):
     username: str = Field(min_length=3, max_length=60, pattern=r"^[a-zA-Z0-9_.-]+$")
     password: str = Field(min_length=8, max_length=128)
     accepted_terms: bool
+    turnstile_token: str | None = Field(default=None, max_length=2048)
 
     @field_validator("accepted_terms")
     @classmethod
@@ -20,10 +21,12 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
+    turnstile_token: str | None = Field(default=None, max_length=2048)
 
 
 class ForgotPasswordRequest(BaseModel):
     email: EmailStr
+    turnstile_token: str | None = Field(default=None, max_length=2048)
 
 
 class ResendVerificationRequest(BaseModel):
@@ -33,6 +36,7 @@ class ResendVerificationRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str = Field(min_length=8, max_length=128)
+    turnstile_token: str | None = Field(default=None, max_length=2048)
 
 
 class VerifyEmailRequest(BaseModel):

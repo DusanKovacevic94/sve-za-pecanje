@@ -150,6 +150,18 @@ def create_listing(
     db: Session = Depends(get_db),
 ):
     check_rate_limit(request, f"listing-create:{user.id}", 10, 24 * 60 * 60)
+    from app.services.risk_service import RiskService
+
+    risk = RiskService(db)
+    risk.enforce(
+        "listing_publish",
+        request,
+        user.id,
+        payload.turnstile_token,
+        "user",
+        user.id,
+    )
+    risk.record_action("listing_publish", request, user.id)
     listing = ListingService(db).create(user, payload)
     return data_response(serialize_listing_detail(listing))
 
@@ -291,6 +303,9 @@ def report_listing(
             properties={"reason": payload.reason},
         )
     db.commit()
+    from app.services.risk_service import RiskService
+
+    RiskService(db).record_report_history(report, listing)
     return data_response({"message": "Prijava je poslata administratorima."})
 
 

@@ -29,6 +29,7 @@ class ListingCreate(BaseModel):
     allow_messages: bool = True
     phone_visible: bool = False
     attributes: dict = Field(default_factory=dict)
+    turnstile_token: str | None = Field(default=None, max_length=2048)
 
     @field_validator("condition")
     @classmethod

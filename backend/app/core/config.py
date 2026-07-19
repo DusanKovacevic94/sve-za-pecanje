@@ -65,6 +65,11 @@ class Settings(BaseSettings):
     max_listing_images: int = 10
     max_image_size_mb: int = 8
     rate_limit_enabled: bool = True
+    turnstile_enabled: bool = False
+    turnstile_site_key: str = ""
+    turnstile_secret_key: str = ""
+    turnstile_timeout_seconds: float = 5.0
+    abuse_signal_retention_days: int = 7
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.0
 

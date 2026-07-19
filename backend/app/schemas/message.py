@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 class MessageCreate(BaseModel):
     body: str = Field(min_length=1, max_length=3000)
+    turnstile_token: str | None = Field(default=None, max_length=2048)
 
 
 class MessageOut(BaseModel):

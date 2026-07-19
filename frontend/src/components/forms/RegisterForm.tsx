@@ -10,11 +10,15 @@ import { trackEvent } from "@/lib/analytics";
 import { registerSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
+import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 type FormData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
   const [message, setMessage] = useState<string | null>(null);
+  const [challengeRequired, setChallengeRequired] = useState(false);
+  const [challengeToken, setChallengeToken] = useState<string | null>(null);
+  const [challengeKey, setChallengeKey] = useState(0);
   const { register, handleSubmit, formState, watch } = useForm<FormData>({
     resolver: zodResolver(registerSchema)
   });
@@ -26,11 +30,16 @@ export function RegisterForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify(data)
+      body: JSON.stringify({ ...data, turnstile_token: challengeToken })
     });
     const json = await response.json();
     if (response.ok) {
       trackEvent("registration_completed");
+    }
+    if (["challenge_required", "challenge_unavailable"].includes(json?.error?.code)) {
+      setChallengeRequired(true);
+      setChallengeToken(null);
+      setChallengeKey((value) => value + 1);
     }
     setMessage(response.ok ? "Nalog je kreiran. Proverite email za potvrdu." : json?.error?.message ?? "Došlo je do greške.");
   }
@@ -71,6 +80,9 @@ export function RegisterForm() {
       <Button type="submit" disabled={formState.isSubmitting} className="w-full">
         Registruj se
       </Button>
+      {challengeRequired ? (
+        <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
+      ) : null}
       <button
         type="button"
         onClick={resendVerification}

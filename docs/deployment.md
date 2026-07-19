@@ -24,6 +24,10 @@ API_URL=https://svezapecanje.rs
 CORS_ALLOWED_ORIGINS=https://svezapecanje.rs
 NEXT_PUBLIC_API_URL=https://svezapecanje.rs/api/v1
 INTERNAL_API_URL=http://backend:8000/api/v1
+TURNSTILE_ENABLED=false
+TURNSTILE_SITE_KEY=<turnstile-site-key>
+TURNSTILE_SECRET_KEY=<turnstile-secret-key>
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=<turnstile-site-key>
 POSTGRES_DB=fishing_marketplace
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=<strong-postgres-admin-password>
@@ -40,6 +44,10 @@ HETZNER_STORAGE_ACCESS_KEY=<key>
 HETZNER_STORAGE_SECRET_KEY=<secret>
 BACKUP_REMOTE=<rclone-remote>:sve-za-pecanje/postgres
 ```
+
+Keep Turnstile disabled for the first deployment of its keys, confirm the frontend widget
+loads, then enable it. See [adaptive anti-abuse and moderation](anti-abuse.md) for thresholds,
+failure behavior, and test credentials.
 
 7. Validate the fully merged production configuration before building anything:
 
