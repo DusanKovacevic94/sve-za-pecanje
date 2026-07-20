@@ -5,7 +5,8 @@
 		reverse_proxy backend:8000
 	}
 
-	handle /health {
+	@health path /health /health/*
+	handle @health {
 		reverse_proxy backend:8000
 	}
 

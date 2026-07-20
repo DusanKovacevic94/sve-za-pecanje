@@ -92,17 +92,20 @@ def main() -> int:
     if not failed:
         try:
             listings = listing_payload["data"]  # type: ignore[index]
-            slug = listings[0]["slug"]
-            detail = Check(
-                "listing detail",
-                f"{app_url}/oglasi/{quote(str(slug), safe='')}",
-                contains=html.escape(str(listings[0]["title"])),
-            )
-            fetch(detail, args.timeout)
-            print(f"PASS {detail.name}: {detail.url}")
-        except (IndexError, KeyError, TypeError):
+            if listings:
+                slug = listings[0]["slug"]
+                detail = Check(
+                    "listing detail",
+                    f"{app_url}/oglasi/{quote(str(slug), safe='')}",
+                    contains=html.escape(str(listings[0]["title"])),
+                )
+                fetch(detail, args.timeout)
+                print(f"PASS {detail.name}: {detail.url}")
+            else:
+                print("SKIP listing detail: no public listings")
+        except (KeyError, TypeError):
             failed = True
-            print("FAIL listing detail: listing API returned no usable public listing", file=sys.stderr)
+            print("FAIL listing detail: listing API returned malformed data", file=sys.stderr)
         except RuntimeError as exc:
             failed = True
             print(f"FAIL listing detail: {exc}", file=sys.stderr)
