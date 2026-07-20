@@ -1,7 +1,9 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
+
+from app.models.listing import DELIVERY_METHODS, PRICE_TYPES
 
 CONDITIONS = {
     "new",
@@ -14,6 +16,19 @@ CONDITIONS = {
 CURRENCIES = {"RSD", "EUR"}
 
 
+def _validate_price_type(value: str) -> str:
+    if value not in PRICE_TYPES:
+        raise ValueError("Izaberite važeći tip cene.")
+    return value
+
+
+def _validate_delivery_methods(values: list[str]) -> list[str]:
+    unique = list(dict.fromkeys(values))
+    if any(value not in DELIVERY_METHODS for value in unique):
+        raise ValueError("Izaberite važeći način preuzimanja ili dostave.")
+    return unique
+
+
 class ListingCreate(BaseModel):
     category_id: str
     title: str = Field(min_length=8, max_length=120)
@@ -22,8 +37,11 @@ class ListingCreate(BaseModel):
     brand_name_custom: str | None = Field(default=None, max_length=120)
     model: str | None = Field(default=None, max_length=120)
     condition: str
-    price_amount: Decimal = Field(gt=0)
+    price_type: str = "fixed"
+    price_amount: Decimal | None = Field(default=None, validate_default=True)
     currency: str = "RSD"
+    delivery_methods: list[str] = Field(default_factory=list)
+    delivery_note: str | None = Field(default=None, max_length=500)
     city: str = Field(min_length=2, max_length=120)
     municipality: str | None = Field(default=None, max_length=120)
     allow_messages: bool = True
@@ -45,6 +63,30 @@ class ListingCreate(BaseModel):
             raise ValueError("Valuta mora biti RSD ili EUR.")
         return value
 
+    @field_validator("price_type")
+    @classmethod
+    def validate_price_type(cls, value: str) -> str:
+        return _validate_price_type(value)
+
+    @field_validator("price_amount")
+    @classmethod
+    def validate_price_amount(
+        cls,
+        value: Decimal | None,
+        info: ValidationInfo,
+    ) -> Decimal | None:
+        price_type = info.data.get("price_type", "fixed")
+        if price_type in {"fixed", "negotiable"} and (value is None or value <= 0):
+            raise ValueError("Unesite cenu veću od nule za izabrani tip cene.")
+        if price_type in {"on_request", "free"} and value is not None:
+            raise ValueError("Za „Na upit” i „Poklanjam” cena se ne unosi.")
+        return value
+
+    @field_validator("delivery_methods")
+    @classmethod
+    def validate_delivery_methods(cls, values: list[str]) -> list[str]:
+        return _validate_delivery_methods(values)
+
 
 class ListingUpdate(BaseModel):
     title: str | None = Field(default=None, min_length=8, max_length=120)
@@ -53,13 +95,26 @@ class ListingUpdate(BaseModel):
     brand_name_custom: str | None = Field(default=None, max_length=120)
     model: str | None = Field(default=None, max_length=120)
     condition: str | None = None
-    price_amount: Decimal | None = Field(default=None, gt=0)
+    price_type: str | None = None
+    price_amount: Decimal | None = None
     currency: str | None = None
+    delivery_methods: list[str] | None = None
+    delivery_note: str | None = Field(default=None, max_length=500)
     city: str | None = Field(default=None, min_length=2, max_length=120)
     municipality: str | None = Field(default=None, max_length=120)
     allow_messages: bool | None = None
     phone_visible: bool | None = None
     attributes: dict | None = None
+
+    @field_validator("price_type")
+    @classmethod
+    def validate_price_type(cls, value: str | None) -> str | None:
+        return _validate_price_type(value) if value is not None else None
+
+    @field_validator("delivery_methods")
+    @classmethod
+    def validate_delivery_methods(cls, values: list[str] | None) -> list[str] | None:
+        return _validate_delivery_methods(values) if values is not None else None
 
 
 class ListingDraftCreate(BaseModel):
@@ -71,13 +126,26 @@ class ListingDraftCreate(BaseModel):
     brand_name_custom: str | None = Field(default=None, max_length=120)
     model: str | None = Field(default=None, max_length=120)
     condition: str = ""
-    price_amount: Decimal = Field(default=Decimal("0"), ge=0)
+    price_type: str = "fixed"
+    price_amount: Decimal | None = Field(default=Decimal("0"), ge=0)
     currency: str = "RSD"
+    delivery_methods: list[str] = Field(default_factory=list)
+    delivery_note: str | None = Field(default=None, max_length=500)
     city: str = Field(default="", max_length=120)
     municipality: str | None = Field(default=None, max_length=120)
     allow_messages: bool = True
     phone_visible: bool = False
     attributes: dict = Field(default_factory=dict)
+
+    @field_validator("price_type")
+    @classmethod
+    def validate_price_type(cls, value: str) -> str:
+        return _validate_price_type(value)
+
+    @field_validator("delivery_methods")
+    @classmethod
+    def validate_delivery_methods(cls, values: list[str]) -> list[str]:
+        return _validate_delivery_methods(values)
 
 
 class ListingDraftUpdate(BaseModel):
@@ -89,13 +157,26 @@ class ListingDraftUpdate(BaseModel):
     brand_name_custom: str | None = Field(default=None, max_length=120)
     model: str | None = Field(default=None, max_length=120)
     condition: str | None = Field(default=None, max_length=40)
+    price_type: str | None = None
     price_amount: Decimal | None = Field(default=None, ge=0)
     currency: str | None = Field(default=None, max_length=3)
+    delivery_methods: list[str] | None = None
+    delivery_note: str | None = Field(default=None, max_length=500)
     city: str | None = Field(default=None, max_length=120)
     municipality: str | None = Field(default=None, max_length=120)
     allow_messages: bool | None = None
     phone_visible: bool | None = None
     attributes: dict | None = None
+
+    @field_validator("price_type")
+    @classmethod
+    def validate_price_type(cls, value: str | None) -> str | None:
+        return _validate_price_type(value) if value is not None else None
+
+    @field_validator("delivery_methods")
+    @classmethod
+    def validate_delivery_methods(cls, values: list[str] | None) -> list[str] | None:
+        return _validate_delivery_methods(values) if values is not None else None
 
 
 class ListingDraftPublish(BaseModel):
@@ -144,8 +225,10 @@ class ListingCard(BaseModel):
     public_id: str
     title: str
     slug: str
-    price_amount: Decimal
+    price_type: str
+    price_amount: Decimal | None
     currency: str
+    delivery_methods: list[str]
     city: str
     condition: str
     status: str
@@ -164,6 +247,7 @@ class ListingDetail(ListingCard):
     municipality: str | None
     model: str | None
     brand_name_custom: str | None
+    delivery_note: str | None
     attributes: dict
     attributes_display: list[AttributeDisplayOut]
     allow_messages: bool
@@ -172,6 +256,7 @@ class ListingDetail(ListingCard):
     favorite_count: int
     images: list[ListingImageOut]
     sold_at: datetime | None
+    reserved_at: datetime | None
     rejection_reason: str | None
     is_favorited: bool = False
 

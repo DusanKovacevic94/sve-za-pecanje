@@ -3,7 +3,11 @@
 import type { ChangeEvent } from "react";
 
 import type { Brand, Category, City } from "@/lib/api";
-import { conditionOptions } from "@/lib/format";
+import {
+  conditionOptions,
+  deliveryMethodOptions,
+  priceTypeOptions
+} from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select } from "@/components/ui/Field";
 
@@ -115,6 +119,8 @@ export function FilterSidebar({
 }) {
   const selectedCategorySlugs = selectedValues(searchParams.category);
   const selectedBrandIds = selectedValues(searchParams.brand_id);
+  const selectedPriceTypes = selectedValues(searchParams.price_type);
+  const selectedDeliveryMethods = selectedValues(searchParams.delivery_method);
   const sort = typeof searchParams.sort === "string" ? searchParams.sort : "";
   const selectedCategories = selectedCategorySlugs
     .map((slug) => findCategory(categories, slug))
@@ -209,6 +215,38 @@ export function FilterSidebar({
           <option value="EUR">EUR</option>
         </Select>
       </div>
+      <fieldset>
+        <legend className="text-sm font-semibold text-slate-800">Tip cene</legend>
+        <div className="mt-2 grid gap-2">
+          {priceTypeOptions.map(({ value, label }) => (
+            <label key={value} className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                name="price_type"
+                value={value}
+                defaultChecked={selectedPriceTypes.includes(value)}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className="text-sm font-semibold text-slate-800">Preuzimanje i dostava</legend>
+        <div className="mt-2 grid gap-2">
+          {deliveryMethodOptions.map(({ value, label }) => (
+            <label key={value} className="flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                name="delivery_method"
+                value={value}
+                defaultChecked={selectedDeliveryMethods.includes(value)}
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <fieldset>
         <legend className="text-sm font-semibold text-slate-800">Brendovi</legend>
         <details id="brand-filter-options" className="group mt-1 rounded-lg border border-slate-200 bg-white">

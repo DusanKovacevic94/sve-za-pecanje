@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
+import { deliveryMethodLabels, priceTypeLabels } from "@/lib/format";
 
 export type SavedSearchItem = {
   id: string;
@@ -70,6 +71,8 @@ function filterSummary(filters: Record<string, unknown>, categories: Category[])
   const globalLabels: Record<string, string> = {
     price_min: "Cena od",
     price_max: "Cena do",
+    price_type: "Tip cene",
+    delivery_method: "Preuzimanje i dostava",
     currency: "Valuta",
     city: "Grad",
     condition: "Stanje",
@@ -95,7 +98,12 @@ function filterSummary(filters: Record<string, unknown>, categories: Category[])
       const bound = match[2] === "min" ? " od" : match[2] === "max" ? " do" : "";
       return `${attribute?.label_sr ?? match[1]}${bound}: ${shown}${attribute?.unit ? ` ${attribute.unit}` : ""}`;
     }
-    return `${globalLabels[key] ?? key}: ${values(value).join(", ")}`;
+    const shownValues = values(value).map((item) => {
+      if (key === "price_type") return priceTypeLabels[item] ?? item;
+      if (key === "delivery_method") return deliveryMethodLabels[item] ?? item;
+      return item;
+    });
+    return `${globalLabels[key] ?? key}: ${shownValues.join(", ")}`;
   });
 }
 

@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.responses import api_error
 from app.models.audit import AuditLog
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Message
 from app.models.report import Report
 from app.models.email_outbox import EmailOutbox
@@ -26,7 +26,9 @@ class ModerationService:
             )
             or 0,
             "active_listings": self.db.scalar(
-                select(func.count(Listing.id)).where(Listing.status == "active")
+                select(func.count(Listing.id)).where(
+                    Listing.status.in_(PUBLIC_LISTING_STATUSES)
+                )
             )
             or 0,
             "new_users_last_7_days": self.db.scalar(
@@ -112,10 +114,15 @@ class ModerationService:
             raise api_error("NOT_FOUND", "Korisnik nije pronađen.", 404)
         user.status = "suspended"
         archived = self.db.scalars(
-            select(Listing).where(Listing.seller_id == user.id, Listing.status == "active")
+            select(Listing).where(
+                Listing.seller_id == user.id,
+                Listing.status.in_(PUBLIC_LISTING_STATUSES),
+            )
         ).all()
         for listing in archived:
             listing.status = "archived"
+            listing.reserved_at = None
+            listing.reserved_by_user_id = None
         self.audit(
             admin,
             "user.suspended",

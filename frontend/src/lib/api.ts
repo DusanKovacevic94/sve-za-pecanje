@@ -106,6 +106,9 @@ export type AttributeDisplay = {
   unit: string | null;
 };
 
+export type PriceType = "fixed" | "negotiable" | "on_request" | "free";
+export type DeliveryMethod = "personal_pickup" | "courier" | "seller_arrangement";
+
 export type AdminBrand = Brand & {
   aliases: string[];
   category_scope: string[];
@@ -119,8 +122,10 @@ export type ListingCard = {
   public_id: string;
   title: string;
   slug: string;
-  price_amount: string;
+  price_type: PriceType;
+  price_amount: string | null;
   currency: string;
+  delivery_methods: DeliveryMethod[];
   city: string;
   condition: string;
   status: string;
@@ -153,6 +158,7 @@ export type ListingCard = {
   draft_version: number;
   draft_expires_at: string | null;
   draft_expires_soon: boolean;
+  reserved_at: string | null;
 };
 
 export type ListingDetail = ListingCard & {
@@ -160,6 +166,7 @@ export type ListingDetail = ListingCard & {
   municipality: string | null;
   model: string | null;
   brand_name_custom: string | null;
+  delivery_note: string | null;
   attributes: Record<string, string | number | boolean | string[]>;
   attributes_display: AttributeDisplay[];
   allow_messages: boolean;
@@ -200,7 +207,18 @@ export type ConversationMessage = {
 export type Conversation = {
   id: string;
   listing_id: string;
-  listing: { id: string; title: string; slug: string; status: string };
+  listing: {
+    id: string;
+    title: string;
+    slug: string;
+    status: string;
+    price_type: PriceType;
+    price_amount: string | null;
+    currency: string;
+    delivery_methods: DeliveryMethod[];
+    delivery_note: string | null;
+    reserved_at: string | null;
+  };
   buyer_id: string;
   seller_id: string;
   buyer: MessageUser;

@@ -5,7 +5,13 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ApiError, type Conversation } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
-import { formatDate } from "@/lib/format";
+import {
+  deliveryMethodLabels,
+  formatDate,
+  formatListingPrice,
+  listingStatusLabels,
+  priceTypeLabels
+} from "@/lib/format";
 import { serverApiFetch } from "@/lib/server-api";
 
 type ConversationPageProps = {
@@ -48,11 +54,29 @@ export default async function ConversationPage({ params, searchParams }: Convers
 
       <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge>{conversation.listing.status}</Badge>
+          <Badge tone={conversation.listing.status === "reserved" ? "warn" : "neutral"}>
+            {listingStatusLabels[conversation.listing.status] ?? conversation.listing.status}
+          </Badge>
+          <span className="text-sm font-bold text-river-800">
+            {formatListingPrice(
+              conversation.listing.price_type,
+              conversation.listing.price_amount,
+              conversation.listing.currency
+            )}
+          </span>
+          <Badge>{priceTypeLabels[conversation.listing.price_type]}</Badge>
+          {conversation.listing.delivery_methods.map((method) => (
+            <Badge key={method}>{deliveryMethodLabels[method] ?? method}</Badge>
+          ))}
           <span className="text-sm font-semibold text-slate-500">
             {conversation.messages_meta.total} poruka
           </span>
         </div>
+        {conversation.listing.delivery_note ? (
+          <p className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+            {conversation.listing.delivery_note}
+          </p>
+        ) : null}
 
         <div className="mt-5 space-y-4">
           {conversation.messages.map((message) => {

@@ -45,7 +45,13 @@ test("registration-to-sale marketplace journey", async ({
     await sellerPage.getByLabel("Brend").selectOption({ label: "Shimano" });
     await sellerPage.getByLabel("Model").fill(`E2E-${suffix}`);
     await sellerPage.getByLabel("Grad").fill("Beograd");
+    await sellerPage.getByLabel("Tip cene").selectOption("negotiable");
     await sellerPage.getByLabel("Cena").fill("12500");
+    await sellerPage.getByLabel("Lično preuzimanje").check();
+    await sellerPage.getByLabel("Kurirska služba").check();
+    await sellerPage
+      .getByLabel("Napomena o preuzimanju ili dostavi")
+      .fill("Lično u Beogradu ili slanje kurirskom službom.");
 
     const rodType = sellerPage.getByLabel(/Tip štapa/);
     if (await rodType.count()) {
@@ -105,6 +111,26 @@ test("registration-to-sale marketplace journey", async ({
     await expect(adminPage.getByText(listingTitle)).toBeVisible();
   });
 
+  await test.step("seller reserves the listing while it remains public", async () => {
+    await sellerPage.goto("/nalog/oglasi");
+    await sellerPage.getByRole("button", { name: "Rezerviši", exact: true }).click();
+    await expect
+      .poll(async () => {
+        const response = await sellerContext.request.get(
+          `${backendURL}/api/v1/listings/${listingSlug}`
+        );
+        return (await response.json()).data.status;
+      })
+      .toBe("reserved");
+    const promotion = await sellerContext.request.post(
+      `${backendURL}/api/v1/listings/${listingId}/feature-request`,
+      { data: { type: "featured", package_days: 7 } }
+    );
+    expect(promotion.status()).toBe(400);
+    await sellerPage.goto(`/oglasi/${listingSlug}`);
+    await expect(sellerPage.getByText("Rezervisano", { exact: true })).toBeVisible();
+  });
+
   const buyerContext = await browser.newContext();
   const buyerPage = await buyerContext.newPage();
   await test.step("buyer registers and restores multi-value filters from a saved search", async () => {
@@ -118,6 +144,8 @@ test("registration-to-sale marketplace journey", async ({
     await filters.locator("#brand-filter-options summary").click();
     await filters.getByRole("checkbox", { name: "Shimano", exact: true }).check();
     await filters.getByRole("checkbox", { name: "Daiwa", exact: true }).check();
+    await filters.getByRole("checkbox", { name: "Cena po dogovoru", exact: true }).check();
+    await filters.getByRole("checkbox", { name: "Kurirska služba", exact: true }).check();
     await filters.getByRole("button", { name: "Primeni filtere" }).click();
 
     const attributeFilters = buyerPage.locator("aside");
@@ -131,6 +159,8 @@ test("registration-to-sale marketplace journey", async ({
     let filteredURL = new URL(buyerPage.url());
     expect(filteredURL.searchParams.getAll("category")).toEqual(["spin-stapovi", "feeder-stapovi"]);
     expect(filteredURL.searchParams.getAll("brand_id")).toHaveLength(2);
+    expect(filteredURL.searchParams.getAll("price_type")).toEqual(["negotiable"]);
+    expect(filteredURL.searchParams.getAll("delivery_method")).toEqual(["courier"]);
     expect(filteredURL.searchParams.get("attributes[length_cm][min]")).toBe("220");
     await expect(buyerPage.getByText(listingTitle, { exact: true })).toBeVisible();
 
@@ -138,6 +168,8 @@ test("registration-to-sale marketplace journey", async ({
     filteredURL = new URL(buyerPage.url());
     expect(filteredURL.searchParams.getAll("category")).toHaveLength(2);
     expect(filteredURL.searchParams.getAll("brand_id")).toHaveLength(2);
+    expect(filteredURL.searchParams.getAll("price_type")).toEqual(["negotiable"]);
+    expect(filteredURL.searchParams.getAll("delivery_method")).toEqual(["courier"]);
 
     await buyerPage.getByRole("link", { name: "Sačuvaj pretragu" }).click();
     await buyerPage.getByLabel("Naziv").fill(savedSearchName);

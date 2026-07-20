@@ -45,13 +45,21 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = []
+    for raw_error in exc.errors():
+        error = dict(raw_error)
+        if error.get("ctx"):
+            error["ctx"] = {
+                key: str(value) for key, value in error["ctx"].items()
+            }
+        errors.append(error)
     return JSONResponse(
         status_code=422,
         content={
             "error": {
                 "code": "VALIDATION_ERROR",
                 "message": "Podaci nisu ispravni.",
-                "details": {"errors": exc.errors()},
+                "details": {"errors": errors},
             }
         },
     )

@@ -9,6 +9,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
 
+PUBLIC_LISTING_STATUSES = ("active", "reserved")
+PRICE_TYPES = ("fixed", "negotiable", "on_request", "free")
+DELIVERY_METHODS = ("personal_pickup", "courier", "seller_arrangement")
+
 if TYPE_CHECKING:
     from app.models.brand import Brand
     from app.models.category import Category
@@ -37,8 +41,14 @@ class Listing(Base, TimestampMixin):
     slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
     description: Mapped[str] = mapped_column(Text)
     condition: Mapped[str] = mapped_column(String(40), index=True)
-    price_amount: Mapped[float] = mapped_column(Numeric(12, 2), index=True)
+    price_type: Mapped[str] = mapped_column(String(30), default="fixed", index=True)
+    price_amount: Mapped[float | None] = mapped_column(Numeric(12, 2), index=True)
     currency: Mapped[str] = mapped_column(String(3), index=True, default="RSD")
+    delivery_methods: Mapped[list[str]] = mapped_column(
+        JSONB().with_variant(JSON, "sqlite"),
+        default=list,
+    )
+    delivery_note: Mapped[str | None] = mapped_column(Text)
     city: Mapped[str] = mapped_column(String(120), index=True)
     municipality: Mapped[str | None] = mapped_column(String(120))
     status: Mapped[str] = mapped_column(String(30), default="pending_review", index=True)
@@ -56,6 +66,8 @@ class Listing(Base, TimestampMixin):
     message_count: Mapped[int] = mapped_column(default=0)
     sold_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     sold_to_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
+    reserved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    reserved_by_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))
     rejection_reason: Mapped[str | None] = mapped_column(Text)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     approved_by_admin_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"))

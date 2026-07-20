@@ -10,7 +10,11 @@ import { z } from "zod";
 import type { Brand, BuyerCandidate, Category, ListingDetail } from "@/lib/api";
 import { ApiError, apiFetch } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
-import { conditionOptions } from "@/lib/format";
+import {
+  conditionOptions,
+  deliveryMethodOptions,
+  priceTypeOptions
+} from "@/lib/format";
 import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
@@ -18,7 +22,7 @@ import { ListingImageManager } from "@/components/forms/ListingImageManager";
 import { ListingQualityChecklist } from "@/components/forms/ListingQualityChecklist";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
-const listingFormSchema = listingSchema.passthrough();
+const listingFormSchema = listingSchema;
 
 type ListingFormInput = z.input<typeof listingFormSchema>;
 type ListingFormOutput = z.output<typeof listingFormSchema>;
@@ -59,6 +63,8 @@ function flattenCategories(categories: Category[]): Category[] {
 function getDefaultValues(categories: Category[], defaultValues?: ListingFormDefaults): ListingFormInput {
   const values: Record<string, unknown> = {
     currency: "RSD",
+    price_type: "fixed",
+    delivery_methods: [],
     condition: "used_good",
     allow_messages: true,
     phone_visible: false,
@@ -101,12 +107,14 @@ function buildPayload(
       delete payload[key];
     }
   });
-  ["brand_id", "brand_name_custom", "model", "municipality"].forEach((key) => {
+  ["brand_id", "brand_name_custom", "model", "municipality", "delivery_note"].forEach((key) => {
     if (payload[key] === "") {
       payload[key] = null;
     }
   });
-  if (mode === "create" && (payload.price_amount === "" || payload.price_amount === undefined)) {
+  if (["on_request", "free"].includes(String(payload.price_type))) {
+    payload.price_amount = null;
+  } else if (mode === "create" && (payload.price_amount === "" || payload.price_amount === undefined)) {
     payload.price_amount = 0;
   }
   if (mode === "edit") {
@@ -124,8 +132,11 @@ function listingDefaults(listing: ListingDetail): ListingFormDefaults {
     brand_name_custom: listing.brand_name_custom ?? "",
     model: listing.model ?? "",
     condition: listing.condition,
-    price_amount: Number(listing.price_amount) || undefined,
+    price_type: listing.price_type,
+    price_amount: listing.price_amount === null ? undefined : Number(listing.price_amount),
     currency: listing.currency === "EUR" ? "EUR" : "RSD",
+    delivery_methods: listing.delivery_methods,
+    delivery_note: listing.delivery_note ?? "",
     city: listing.city,
     municipality: listing.municipality ?? "",
     allow_messages: listing.allow_messages,
@@ -181,6 +192,7 @@ export function CreateListingForm({
     shouldUnregister: true
   });
   const categoryId = watch("category_id") || categories[0]?.id || "";
+  const priceType = watch("price_type") ?? "fixed";
   const watchedValues = watch() as Record<string, unknown>;
   const selectedCategory = useMemo(
     () => categoryOptions.find((item) => item.id === categoryId),
@@ -611,17 +623,33 @@ export function CreateListingForm({
             <Input id="city" {...register("city")} placeholder="Beograd" />
           </div>
           <div>
-            <FieldLabel htmlFor="price_amount">Cena</FieldLabel>
-            <Input id="price_amount" type="number" step="0.01" {...register("price_amount")} />
-            <p className="mt-1 text-sm text-red-600">{formState.errors.price_amount?.message}</p>
-          </div>
-          <div>
-            <FieldLabel htmlFor="currency">Valuta</FieldLabel>
-            <Select id="currency" {...register("currency")}>
-              <option value="RSD">RSD</option>
-              <option value="EUR">EUR</option>
+            <FieldLabel htmlFor="price_type">Tip cene</FieldLabel>
+            <Select id="price_type" {...register("price_type")}>
+              {priceTypeOptions.map(({ value, label }) => (
+                <option value={value} key={value}>{label}</option>
+              ))}
             </Select>
           </div>
+          {priceType === "fixed" || priceType === "negotiable" ? (
+            <>
+              <div>
+                <FieldLabel htmlFor="price_amount">Cena</FieldLabel>
+                <Input id="price_amount" type="number" min="0.01" step="0.01" {...register("price_amount")} />
+                <p className="mt-1 text-sm text-red-600">{formState.errors.price_amount?.message}</p>
+              </div>
+              <div>
+                <FieldLabel htmlFor="currency">Valuta</FieldLabel>
+                <Select id="currency" {...register("currency")}>
+                  <option value="RSD">RSD</option>
+                  <option value="EUR">EUR</option>
+                </Select>
+              </div>
+            </>
+          ) : (
+            <p className="self-end rounded-md bg-river-50 p-3 text-sm text-river-800">
+              Za opciju „{priceType === "free" ? "Poklanjam" : "Na upit"}” iznos se ne unosi.
+            </p>
+          )}
         </div>
       </section>
 
@@ -694,8 +722,28 @@ export function CreateListingForm({
       </section>
 
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <h2 className="text-xl font-black">4. Pravila i kontakt</h2>
+        <h2 className="text-xl font-black">4. Preuzimanje i kontakt</h2>
         <div className="mt-4 space-y-3">
+          <fieldset>
+            <legend className="text-sm font-semibold text-slate-800">Način preuzimanja ili dostave</legend>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {deliveryMethodOptions.map(({ value, label }) => (
+                <label key={value} className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" value={value} {...register("delivery_methods")} />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div>
+            <FieldLabel htmlFor="delivery_note">Napomena o preuzimanju ili dostavi</FieldLabel>
+            <Textarea
+              id="delivery_note"
+              {...register("delivery_note")}
+              placeholder="Na primer: lično preuzimanje radnim danima posle 17h."
+            />
+            <p className="mt-1 text-sm text-red-600">{formState.errors.delivery_note?.message}</p>
+          </div>
           <label className="flex gap-3 text-sm">
             <input type="checkbox" {...register("allow_messages")} defaultChecked />
             Dozvoli poruke za ovaj oglas

@@ -179,12 +179,17 @@ class RiskService:
         return case
 
     def fingerprint_listing(self, listing: Listing) -> ListingFingerprint:
-        price = str(Decimal(listing.price_amount).quantize(Decimal("0.01")))
+        price = (
+            str(Decimal(listing.price_amount).quantize(Decimal("0.01")))
+            if listing.price_amount is not None
+            else listing.price_type
+        )
         content = "\n".join(
             [
                 normalized_text(listing.title),
                 normalized_text(listing.description),
                 listing.category_id,
+                listing.price_type,
                 price,
                 listing.currency,
             ]

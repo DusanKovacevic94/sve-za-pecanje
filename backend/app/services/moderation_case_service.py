@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.responses import api_error
 from app.models.audit import AuditLog
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.moderation_case import ModerationCase
 from app.models.user import User
 from app.services.moderation_service import ModerationService
@@ -171,7 +171,7 @@ class ModerationCaseService:
             case.assigned_admin_id = admin.id
             if action == "approve" and case.entity_type == "listing":
                 listing = self.db.get(Listing, case.entity_id)
-                if listing and listing.status != "active":
+                if listing and listing.status not in PUBLIC_LISTING_STATUSES:
                     moderation.approve_listing(listing.id, admin)
             elif action == "reject" and case.entity_type == "listing":
                 listing = self.db.get(Listing, case.entity_id)

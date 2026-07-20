@@ -11,10 +11,11 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.config import settings
 from app.core.responses import api_error
 from app.core.storage import delete_storage_object
+from app.models.audit import AuditLog
 from app.models.category import AttributeDefinition, Category
 from app.models.favorite import Favorite
 from app.models.image import ListingImage
-from app.models.listing import Listing
+from app.models.listing import Listing, PUBLIC_LISTING_STATUSES
 from app.models.message import Conversation
 from app.models.user import User
 from app.schemas.listing import (
@@ -63,8 +64,11 @@ class ListingService:
             slug=f"{slugify(payload.title)}-{public_id}",
             description=payload.description,
             condition=payload.condition,
+            price_type=payload.price_type,
             price_amount=payload.price_amount,
             currency=payload.currency,
+            delivery_methods=payload.delivery_methods,
+            delivery_note=payload.delivery_note,
             city=payload.city,
             municipality=payload.municipality,
             status="active" if automatically_approved else "pending_review",
@@ -132,8 +136,11 @@ class ListingService:
             slug=f"nacrt-{public_id}",
             description=payload.description,
             condition=payload.condition,
+            price_type=payload.price_type,
             price_amount=payload.price_amount,
             currency=payload.currency,
+            delivery_methods=payload.delivery_methods,
+            delivery_note=payload.delivery_note,
             city=payload.city,
             municipality=payload.municipality,
             status="draft",
@@ -193,8 +200,9 @@ class ListingService:
             "title": "",
             "description": "",
             "condition": "",
-            "price_amount": 0,
+            "price_type": "fixed",
             "currency": "RSD",
+            "delivery_methods": [],
             "city": "",
             "attributes": {},
             "allow_messages": True,
@@ -203,6 +211,8 @@ class ListingService:
         for key, default in draft_defaults.items():
             if key in data and data[key] is None:
                 data[key] = default
+        if data.get("price_type") in {"on_request", "free"}:
+            data["price_amount"] = None
         for key, value in data.items():
             setattr(listing, key, value)
         listing.draft_version += 1
@@ -230,8 +240,11 @@ class ListingService:
                     "brand_name_custom": listing.brand_name_custom,
                     "model": listing.model,
                     "condition": listing.condition,
+                    "price_type": listing.price_type,
                     "price_amount": listing.price_amount,
                     "currency": listing.currency,
+                    "delivery_methods": listing.delivery_methods,
+                    "delivery_note": listing.delivery_note,
                     "city": listing.city,
                     "municipality": listing.municipality,
                     "allow_messages": listing.allow_messages,
@@ -309,6 +322,25 @@ class ListingService:
                 400,
             )
         data = payload.model_dump(exclude_unset=True)
+        next_price_type = data.get("price_type", listing.price_type)
+        if next_price_type in {"on_request", "free"}:
+            if data.get("price_amount") is not None:
+                raise api_error(
+                    "VALIDATION_ERROR",
+                    "Za „Na upit” i „Poklanjam” cena se ne unosi.",
+                    422,
+                    {"field": "price_amount"},
+                )
+            data["price_amount"] = None
+        else:
+            next_amount = data.get("price_amount", listing.price_amount)
+            if next_amount is None or next_amount <= 0:
+                raise api_error(
+                    "VALIDATION_ERROR",
+                    "Unesite cenu veću od nule za izabrani tip cene.",
+                    422,
+                    {"field": "price_amount"},
+                )
         if "attributes" in data and data["attributes"] is not None:
             data["attributes"] = validate_and_coerce_attributes(
                 self.db,
@@ -316,11 +348,26 @@ class ListingService:
                 data["attributes"],
                 enforce_required=False,
             )
-        major_fields = {"title", "description", "category_id", "price_amount", "attributes"}
+        major_fields = {
+            "title",
+            "description",
+            "category_id",
+            "price_type",
+            "price_amount",
+            "delivery_methods",
+            "delivery_note",
+            "attributes",
+        }
         for key, value in data.items():
             setattr(listing, key, value)
-        if actor.role == "user" and listing.status == "active" and major_fields.intersection(data):
+        if (
+            actor.role == "user"
+            and listing.status in PUBLIC_LISTING_STATUSES
+            and major_fields.intersection(data)
+        ):
             listing.status = "pending_review"
+            listing.reserved_at = None
+            listing.reserved_by_user_id = None
         self.db.commit()
         self.db.refresh(listing)
         from app.services.risk_service import RiskService
@@ -331,7 +378,7 @@ class ListingService:
     def list_public(self, params: dict[str, Any]) -> tuple[list[Listing], int]:
         page = max(int(params.get("page", 1)), 1)
         page_size = min(max(int(params.get("page_size", 24)), 1), 48)
-        query = self._base_query().where(Listing.status == "active")
+        query = self._base_query().where(Listing.status.in_(PUBLIC_LISTING_STATUSES))
         query, rank = apply_listing_filters(self.db, query, params)
         total = self.db.scalar(select(func.count()).select_from(query.subquery())) or 0
         query = self._apply_sort(query, params.get("sort"), rank)
@@ -359,7 +406,7 @@ class ListingService:
 
     def favorite(self, listing_id: str, user: User) -> None:
         listing = self.db.get(Listing, listing_id)
-        if not listing or listing.status != "active":
+        if not listing or listing.status not in PUBLIC_LISTING_STATUSES:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
         exists = self.db.scalar(
             select(Favorite).where(Favorite.user_id == user.id, Favorite.listing_id == listing_id)
@@ -390,8 +437,12 @@ class ListingService:
     def mark_sold(self, listing: Listing, actor: User, sold_to_user_id: str | None = None) -> Listing:
         if listing.seller_id != actor.id and actor.role not in {"admin", "super_admin"}:
             raise api_error("FORBIDDEN", "Samo prodavac ili admin može označiti oglas kao prodat.", 403)
-        if listing.status == "draft":
-            raise api_error("VALIDATION_ERROR", "Nacrt još nije objavljen.", 400)
+        if listing.status not in PUBLIC_LISTING_STATUSES:
+            raise api_error(
+                "INVALID_LISTING_STATE",
+                "Samo aktivan ili rezervisan oglas može biti označen kao prodat.",
+                409,
+            )
         if sold_to_user_id:
             buyer_conversation = self.db.scalar(
                 select(Conversation.id).where(
@@ -405,6 +456,9 @@ class ListingService:
         listing.status = "sold"
         listing.sold_at = datetime.now(UTC)
         listing.sold_to_user_id = sold_to_user_id
+        listing.reserved_at = None
+        listing.reserved_by_user_id = None
+        self._audit_state_change(actor, listing, "listing.sold", "sold")
         self.track(
             actor.id,
             "listing_marked_sold",
@@ -416,10 +470,44 @@ class ListingService:
         self.db.refresh(listing)
         return listing
 
+    def reserve(self, listing: Listing, actor: User) -> Listing:
+        self._ensure_owner_or_admin(listing, actor)
+        if listing.status != "active":
+            raise api_error(
+                "INVALID_LISTING_STATE",
+                "Samo aktivan oglas može biti rezervisan.",
+                409,
+            )
+        listing.status = "reserved"
+        listing.reserved_at = datetime.now(UTC)
+        listing.reserved_by_user_id = actor.id
+        self._audit_state_change(actor, listing, "listing.reserved", "reserved")
+        self.db.commit()
+        self.db.refresh(listing)
+        return listing
+
+    def unreserve(self, listing: Listing, actor: User) -> Listing:
+        self._ensure_owner_or_admin(listing, actor)
+        if listing.status != "reserved":
+            raise api_error(
+                "INVALID_LISTING_STATE",
+                "Samo rezervisan oglas može ponovo biti aktiviran.",
+                409,
+            )
+        listing.status = "active"
+        listing.reserved_at = None
+        listing.reserved_by_user_id = None
+        self._audit_state_change(actor, listing, "listing.unreserved", "active")
+        self.db.commit()
+        self.db.refresh(listing)
+        return listing
+
     def archive(self, listing: Listing) -> Listing:
         if listing.status == "draft":
             raise api_error("VALIDATION_ERROR", "Nacrt obrišite iz liste nacrta.", 400)
         listing.status = "archived"
+        listing.reserved_at = None
+        listing.reserved_by_user_id = None
         self.db.commit()
         self.db.refresh(listing)
         return listing
@@ -435,8 +523,10 @@ class ListingService:
             **image_data,
         )
         self.db.add(image)
-        if listing.status == "active":
+        if listing.status in PUBLIC_LISTING_STATUSES:
             listing.status = "pending_review"
+            listing.reserved_at = None
+            listing.reserved_by_user_id = None
         elif listing.status == "draft":
             listing.draft_last_saved_at = datetime.now(UTC)
         self.db.commit()
@@ -507,6 +597,27 @@ class ListingService:
         if listing.status != "draft":
             raise api_error("DRAFT_NOT_EDITABLE", "Ovaj nacrt više nije dostupan.", 409)
 
+    def _ensure_owner_or_admin(self, listing: Listing, actor: User) -> None:
+        if listing.seller_id != actor.id and actor.role not in {"admin", "super_admin"}:
+            raise api_error("FORBIDDEN", "Nemate dozvolu za ovu izmenu oglasa.", 403)
+
+    def _audit_state_change(
+        self,
+        actor: User,
+        listing: Listing,
+        action: str,
+        status: str,
+    ) -> None:
+        self.db.add(
+            AuditLog(
+                actor_user_id=actor.id,
+                action=action,
+                entity_type="listing",
+                entity_id=listing.id,
+                metadata_json={"status": status},
+            )
+        )
+
     def _lock_listing(self, listing_id: str) -> Listing:
         listing = self.db.scalar(
             self._base_query()
@@ -535,9 +646,9 @@ class ListingService:
         featured = Listing.is_featured.desc()
         freshness = func.coalesce(Listing.bumped_at, Listing.created_at).desc()
         if sort == "price_asc":
-            return query.order_by(featured, Listing.price_amount.asc())
+            return query.order_by(featured, Listing.price_amount.asc().nullslast())
         if sort == "price_desc":
-            return query.order_by(featured, Listing.price_amount.desc())
+            return query.order_by(featured, Listing.price_amount.desc().nullslast())
         if sort == "most_viewed":
             return query.order_by(featured, Listing.view_count.desc())
         if rank is not None and not sort:
@@ -635,8 +746,10 @@ def serialize_listing_card(listing: Listing) -> dict:
         "public_id": listing.public_id,
         "title": listing.title,
         "slug": listing.slug,
+        "price_type": listing.price_type,
         "price_amount": listing.price_amount,
         "currency": listing.currency,
+        "delivery_methods": listing.delivery_methods,
         "city": listing.city,
         "condition": listing.condition,
         "status": listing.status,
@@ -668,6 +781,7 @@ def serialize_listing_card(listing: Listing) -> dict:
         "favorite_count": listing.favorite_count,
         "created_at": listing.created_at,
         "updated_at": listing.updated_at,
+        "reserved_at": listing.reserved_at,
         "draft_version": listing.draft_version,
         "draft_expires_at": draft_expires_at,
         "draft_expires_soon": draft_expires_soon,
@@ -689,6 +803,7 @@ def serialize_listing_detail(
             "municipality": listing.municipality,
             "model": listing.model,
             "brand_name_custom": listing.brand_name_custom,
+            "delivery_note": listing.delivery_note,
             "attributes": listing.attributes,
             "attributes_display": display_attributes,
             "allow_messages": listing.allow_messages,

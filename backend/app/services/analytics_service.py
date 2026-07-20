@@ -187,7 +187,7 @@ def _active_listing_rows(db: Session, start: datetime, end: datetime):
         (
             Listing.approved_at.is_(None)
             & (Listing.created_at < end)
-            & Listing.status.in_(["active", "sold"])
+            & Listing.status.in_(["active", "reserved", "sold"])
         ),
     )
     not_sold_before_end = or_(Listing.sold_at.is_(None), Listing.sold_at >= end)
@@ -205,7 +205,7 @@ def _active_listing_rows(db: Session, start: datetime, end: datetime):
             approved_before_end,
             not_sold_before_end,
             not_expired_before_end,
-            Listing.status.in_(["active", "sold"]),
+            Listing.status.in_(["active", "reserved", "sold"]),
         )
         .group_by(Listing.id, Listing.category_id, Listing.seller_id)
     ).all()

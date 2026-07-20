@@ -1,6 +1,6 @@
 # 051 — Price flexibility, delivery options, and reservation state
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Problem
@@ -14,26 +14,26 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Add stable `price_type` values: `fixed`, `negotiable`, `on_request`, and `free`
-- [ ] Require `price_amount` for fixed/negotiable listings and store no amount for
+- [x] Add stable `price_type` values: `fixed`, `negotiable`, `on_request`, and `free`
+- [x] Require `price_amount` for fixed/negotiable listings and store no amount for
   on-request/free listings
-- [ ] Backfill all existing listings as `fixed` without changing their displayed amount
-- [ ] Add repeatable delivery methods with stable values for personal pickup, courier, and
+- [x] Backfill all existing listings as `fixed` without changing their displayed amount
+- [x] Add repeatable delivery methods with stable values for personal pickup, courier, and
   arrangement with seller, plus an optional delivery note
-- [ ] Use Serbian UI labels: `Fiksna cena`, `Cena po dogovoru`, `Na upit`, `Poklanjam`,
+- [x] Use Serbian UI labels: `Fiksna cena`, `Cena po dogovoru`, `Na upit`, `Poklanjam`,
   `Lično preuzimanje`, `Kurirska služba`, and `Dogovor sa prodavcem`
-- [ ] Add a reversible `reserved` listing state controlled by the owner or administrator
-- [ ] Add reserve/unreserve operations and keep the existing mark-sold operation as the
+- [x] Add a reversible `reserved` listing state controlled by the owner or administrator
+- [x] Add reserve/unreserve operations and keep the existing mark-sold operation as the
   terminal successful state
-- [ ] Keep reserved listings publicly visible with a prominent `Rezervisano` label, but
+- [x] Keep reserved listings publicly visible with a prominent `Rezervisano` label, but
   exclude them from renewal and new promotion purchases
-- [ ] Display price type and delivery consistently in listing forms, cards, detail pages,
+- [x] Display price type and delivery consistently in listing forms, cards, detail pages,
   seller management, messages, and structured metadata
-- [ ] Add price-type and delivery filters to browse, active chips, URLs, saved searches,
+- [x] Add price-type and delivery filters to browse, active chips, URLs, saved searches,
   matching counts, and digest matching
-- [ ] Update API schemas and generated frontend types additively so older clients continue
+- [x] Update API schemas and generated frontend types additively so older clients continue
   to receive valid listing data
-- [ ] Add migration, validation, state-transition, filter, saved-search, serialization, and
+- [x] Add migration, validation, state-transition, filter, saved-search, serialization, and
   E2E tests
 
 ## Acceptance criteria
@@ -49,3 +49,12 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 ## Dependencies
 
 - 050
+
+## Verification
+
+- `uv run ruff check app db/migrations/versions/0013_listing_handoff_options.py`
+- `uv run pytest -q` — 61 passed
+- migration upgrade → downgrade → upgrade on a clean SQLite database
+- `pnpm lint`
+- `pnpm build`
+- `pnpm test:e2e:critical` — 1 passed

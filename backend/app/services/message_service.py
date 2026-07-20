@@ -4,7 +4,7 @@ from sqlalchemy import and_, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.responses import api_error
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation, Message
 from app.models.user import User
 from app.services.analytics_service import AnalyticsService
@@ -87,7 +87,7 @@ class MessageService:
         listing = self.db.get(Listing, listing_id)
         if not listing:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
-        if listing.status != "active":
+        if listing.status not in PUBLIC_LISTING_STATUSES:
             raise api_error("LISTING_NOT_ACTIVE", "Oglas nije dostupan za poruke.", 400)
         if listing.seller_id == sender.id:
             raise api_error("VALIDATION_ERROR", "Ne možete poslati poruku za sopstveni oglas.", 400)
@@ -121,7 +121,7 @@ class MessageService:
     def reply(self, conversation_id: str, sender: User, body: str) -> Conversation:
         conversation = self.get_conversation(conversation_id, sender)
         listing = self.db.get(Listing, conversation.listing_id)
-        if listing and listing.status != "active":
+        if listing and listing.status not in PUBLIC_LISTING_STATUSES:
             raise api_error("LISTING_NOT_ACTIVE", "Nije moguće poslati poruku za ovaj oglas.", 400)
         return self._append_message(conversation, sender, body, listing)
 
@@ -186,6 +186,12 @@ def serialize_conversation(
             "title": conversation.listing.title,
             "slug": conversation.listing.slug,
             "status": conversation.listing.status,
+            "price_type": conversation.listing.price_type,
+            "price_amount": conversation.listing.price_amount,
+            "currency": conversation.listing.currency,
+            "delivery_methods": conversation.listing.delivery_methods,
+            "delivery_note": conversation.listing.delivery_note,
+            "reserved_at": conversation.listing.reserved_at,
         },
         "buyer_id": conversation.buyer_id,
         "seller_id": conversation.seller_id,

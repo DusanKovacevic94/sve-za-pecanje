@@ -12,7 +12,7 @@ from app.core.responses import api_error
 from app.core.category_taxonomy import LEAF_BY_SLUG
 from app.models.brand import Brand
 from app.models.category import Category
-from app.models.listing import Listing
+from app.models.listing import DELIVERY_METHODS, PRICE_TYPES, Listing
 from app.models.profile import UserProfile
 from app.services.category_service import effective_attribute_definitions
 from app.services.attribute_service import condition_matches
@@ -107,6 +107,31 @@ def apply_listing_filters(
         values = _values(filters.get(key))
         if values:
             statement = statement.where(getattr(Listing, key).in_(values))
+    price_types = _values(filters.get("price_type"))
+    if any(value not in PRICE_TYPES for value in price_types):
+        raise api_error("VALIDATION_ERROR", "Filter tipa cene nije ispravan.", 422)
+    if price_types:
+        statement = statement.where(Listing.price_type.in_(price_types))
+    delivery_methods = _values(filters.get("delivery_method"))
+    if any(value not in DELIVERY_METHODS for value in delivery_methods):
+        raise api_error("VALIDATION_ERROR", "Filter načina dostave nije ispravan.", 422)
+    if delivery_methods:
+        dialect = db.bind.dialect.name if db.bind is not None else "sqlite"
+        if dialect == "postgresql":
+            statement = statement.where(
+                or_(
+                    *(Listing.delivery_methods.contains([value]) for value in delivery_methods)
+                )
+            )
+        else:
+            statement = statement.where(
+                or_(
+                    *(
+                        cast(Listing.delivery_methods, String).contains(f'"{value}"')
+                        for value in delivery_methods
+                    )
+                )
+            )
     if filters.get("price_min") not in (None, ""):
         statement = statement.where(Listing.price_amount >= _number(filters["price_min"], "Cena od"))
     if filters.get("price_max") not in (None, ""):

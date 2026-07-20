@@ -8,7 +8,11 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Select } from "@/components/ui/Field";
 import { apiFetch, Brand, Category, City, ListingCard as ListingCardType } from "@/lib/api";
-import { conditionLabels } from "@/lib/format";
+import {
+  conditionLabels,
+  deliveryMethodLabels,
+  priceTypeLabels
+} from "@/lib/format";
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -87,6 +91,22 @@ function activeFilters(
   if (typeof params.price_min === "string" && params.price_min) add("price_min", `Od ${params.price_min}`);
   if (typeof params.price_max === "string" && params.price_max) add("price_max", `Do ${params.price_max}`);
   if (typeof params.currency === "string" && params.currency) add("currency", params.currency);
+  values(params.price_type).forEach((priceType) => {
+    chips.push({
+      id: `price-type-${priceType}`,
+      key: "price_type",
+      label: priceTypeLabels[priceType] ?? priceType,
+      href: hrefWithoutValue(params, "price_type", priceType)
+    });
+  });
+  values(params.delivery_method).forEach((method) => {
+    chips.push({
+      id: `delivery-method-${method}`,
+      key: "delivery_method",
+      label: deliveryMethodLabels[method] ?? method,
+      href: hrefWithoutValue(params, "delivery_method", method)
+    });
+  });
   if (typeof params.city === "string" && params.city) add("city", params.city);
   if (typeof params.condition === "string" && params.condition) add("condition", conditionLabels[params.condition] ?? params.condition);
   values(params.brand_id).forEach((brandId) => {
@@ -156,7 +176,7 @@ export default async function BrowsePage({ searchParams }: PageProps) {
       { next: { revalidate: 3600 } }
     ).catch(() => ({ data: [] })),
     apiFetch<City[]>("/categories/cities", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
-    apiFetch<ListingCardType[]>(`/listings?${toQuery(params)}`, { next: { revalidate: 60 } }).catch(() => ({
+    apiFetch<ListingCardType[]>(`/listings?${toQuery(params)}`, { cache: "no-store" }).catch(() => ({
       data: [] as ListingCardType[],
       meta: { total: 0, page: 1, total_pages: 1 } as Record<string, unknown>
     }))

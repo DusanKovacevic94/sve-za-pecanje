@@ -24,7 +24,7 @@ export function ListingQualityChecklist({
   images: ListingImage[];
 }) {
   const description = String(values.description ?? "").trim();
-  const hasDeliveryInfo = /(dostav|slanj|šalj|salj|preuzim|ličn|licn)/i.test(description);
+  const hasDeliveryInfo = hasValue(values.delivery_methods);
   const importantAttributes = (category?.attributes ?? []).filter(
     (attribute) => attribute.required || attribute.searchable
   );
@@ -65,7 +65,7 @@ export function ListingQualityChecklist({
     {
       done: hasDeliveryInfo,
       label: "Način dostave",
-      suggestion: "U opisu navedite da li šaljete paket ili nudite lično preuzimanje."
+      suggestion: "Izaberite bar jedan način preuzimanja ili dostave."
     },
     {
       done: importantAttributes.length === 0 || completedImportant === importantAttributes.length,

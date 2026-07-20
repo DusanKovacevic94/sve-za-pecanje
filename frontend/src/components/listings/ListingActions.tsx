@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, CheckCircle2, Flag, Heart, Pencil } from "lucide-react";
+import { Archive, CheckCircle2, Flag, Heart, LockKeyhole, Pencil, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -118,9 +118,9 @@ export function ReportButton({ listingId }: { listingId: string }) {
   );
 }
 
-export function OwnerListingActions({ listingId }: { listingId: string }) {
+export function OwnerListingActions({ listingId, status }: { listingId: string; status: string }) {
   const router = useRouter();
-  const [busyAction, setBusyAction] = useState<"archive" | "mark-sold" | null>(null);
+  const [busyAction, setBusyAction] = useState<"archive" | "mark-sold" | "reserve" | "unreserve" | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   async function chooseBuyerId() {
@@ -138,7 +138,7 @@ export function OwnerListingActions({ listingId }: { listingId: string }) {
     return candidates[index]?.id;
   }
 
-  async function runAction(action: "archive" | "mark-sold") {
+  async function runAction(action: "archive" | "mark-sold" | "reserve" | "unreserve") {
     const soldToUserId = action === "mark-sold" ? await chooseBuyerId() : null;
     if (soldToUserId === undefined) return;
     const confirmed = action === "archive" ? window.confirm("Arhivirati ovaj oglas?") : true;
@@ -160,19 +160,43 @@ export function OwnerListingActions({ listingId }: { listingId: string }) {
 
   return (
     <div className="space-y-2">
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2">
         <Button href={`/izmeni-oglas/${listingId}`} variant="secondary" className="min-h-10 px-3">
           <Pencil size={16} /> Izmeni
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          className="min-h-10 px-3"
-          disabled={busyAction === "mark-sold"}
-          onClick={() => runAction("mark-sold")}
-        >
-          <CheckCircle2 size={16} /> Prodato
-        </Button>
+        {status === "active" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-10 px-3"
+            disabled={busyAction === "reserve"}
+            onClick={() => runAction("reserve")}
+          >
+            <LockKeyhole size={16} /> Rezerviši
+          </Button>
+        ) : null}
+        {status === "reserved" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-10 px-3"
+            disabled={busyAction === "unreserve"}
+            onClick={() => runAction("unreserve")}
+          >
+            <Undo2 size={16} /> Ukloni rezervaciju
+          </Button>
+        ) : null}
+        {status === "active" || status === "reserved" ? (
+          <Button
+            type="button"
+            variant="secondary"
+            className="min-h-10 px-3"
+            disabled={busyAction === "mark-sold"}
+            onClick={() => runAction("mark-sold")}
+          >
+            <CheckCircle2 size={16} /> Prodato
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="danger"

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.responses import api_error
 from app.models.category import Category
 from app.models.feature_request import PromotionOrder
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.user import User
 from app.services.email_service import EmailService
 
@@ -132,7 +132,7 @@ class FeatureService:
                     selectinload(Listing.images),
                 )
                 .where(
-                    Listing.status == "active",
+                    Listing.status.in_(PUBLIC_LISTING_STATUSES),
                     PromotionOrder.type == "homepage",
                     PromotionOrder.status == "paid",
                     PromotionOrder.starts_at <= now,
@@ -244,6 +244,18 @@ class FeatureService:
             raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
         if listing.seller_id != user.id:
             raise api_error("FORBIDDEN", "Samo vlasnik može obnoviti oglas.", 403)
+        if listing.status == "reserved":
+            raise api_error(
+                "INVALID_LISTING_STATE",
+                "Rezervisan oglas nije moguće obnoviti. Prvo uklonite rezervaciju.",
+                409,
+            )
+        if listing.status in {"sold", "draft", "pending_review", "deleted"}:
+            raise api_error(
+                "INVALID_LISTING_STATE",
+                "Oglas u ovom statusu nije moguće obnoviti.",
+                409,
+            )
         listing.status = "active"
         listing.expires_at = datetime.now(UTC) + timedelta(days=60)
         self.db.commit()

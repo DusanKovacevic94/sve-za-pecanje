@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.responses import api_error
 from app.models.category import Category
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.profile import UserProfile
 from app.models.shop_subscription import ShopSubscriptionRequest
 from app.models.user import User
@@ -143,7 +143,10 @@ class ShopService:
                     selectinload(Listing.brand),
                     selectinload(Listing.images),
                 )
-                .where(Listing.seller_id == profile.user_id, Listing.status == "active")
+                .where(
+                    Listing.seller_id == profile.user_id,
+                    Listing.status.in_(PUBLIC_LISTING_STATUSES),
+                )
                 .order_by(Listing.is_featured.desc(), func.coalesce(Listing.bumped_at, Listing.created_at).desc())
             ).all()
         )

@@ -7,7 +7,7 @@ from app.core.responses import api_error, data_response
 from app.db.session import get_db
 from app.models.category import Category
 from app.models.favorite import Favorite
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation
 from app.models.profile import UserProfile
 from app.models.review import Review
@@ -110,7 +110,10 @@ def public_profile(username: str, db: Session = Depends(get_db)):
             selectinload(Listing.brand),
             selectinload(Listing.images),
         )
-        .where(Listing.seller_id == user.id, Listing.status == "active")
+        .where(
+            Listing.seller_id == user.id,
+            Listing.status.in_(PUBLIC_LISTING_STATUSES),
+        )
         .order_by(Listing.created_at.desc())
     ).all()
     rating = db.scalar(select(func.avg(Review.rating)).where(Review.reviewee_id == user.id))

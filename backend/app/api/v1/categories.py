@@ -6,7 +6,7 @@ from app.core.responses import api_error, data_response
 from app.core.category_taxonomy import LEAF_BY_SLUG
 from app.db.session import get_db
 from app.models.category import Category, City
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.services.category_service import effective_loaded_attribute_definitions
 
 router = APIRouter(prefix="/categories", tags=["categories"])
@@ -83,7 +83,7 @@ def serialize_category(
 def list_categories(db: Session = Depends(get_db)):
     count_rows = db.execute(
         select(Listing.category_id, func.count(Listing.id))
-        .where(Listing.status == "active")
+        .where(Listing.status.in_(PUBLIC_LISTING_STATUSES))
         .group_by(Listing.category_id)
     ).all()
     active_counts = {category_id: count for category_id, count in count_rows}

@@ -3,7 +3,13 @@ import Image from "next/image";
 import Link from "next/link";
 
 import type { ListingCard as ListingCardType } from "@/lib/api";
-import { conditionLabels, formatPrice, formatRelativeDate } from "@/lib/format";
+import {
+  conditionLabels,
+  deliveryMethodLabels,
+  formatListingPrice,
+  formatRelativeDate,
+  priceTypeLabels
+} from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
 import { FavoriteIconButton } from "@/components/listings/ListingActions";
 
@@ -33,6 +39,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
           <div className="absolute left-3 top-3 flex gap-2">
             {listing.is_featured ? <Badge tone="accent">Istaknuto</Badge> : null}
             {listing.seller.shop_active ? <Badge>Prodavnica</Badge> : null}
+            {listing.status === "reserved" ? <Badge tone="warn">Rezervisano</Badge> : null}
             {listing.status === "sold" ? <Badge tone="sold">Prodato</Badge> : null}
           </div>
         </div>
@@ -44,7 +51,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
               {listing.title}
             </Link>
             <p className="mt-1 text-lg font-black text-river-800">
-              {formatPrice(listing.price_amount, listing.currency)}
+              {formatListingPrice(listing.price_type, listing.price_amount, listing.currency)}
             </p>
           </div>
           <FavoriteIconButton listingId={listing.id} initialSaved={listing.is_favorited} />
@@ -57,6 +64,10 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
           <span>{listing.category.name_sr}</span>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Badge>{priceTypeLabels[listing.price_type] ?? listing.price_type}</Badge>
+          {listing.delivery_methods.slice(0, 2).map((method) => (
+            <Badge key={method}>{deliveryMethodLabels[method] ?? method}</Badge>
+          ))}
           {listing.key_attributes.slice(0, 3).map((attribute) => (
             <Badge key={attribute.key}>
               {attribute.label_sr}: {attribute.value}

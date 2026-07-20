@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation, Message
 from app.models.user import User
 from app.services.email_service import EmailService
@@ -92,7 +92,7 @@ def send_listing_expiry_reminders(db: Session, limit: int = 100) -> int:
         select(Listing)
         .options(selectinload(Listing.seller).selectinload(User.profile))
         .where(
-            Listing.status == "active",
+            Listing.status.in_(PUBLIC_LISTING_STATUSES),
             Listing.expires_at.is_not(None),
             Listing.expires_at <= upper,
             Listing.expires_at > now,

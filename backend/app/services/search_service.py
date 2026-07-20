@@ -3,7 +3,7 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.services.filter_service import apply_listing_filters
 from app.services.search_utils import apply_listing_search
 
@@ -35,7 +35,9 @@ class SearchService:
         return list(self.db.scalars(statement.order_by(*order).limit(limit)).all())
 
     def _matching_statement(self, query: str | None, filters: dict):
-        statement = select(Listing).where(Listing.status == "active")
+        statement = select(Listing).where(
+            Listing.status.in_(PUBLIC_LISTING_STATUSES)
+        )
         combined = dict(filters)
         if query:
             combined["q"] = query

@@ -26,7 +26,7 @@ from app.services.listing_service import (
 )
 from app.services.view_service import track_listing_view
 from app.models.report import Report
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation
 from app.models.review import Review
 from app.models.user import User as UserModel
@@ -154,7 +154,7 @@ def get_listing(
     active_listing_count = db.scalar(
         select(func.count(Listing.id)).where(
             Listing.seller_id == listing.seller_id,
-            Listing.status == "active",
+            Listing.status.in_(PUBLIC_LISTING_STATUSES),
         )
     )
     seller_stats = {
@@ -169,7 +169,7 @@ def get_listing(
 @router.get("/{listing_id}/similar")
 def similar_listings(listing_id: str, db: Session = Depends(get_db)):
     listing = db.get(Listing, listing_id)
-    if not listing or listing.status != "active":
+    if not listing or listing.status not in PUBLIC_LISTING_STATUSES:
         raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
     rows = db.scalars(
         select(Listing)
@@ -180,7 +180,7 @@ def similar_listings(listing_id: str, db: Session = Depends(get_db)):
             selectinload(Listing.images),
         )
         .where(
-            Listing.status == "active",
+            Listing.status.in_(PUBLIC_LISTING_STATUSES),
             Listing.category_id == listing.category_id,
             Listing.id != listing.id,
         )
@@ -198,7 +198,7 @@ def track_view(
     db: Session = Depends(get_db),
 ):
     listing = db.get(Listing, listing_id)
-    if not listing or listing.status != "active":
+    if not listing or listing.status not in PUBLIC_LISTING_STATUSES:
         return data_response({"tracked": False})
     ip = request.client.host if request.client else "unknown"
     user_agent = request.headers.get("user-agent")
@@ -282,6 +282,28 @@ def mark_sold(
     return data_response(serialize_listing_detail(service.mark_sold(listing, user, payload.sold_to_user_id)))
 
 
+@router.post("/{listing_id}/reserve")
+def reserve_listing(
+    listing_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    return data_response(serialize_listing_detail(service.reserve(listing, user)))
+
+
+@router.post("/{listing_id}/unreserve")
+def unreserve_listing(
+    listing_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    service = ListingService(db)
+    listing = service.get_owned_or_admin(listing_id, user)
+    return data_response(serialize_listing_detail(service.unreserve(listing, user)))
+
+
 @router.post("/{listing_id}/renew")
 def renew_listing(listing_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     listing = FeatureService(db).renew_listing(listing_id, user)
@@ -347,7 +369,7 @@ def report_listing(
     db: Session = Depends(get_db),
 ):
     listing = db.get(Listing, listing_id)
-    if not listing or listing.status != "active":
+    if not listing or listing.status not in PUBLIC_LISTING_STATUSES:
         raise api_error("NOT_FOUND", "Oglas nije pronađen.", 404)
     from sqlalchemy import select
 

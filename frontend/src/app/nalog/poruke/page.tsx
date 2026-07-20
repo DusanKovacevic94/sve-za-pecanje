@@ -4,7 +4,12 @@ import { MessageForm } from "@/components/messages/MessageForm";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Conversation } from "@/lib/api";
-import { formatDate } from "@/lib/format";
+import {
+  formatDate,
+  formatListingPrice,
+  listingStatusLabels,
+  priceTypeLabels
+} from "@/lib/format";
 import { serverApiFetch } from "@/lib/server-api";
 
 type MessagesPageProps = {
@@ -52,6 +57,14 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-river-700">{conversation.listing.title}</p>
+                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                    {formatListingPrice(
+                      conversation.listing.price_type,
+                      conversation.listing.price_amount,
+                      conversation.listing.currency
+                    )} · {priceTypeLabels[conversation.listing.price_type]} ·{" "}
+                    {listingStatusLabels[conversation.listing.status] ?? conversation.listing.status}
+                  </p>
                   <h2 className="mt-1 truncate text-xl font-black">
                     {conversation.counterpart.display_name ?? conversation.counterpart.username}
                   </h2>

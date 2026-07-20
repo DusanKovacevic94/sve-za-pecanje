@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models.listing import Listing
+from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.core.storage import delete_storage_object
 from app.services.listing_service import DRAFT_RETENTION_DAYS
 
@@ -12,11 +12,17 @@ def archive_expired_listings(db: Session, limit: int = 100) -> int:
     now = datetime.now(UTC)
     listings = db.scalars(
         select(Listing)
-        .where(Listing.expires_at.is_not(None), Listing.expires_at < now, Listing.status.in_(["active", "pending_review"]))
+        .where(
+            Listing.expires_at.is_not(None),
+            Listing.expires_at < now,
+            Listing.status.in_([*PUBLIC_LISTING_STATUSES, "pending_review"]),
+        )
         .limit(limit)
     ).all()
     for listing in listings:
         listing.status = "archived"
+        listing.reserved_at = None
+        listing.reserved_by_user_id = None
     if listings:
         db.commit()
     return len(listings)

@@ -57,7 +57,7 @@ export default async function MyListingsPage() {
               {listing.status === "active" ? (
                 <FeatureRequestPanel listing={listing} packages={packages.data} requests={requests.data} />
               ) : null}
-              <OwnerListingActions listingId={listing.id} />
+              <OwnerListingActions listingId={listing.id} status={listing.status} />
             </div>
           ))}
         </div>
