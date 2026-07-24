@@ -82,3 +82,7 @@ class BrandUpdateRequest(BaseModel):
     aliases: list[str] | None = Field(default=None, max_length=20)
     category_scope: list[str] | None = Field(default=None, max_length=20)
     is_verified: bool | None = None
+
+
+class SearchBlacklistCreateRequest(BaseModel):
+    term: str = Field(min_length=2, max_length=160)

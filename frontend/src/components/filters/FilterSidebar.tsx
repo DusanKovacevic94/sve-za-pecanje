@@ -10,6 +10,7 @@ import {
 } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select } from "@/components/ui/Field";
+import { SearchCombobox } from "@/components/search/SearchCombobox";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -110,12 +111,14 @@ export function FilterSidebar({
   categories,
   brands,
   cities,
-  searchParams
+  searchParams,
+  idPrefix = "filters"
 }: {
   categories: Category[];
   brands: Brand[];
   cities: City[];
   searchParams: SearchParams;
+  idPrefix?: string;
 }) {
   const selectedCategorySlugs = selectedValues(searchParams.category);
   const selectedBrandIds = selectedValues(searchParams.brand_id);
@@ -146,8 +149,12 @@ export function FilterSidebar({
     <form action="/oglasi" className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
       {sort ? <input type="hidden" name="sort" value={sort} /> : null}
       <div>
-        <FieldLabel htmlFor="q">Pretraga</FieldLabel>
-        <Input id="q" name="q" defaultValue={typeof searchParams.q === "string" ? searchParams.q : ""} placeholder="Shimano, štap, varalice..." />
+        <FieldLabel htmlFor={`${idPrefix}-q`}>Pretraga</FieldLabel>
+        <SearchCombobox
+          id={`${idPrefix}-q`}
+          defaultValue={typeof searchParams.q === "string" ? searchParams.q : ""}
+          className="focus-ring min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition hover:border-river-200"
+        />
       </div>
       <fieldset>
         <legend className="text-sm font-semibold text-slate-800">Kategorije</legend>

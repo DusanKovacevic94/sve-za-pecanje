@@ -22,6 +22,7 @@ from app.schemas.admin import (
     RejectListingRequest,
     ResolveFeatureRequest,
     ResolveReportRequest,
+    SearchBlacklistCreateRequest,
     SuspendUserRequest,
     ModerationCaseAssignRequest,
     ModerationCaseBulkRequest,
@@ -37,8 +38,52 @@ from app.services.shop_service import (
     serialize_shop_profile,
     serialize_shop_subscription_request,
 )
+from app.services.search_discovery_service import SearchDiscoveryService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+@router.get("/search-blacklist")
+def search_blacklist(
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return data_response(
+        [
+            {
+                "id": item.id,
+                "term_normalized": item.term_normalized,
+                "created_at": item.created_at,
+            }
+            for item in SearchDiscoveryService(db).list_blacklist()
+        ]
+    )
+
+
+@router.post("/search-blacklist")
+def add_search_blacklist(
+    payload: SearchBlacklistCreateRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    item = SearchDiscoveryService(db).blacklist(payload.term, admin.id)
+    return data_response(
+        {
+            "id": item.id,
+            "term_normalized": item.term_normalized,
+            "created_at": item.created_at,
+        }
+    )
+
+
+@router.delete("/search-blacklist/{item_id}")
+def remove_search_blacklist(
+    item_id: str,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    SearchDiscoveryService(db).remove_blacklist(item_id)
+    return data_response({"message": "Termin je uklonjen sa liste."})
 
 
 def serialize_brand(brand: Brand) -> dict:

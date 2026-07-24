@@ -31,7 +31,9 @@ type E2EHelpers = {
     request: APIRequestContext,
     account: Pick<TestAccount, "email" | "password">
   ) => Promise<void>;
-  runBackgroundTask: (taskName: "email_outbox" | "marketplace_metrics") => void;
+  runBackgroundTask: (
+    taskName: "email_outbox" | "marketplace_metrics" | "search_discovery"
+  ) => void;
 };
 
 const backendDirectory = path.resolve(__dirname, "../../backend");

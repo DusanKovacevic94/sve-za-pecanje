@@ -38,7 +38,14 @@ SERVER_EVENT_NAMES = frozenset(
         "saved_search_created",
     }
 )
-PUBLIC_EVENT_NAMES = frozenset({"search_performed"})
+PUBLIC_EVENT_NAMES = frozenset(
+    {
+        "search_performed",
+        "suggestion_impression",
+        "suggestion_selected",
+        "zero_result_recovery",
+    }
+)
 EVENT_NAMES = SERVER_EVENT_NAMES | PUBLIC_EVENT_NAMES
 
 _EMAIL_PATTERN = re.compile(r"\b[^@\s]+@[^@\s]+\.[^@\s]+\b")
@@ -94,6 +101,7 @@ class AnalyticsService:
         self,
         *,
         client_event_id: str,
+        event_name: str = "search_performed",
         anonymous_id: str,
         user_id: str | None,
         category_id: str | None,
@@ -109,17 +117,40 @@ class AnalyticsService:
             return False
         if category_id and not self.db.get(Category, category_id):
             category_id = None
-        safe_properties = {
-            "query_normalized": _safe_search_query(properties.get("query")),
-            "result_count": int(properties["result_count"]),
-            "filter_count": int(properties.get("filter_count", 0)),
-            "page": int(properties.get("page", 1)),
-        }
+        if event_name not in PUBLIC_EVENT_NAMES:
+            raise ValueError(f"Unsupported public analytics event: {event_name}")
+        if event_name == "search_performed":
+            safe_properties = {
+                "query_normalized": _safe_search_query(properties.get("query")),
+                "result_count": int(properties["result_count"]),
+                "filter_count": int(properties.get("filter_count", 0)),
+                "page": int(properties.get("page", 1)),
+            }
+        elif event_name == "suggestion_impression":
+            safe_properties = {
+                "query_length": int(properties.get("query_length") or 0),
+                "suggestion_types": list(
+                    dict.fromkeys(properties.get("suggestion_types") or [])
+                )[:4],
+                "suggestion_count": int(properties.get("suggestion_count") or 0),
+            }
+        elif event_name == "suggestion_selected":
+            safe_properties = {
+                "query_length": int(properties.get("query_length") or 0),
+                "suggestion_type": properties.get("suggestion_type"),
+                "position": int(properties.get("position") or 0),
+            }
+        else:
+            safe_properties = {
+                "recovery_action": properties.get("recovery_action"),
+                "removed_filter": (properties.get("removed_filter") or "")[:80]
+                or None,
+            }
         event = AnalyticsEvent(
             client_event_id=client_event_id,
             user_id=user_id,
             anonymous_id=_hash_identifier(anonymous_id),
-            event_name="search_performed",
+            event_name=event_name,
             category_id=category_id,
             properties=safe_properties,
             ip_address_hash=_hash_identifier(ip_address),

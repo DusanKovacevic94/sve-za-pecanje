@@ -22,6 +22,7 @@ def create_public_event(
     check_rate_limit(request, "analytics-event", 120, 60)
     tracked = AnalyticsService(db).track_public_search(
         client_event_id=payload.client_event_id,
+        event_name=payload.event_name,
         anonymous_id=payload.anonymous_id,
         user_id=user.id if user else None,
         category_id=payload.category_id,

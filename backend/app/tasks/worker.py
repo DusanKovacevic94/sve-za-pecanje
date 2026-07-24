@@ -10,6 +10,7 @@ from app.tasks.analytics_tasks import (
     delete_old_analytics_events,
     flush_listing_view_counts,
     refresh_marketplace_metrics,
+    refresh_search_discovery,
 )
 from app.tasks.abuse_tasks import purge_expired_abuse_signals
 from app.tasks.email_tasks import process_email_outbox
@@ -45,6 +46,7 @@ def run_cycle() -> None:
     run_task("email_outbox", process_email_outbox)
     run_task("flush_listing_view_counts", flush_listing_view_counts)
     run_task("refresh_marketplace_metrics", refresh_marketplace_metrics)
+    run_task("refresh_search_discovery", refresh_search_discovery)
     run_task("archive_expired_listings", archive_expired_listings)
     run_task("clear_expired_featured_listings", clear_expired_featured_listings)
     run_task("delete_stale_listing_drafts", delete_stale_listing_drafts)

@@ -20,7 +20,7 @@ from app.db.session import SessionLocal
 from app.models.email_outbox import EmailOutbox
 from app.models.profile import UserProfile
 from app.models.user import User
-from app.tasks.analytics_tasks import refresh_marketplace_metrics
+from app.tasks.analytics_tasks import refresh_marketplace_metrics, refresh_search_discovery
 from app.tasks.email_tasks import process_email_outbox
 
 ADMIN_EMAIL = "e2e-admin@example.com"
@@ -84,6 +84,7 @@ def run_task(db: Session, task_name: str) -> None:
     tasks = {
         "email_outbox": process_email_outbox,
         "marketplace_metrics": refresh_marketplace_metrics,
+        "search_discovery": refresh_search_discovery,
     }
     task = tasks.get(task_name)
     if task is None:

@@ -4,27 +4,57 @@ import { Bell, CheckCircle2, Search, ShieldCheck, SlidersHorizontal, Star, type 
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import { Button } from "@/components/ui/Button";
 import { ListingCard } from "@/components/listings/ListingCard";
-import { apiFetch, Category, ListingCard as ListingCardType } from "@/lib/api";
+import { SearchCombobox } from "@/components/search/SearchCombobox";
+import {
+  apiFetch,
+  Category,
+  ListingCard as ListingCardType,
+  SearchSuggestion
+} from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
+const curatedSearchFallback: SearchSuggestion[] = [
+  "Shimano",
+  "Daiwa",
+  "feeder štap",
+  "varalice",
+  "mašinica 4000",
+  "najlon 0.25"
+].map((term) => ({
+  id: `query:fallback-${term}`,
+  type: "common_query",
+  display: term,
+  value: term,
+  href: `/oglasi?q=${encodeURIComponent(term)}`,
+  description: "Predložena pretraga",
+  source: "curated"
+}));
+
 async function getHomeData() {
-  const [categories, listings, homepageListings] = await Promise.all([
+  const [categories, listings, homepageListings, popularSearches] = await Promise.all([
     apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
     apiFetch<ListingCardType[]>("/listings?page_size=12", { next: { revalidate: 60 } }).catch(() => ({ data: [] })),
     apiFetch<ListingCardType[]>("/promotions/homepage-listings", { next: { revalidate: 60 } }).catch(() => ({
       data: [] as ListingCardType[]
-    }))
+    })),
+    apiFetch<SearchSuggestion[]>("/search/popular?limit=6", {
+      cache: "no-store"
+    }).catch(() => ({ data: curatedSearchFallback }))
   ]);
-  return { categories: categories.data, listings: listings.data, homepageListings: homepageListings.data };
+  return {
+    categories: categories.data,
+    listings: listings.data,
+    homepageListings: homepageListings.data,
+    popularSearches: popularSearches.data
+  };
 }
 
 export default async function HomePage() {
-  const { categories, listings, homepageListings } = await getHomeData();
+  const { categories, listings, homepageListings, popularSearches } = await getHomeData();
   const featuredListings = (homepageListings.length ? homepageListings : listings.filter((listing) => listing.is_featured)).slice(0, 4);
   const latestListings = listings.filter((listing) => !listing.is_featured).slice(0, 8);
   const visibleLatest = latestListings.length ? latestListings : listings.slice(0, 8);
-  const popularSearches = ["Shimano", "Daiwa", "feeder štap", "varalice", "mašinica 4000", "najlon 0.25"];
   const benefits: { Icon: LucideIcon; title: string; copy: string }[] = [
     { Icon: SlidersHorizontal, title: "Filteri za ribolovnu opremu", copy: "Dužina, težina bacanja, veličina mašinice i drugi detalji." },
     { Icon: ShieldCheck, title: "Oglasi od ribolovaca", copy: "Profil prodavca, prijave i ručna moderacija." },
@@ -43,11 +73,10 @@ export default async function HomePage() {
               Pronađi štapove, mašinice, varalice i opremu od ribolovaca iz Srbije.
             </p>
             <form action="/oglasi" className="mt-8 flex max-w-2xl flex-col gap-3 rounded-lg bg-white p-2 shadow-lift sm:flex-row">
-              <label className="sr-only" htmlFor="q">Pretraga</label>
-              <input
-                id="q"
-                name="q"
-                className="focus-ring min-h-12 flex-1 rounded-md px-4 text-ink"
+              <label className="sr-only" htmlFor="homepage-search">Pretraga</label>
+              <SearchCombobox
+                id="homepage-search"
+                className="focus-ring min-h-12 w-full rounded-md px-4 text-ink"
                 placeholder="Pretraži Shimano, Daiwa, feeder..."
               />
               <Button type="submit" className="bg-ink hover:bg-ink-800">
@@ -55,13 +84,13 @@ export default async function HomePage() {
               </Button>
             </form>
             <div className="mt-4 flex flex-wrap gap-2">
-              {popularSearches.map((term) => (
+              {popularSearches.map((suggestion) => (
                 <Link
-                  key={term}
-                  href={`/oglasi?q=${encodeURIComponent(term)}`}
+                  key={suggestion.id}
+                  href={suggestion.href}
                   className="focus-ring rounded-md bg-white/12 px-3 py-2 text-sm font-semibold text-river-50 transition hover:bg-white/20"
                 >
-                  {term}
+                  {suggestion.display}
                 </Link>
               ))}
             </div>

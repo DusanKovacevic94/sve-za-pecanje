@@ -99,6 +99,33 @@ export type AttributeDefinition = {
 export type Brand = { id: string; name: string; slug: string };
 export type City = { id: string; name: string };
 
+export type SearchSuggestion = {
+  id: string;
+  type: "category" | "brand" | "common_query" | "listing";
+  display: string;
+  value: string;
+  href: string;
+  description: string | null;
+  source: "catalog" | "dynamic" | "curated" | "listing";
+};
+
+export type SearchRecovery = {
+  did_you_mean: SearchSuggestion[];
+  related_categories: {
+    id: string;
+    slug: string;
+    name_sr: string;
+    parent_id: string | null;
+  }[];
+  recent_listings: ListingCard[];
+};
+
+export type SearchBlacklistItem = {
+  id: string;
+  term_normalized: string;
+  created_at: string;
+};
+
 export type AttributeDisplay = {
   key: string;
   label_sr: string;

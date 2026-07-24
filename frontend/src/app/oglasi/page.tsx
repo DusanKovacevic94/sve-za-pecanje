@@ -5,9 +5,19 @@ import { MarketplaceSearchTracker } from "@/components/analytics/MarketplaceSear
 import { FilterSidebar } from "@/components/filters/FilterSidebar";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { Button } from "@/components/ui/Button";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { Select } from "@/components/ui/Field";
-import { apiFetch, Brand, Category, City, ListingCard as ListingCardType } from "@/lib/api";
+import {
+  TrackedRecoveryContainer,
+  TrackedRecoveryLink
+} from "@/components/search/TrackedRecoveryLink";
+import {
+  apiFetch,
+  Brand,
+  Category,
+  City,
+  ListingCard as ListingCardType,
+  SearchRecovery
+} from "@/lib/api";
 import {
   conditionLabels,
   deliveryMethodLabels,
@@ -185,6 +195,21 @@ export default async function BrowsePage({ searchParams }: PageProps) {
   const page = Number(listings.meta?.page ?? 1);
   const totalPages = Number(listings.meta?.total_pages ?? 1);
   const chips = activeFilters(params, categories.data, brands.data);
+  const recoveryParams = new URLSearchParams();
+  if (typeof params.q === "string" && params.q) recoveryParams.set("q", params.q);
+  selectedCategorySlugs.forEach((slug) => recoveryParams.append("category", slug));
+  const recovery = total === 0
+    ? await apiFetch<SearchRecovery>(
+      `/search/recovery${recoveryParams.size ? `?${recoveryParams.toString()}` : ""}`,
+      { cache: "no-store" }
+    ).catch(() => ({
+      data: {
+        did_you_mean: [],
+        related_categories: [],
+        recent_listings: []
+      } as SearchRecovery
+    }))
+    : null;
   const sort = typeof params.sort === "string" ? params.sort : "newest";
   const selectedCategories = allCategories(categories.data).filter((category) =>
     selectedCategorySlugs.includes(category.slug)
@@ -235,14 +260,26 @@ export default async function BrowsePage({ searchParams }: PageProps) {
       </div>
       <div className="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
         <aside className="hidden lg:block">
-          <FilterSidebar categories={categories.data} brands={brands.data} cities={cities.data} searchParams={params} />
+          <FilterSidebar
+            categories={categories.data}
+            brands={brands.data}
+            cities={cities.data}
+            searchParams={params}
+            idPrefix="desktop-filters"
+          />
         </aside>
         <details className="lg:hidden">
           <summary className="focus-ring flex cursor-pointer items-center gap-2 rounded-md bg-white p-3 font-semibold shadow-soft">
             <SlidersHorizontal size={18} /> Filteri{chips.length ? ` (${chips.length})` : ""}
           </summary>
           <div className="mt-3">
-            <FilterSidebar categories={categories.data} brands={brands.data} cities={cities.data} searchParams={params} />
+            <FilterSidebar
+              categories={categories.data}
+              brands={brands.data}
+              cities={cities.data}
+              searchParams={params}
+              idPrefix="mobile-filters"
+            />
           </div>
         </details>
         <section>
@@ -293,11 +330,92 @@ export default async function BrowsePage({ searchParams }: PageProps) {
               ) : null}
             </>
           ) : (
-            <EmptyState
-              title="Nema oglasa za izabrane filtere"
-              copy="Pokušajte da proširite pretragu ili sačuvajte pretragu da vas obavestimo kada se pojavi novi oglas."
-              action={{ href: "/oglasi", label: "Poništi filtere" }}
-            />
+            <div className="space-y-6">
+              <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
+                <h2 className="text-2xl font-black">Nema oglasa za izabranu pretragu</h2>
+                <p className="mt-2 text-slate-600">
+                  Nijedan filter nije automatski uklonjen. Izaberite samo promenu koja vam odgovara.
+                </p>
+                {recovery?.data.did_you_mean.length ? (
+                  <div className="mt-5">
+                    <h3 className="font-black">Da li ste mislili?</h3>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {recovery.data.did_you_mean.map((suggestion) => (
+                        <TrackedRecoveryLink
+                          key={suggestion.id}
+                          href={`/oglasi?${toQuery(params, { q: suggestion.value, page: null })}`}
+                          action="spelling"
+                          className="focus-ring rounded-md bg-river-50 px-3 py-2 text-sm font-bold text-river-800 hover:bg-river-100"
+                        >
+                          {suggestion.display}
+                        </TrackedRecoveryLink>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {chips.length ? (
+                  <div className="mt-5">
+                    <h3 className="font-black">Uklonite samo jedan filter</h3>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {chips.slice(0, 6).map((chip) => (
+                        <TrackedRecoveryLink
+                          key={chip.id}
+                          href={chip.href}
+                          action="remove_filter"
+                          removedFilter={chip.key}
+                          className="focus-ring rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-river-300 hover:text-river-700"
+                        >
+                          Ukloni: {chip.label}
+                        </TrackedRecoveryLink>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {recovery?.data.related_categories.length ? (
+                  <div className="mt-5">
+                    <h3 className="font-black">Srodne kategorije</h3>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {recovery.data.related_categories.map((category) => (
+                        <TrackedRecoveryLink
+                          key={category.id}
+                          href={`/oglasi?${toQuery(
+                            params,
+                            { category: category.slug, page: null },
+                            ["category"]
+                          )}`}
+                          action="related_category"
+                          className="focus-ring rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:text-river-700"
+                        >
+                          {category.name_sr}
+                        </TrackedRecoveryLink>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <TrackedRecoveryLink
+                    href={`/nalog/sacuvane-pretrage?${toQuery(params)}`}
+                    action="save_search"
+                    className="focus-ring rounded-md bg-river-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-river-600"
+                  >
+                    Sačuvaj ovu pretragu
+                  </TrackedRecoveryLink>
+                  <Button href="/oglasi" variant="secondary">Pogledaj sve oglase</Button>
+                </div>
+              </div>
+              {recovery?.data.recent_listings.length ? (
+                <section>
+                  <h2 className="text-xl font-black">Nedavno objavljeni srodni oglasi</h2>
+                  <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                    {recovery.data.recent_listings.map((listing) => (
+                      <TrackedRecoveryContainer key={listing.id} action="recent_listing">
+                        <ListingCard listing={listing} />
+                      </TrackedRecoveryContainer>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+            </div>
           )}
         </section>
       </div>

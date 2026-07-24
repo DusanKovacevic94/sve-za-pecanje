@@ -14,6 +14,11 @@ from app.models.profile import UserProfile
 from app.models.report import Report
 from app.models.review import Review
 from app.models.saved_search import SavedSearch
+from app.models.search_discovery import (
+    PopularSearchQuery,
+    SearchDiscoveryState,
+    SearchQueryBlacklist,
+)
 from app.models.shop_subscription import ShopSubscriptionRequest
 from app.models.user import User
 
@@ -40,6 +45,9 @@ __all__ = [
     "Report",
     "Review",
     "SavedSearch",
+    "PopularSearchQuery",
+    "SearchDiscoveryState",
+    "SearchQueryBlacklist",
     "ShopSubscriptionRequest",
     "User",
     "UserProfile",

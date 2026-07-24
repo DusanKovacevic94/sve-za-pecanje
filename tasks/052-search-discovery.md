@@ -1,6 +1,6 @@
 # 052 — Search suggestions, typo recovery, and better empty results
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Problem
@@ -13,28 +13,28 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Add a debounced suggestions endpoint using PostgreSQL prefix and trigram matching
-- [ ] Return a typed, size-limited response for category, brand, common-query, and direct
+- [x] Add a debounced suggestions endpoint using PostgreSQL prefix and trigram matching
+- [x] Return a typed, size-limited response for category, brand, common-query, and direct
   listing suggestions with stable display/value fields
-- [ ] Add an accessible search combobox with keyboard navigation, active-option
+- [x] Add an accessible search combobox with keyboard navigation, active-option
   announcements, escape handling, and cancellation of stale requests
-- [ ] Keep exact search behavior available and never silently replace the submitted query
-- [ ] Show `Da li ste mislili?` suggestions when a close term exists, especially on zero
+- [x] Keep exact search behavior available and never silently replace the submitted query
+- [x] Show `Da li ste mislili?` suggestions when a close term exists, especially on zero
   results
-- [ ] Build 30-day popular-query aggregates from task 047 data
-- [ ] Require at least five distinct authenticated or anonymous users before exposing a
+- [x] Build 30-day popular-query aggregates from task 047 data
+- [x] Require at least five distinct authenticated or anonymous users before exposing a
   query publicly, and add an administrator blacklist for unsafe terms
-- [ ] Retain curated fallback searches for the soft-launch period when traffic is too low
+- [x] Retain curated fallback searches for the soft-launch period when traffic is too low
   for privacy-safe dynamic suggestions
-- [ ] Replace the homepage's hard-coded popular searches with dynamic-or-curated data
-- [ ] Improve zero-result pages with one-click removal of restrictive filters, parent or
+- [x] Replace the homepage's hard-coded popular searches with dynamic-or-curated data
+- [x] Improve zero-result pages with one-click removal of restrictive filters, parent or
   neighboring categories, recent relevant listings, spelling suggestions, and a
   save-search action
-- [ ] Track suggestion impressions/selections and zero-result recovery without storing raw
+- [x] Track suggestion impressions/selections and zero-result recovery without storing raw
   PII
-- [ ] Define and test a response-time budget using production-like data before considering a
+- [x] Define and test a response-time budget using production-like data before considering a
   separate search service
-- [ ] Add API, ranking, privacy threshold, diacritic, stale request, accessibility, failure
+- [x] Add API, ranking, privacy threshold, diacritic, stale request, accessibility, failure
   fallback, and E2E tests
 
 ## Acceptance criteria
@@ -54,3 +54,17 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 - 043
 - 045
 - 046
+
+## Verification
+
+- `uv run ruff check app scripts`
+- `uv run pytest -q` — 67 passed
+- migration upgrade → downgrade → upgrade on a clean SQLite database
+- `pnpm lint`
+- `pnpm build`
+- `pnpm test:e2e` — 6 passed
+- `pnpm exec playwright test e2e/search-discovery.spec.ts` — 2 passed after final
+  contract verification
+- bounded 1,000-listing integration timing test plus
+  `scripts/benchmark_search_discovery.py` as the 100,000-listing PostgreSQL staging release
+  gate
