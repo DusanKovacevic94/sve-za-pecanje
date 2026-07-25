@@ -12,6 +12,7 @@ from app.models.email_outbox import EmailOutbox
 from app.models.user import User
 from app.services.email_service import EmailService
 from app.services.analytics_service import AnalyticsService
+from app.services.notification_service import NotificationService
 
 
 class ModerationService:
@@ -72,6 +73,19 @@ class ModerationService:
             category_id=listing.category_id,
         )
         EmailService(self.db).send_listing_approved(listing.seller.email, listing.title)
+        NotificationService(self.db).create(
+            recipient_id=listing.seller_id,
+            type_="listing_approved",
+            deduplication_key=f"listing-approved:{listing.id}",
+            actor_id=admin.id,
+            entity_type="listing",
+            entity_id=listing.id,
+            payload={
+                "title": "Oglas je odobren",
+                "body": f'Vaš oglas „{listing.title}” je objavljen.',
+            },
+            event_id=f"approved:{listing.id}:{listing.approved_at.isoformat()}",
+        )
         self.db.commit()
         self.db.refresh(listing)
         return listing
@@ -80,6 +94,7 @@ class ModerationService:
         listing = self._get_listing(listing_id)
         if listing.status == "draft":
             raise api_error("VALIDATION_ERROR", "Nacrt prvo mora biti objavljen.", 400)
+        rejected_at = datetime.now(UTC)
         listing.status = "rejected"
         listing.rejection_reason = reason
         self.audit(
@@ -90,6 +105,20 @@ class ModerationService:
             {"reason": reason, "seller_id": listing.seller_id},
         )
         EmailService(self.db).send_listing_rejected(listing.seller.email, listing.title, reason)
+        NotificationService(self.db).create(
+            recipient_id=listing.seller_id,
+            type_="listing_rejected",
+            deduplication_key=f"listing-rejected:{listing.id}",
+            actor_id=admin.id,
+            entity_type="listing",
+            entity_id=listing.id,
+            payload={
+                "title": "Oglas nije odobren",
+                "body": f'Pregledajte potrebne izmene za oglas „{listing.title}”.',
+            },
+            event_id=f"rejected:{listing.id}:{rejected_at.isoformat()}",
+            consolidate=True,
+        )
         self.db.commit()
         self.db.refresh(listing)
         from app.services.risk_service import RiskService

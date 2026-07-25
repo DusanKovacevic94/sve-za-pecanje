@@ -10,6 +10,7 @@ from app.models.feature_request import PromotionOrder
 from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.user import User
 from app.services.email_service import EmailService
+from app.services.notification_service import NotificationService
 
 PROMOTION_PACKAGES: dict[str, list[dict[str, object]]] = {
     "featured": [
@@ -223,6 +224,23 @@ class FeatureService:
                 PROMOTION_LABELS.get(request.type, "Promocija"),
                 request.ends_at,
             )
+            NotificationService(self.db).create(
+                recipient_id=seller.id,
+                type_="promotion_status",
+                deduplication_key=f"promotion-status:{request.id}",
+                actor_id=admin.id,
+                entity_type="promotion_order",
+                entity_id=request.id,
+                payload={
+                    "title": "Promocija je aktivirana",
+                    "body": (
+                        f'{PROMOTION_LABELS.get(request.type, "Promocija")} za '
+                        f'„{listing.title}” je aktivirana.'
+                    ),
+                },
+                event_id=f"promotion:{request.id}:paid",
+                consolidate=True,
+            )
         self.db.commit()
         self.db.refresh(request)
         return request
@@ -234,6 +252,20 @@ class FeatureService:
         request.status = "rejected"
         request.resolved_by_admin_id = admin.id
         request.admin_note = note
+        NotificationService(self.db).create(
+            recipient_id=request.user_id,
+            type_="promotion_status",
+            deduplication_key=f"promotion-status:{request.id}",
+            actor_id=admin.id,
+            entity_type="promotion_order",
+            entity_id=request.id,
+            payload={
+                "title": "Promocija nije odobrena",
+                "body": "Pregledajte status zahteva za promociju oglasa.",
+            },
+            event_id=f"promotion:{request.id}:rejected",
+            consolidate=True,
+        )
         self.db.commit()
         self.db.refresh(request)
         return request

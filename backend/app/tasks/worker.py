@@ -21,6 +21,7 @@ from app.tasks.listing_tasks import (
     delete_stale_listing_drafts,
 )
 from app.tasks.notification_tasks import (
+    delete_old_notifications,
     send_listing_expiry_reminders,
     send_shop_subscription_expiry_reminders,
     send_unread_message_notifications,
@@ -57,6 +58,7 @@ def run_cycle() -> None:
     run_task("send_unread_message_notifications", send_unread_message_notifications)
     run_task("send_listing_expiry_reminders", send_listing_expiry_reminders)
     run_task("send_shop_subscription_expiry_reminders", send_shop_subscription_expiry_reminders)
+    run_task("delete_old_notifications", delete_old_notifications)
 
 
 def write_heartbeat() -> None:

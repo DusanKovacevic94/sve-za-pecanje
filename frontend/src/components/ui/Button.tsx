@@ -20,7 +20,12 @@ export function Button({ href, variant = "primary", className = "", isLoading = 
   const classes = `focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-60 ${variants[variant]} ${className}`;
   if (href) {
     return (
-      <Link href={href} className={classes}>
+      <Link
+        href={href}
+        className={classes}
+        aria-label={props["aria-label"]}
+        title={props.title}
+      >
         {children}
       </Link>
     );

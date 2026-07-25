@@ -215,6 +215,43 @@ test("registration-to-sale marketplace journey", async ({
   });
 
   await test.step("seller sees unread state, reads the message, and replies", async () => {
+    await sellerPage.bringToFront();
+    await expect(
+      sellerPage.getByRole("link", {
+        name: /Obaveštenja, \d+ nepročitanih/,
+      })
+    ).toBeVisible();
+
+    const sellerMirror = await sellerContext.newPage();
+    await Promise.all([
+      sellerPage.goto("/nalog/obavestenja"),
+      sellerMirror.goto("/nalog/obavestenja"),
+    ]);
+    await expect(
+      sellerPage.getByRole("heading", { name: "Obaveštenja" })
+    ).toBeVisible();
+    const messageNotification = sellerPage
+      .getByRole("listitem")
+      .filter({ hasText: `Nova poruka od ${accounts.buyer.username}` });
+    const mirroredNotification = sellerMirror
+      .getByRole("listitem")
+      .filter({ hasText: `Nova poruka od ${accounts.buyer.username}` });
+    await expect(messageNotification).toBeVisible();
+    await expect(
+      mirroredNotification.getByRole("button", {
+        name: "Označi kao pročitano",
+      })
+    ).toBeVisible();
+    await messageNotification
+      .getByRole("button", { name: "Označi kao pročitano" })
+      .click();
+    await expect(
+      mirroredNotification.getByRole("button", {
+        name: "Označi kao pročitano",
+      })
+    ).toHaveCount(0);
+    await sellerMirror.close();
+
     await sellerPage.goto("/nalog/poruke");
     const conversation = sellerPage.getByRole("link").filter({ hasText: listingTitle });
     await expect(conversation.getByText("1 novo")).toBeVisible();

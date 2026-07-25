@@ -1,6 +1,6 @@
 # 053 — In-app notification center
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Problem
@@ -13,30 +13,30 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Add a user notification model with type, recipient, optional actor/entity references,
+- [x] Add a user notification model with type, recipient, optional actor/entity references,
   safe display payload, deduplication key, read timestamp, and creation timestamp
-- [ ] Define initial notification types for:
+- [x] Define initial notification types for:
   - new conversation or message
   - listing approved, rejected, expiring, expired, reserved, or sold
   - saved-search matches
   - review received
   - promotion, shop-subscription, or moderation status changes
-- [ ] Produce notifications from domain services or idempotent worker tasks rather than
+- [x] Produce notifications from domain services or idempotent worker tasks rather than
   scattered frontend calls
-- [ ] Add cursor-paginated list, unread-count, mark-one-read, and mark-all-read operations
-- [ ] Enforce recipient ownership and avoid leaking a deleted/private entity through
+- [x] Add cursor-paginated list, unread-count, mark-one-read, and mark-all-read operations
+- [x] Enforce recipient ownership and avoid leaking a deleted/private entity through
   notification payloads
-- [ ] Add a header bell with unread count and a dedicated notification page
-- [ ] Link each notification to the relevant accessible entity and fall back to safe generic
+- [x] Add a header bell with unread count and a dedicated notification page
+- [x] Link each notification to the relevant accessible entity and fall back to safe generic
   text when the entity is no longer available
-- [ ] Poll only while the page is visible and refresh immediately when the window regains
+- [x] Poll only while the page is visible and refresh immediately when the window regains
   focus; do not add WebSockets or web push in this task
-- [ ] Consolidate bursts, particularly multiple messages in one conversation and multiple
+- [x] Consolidate bursts, particularly multiple messages in one conversation and multiple
   saved-search matches
-- [ ] Keep critical in-app notifications enabled while respecting existing email
+- [x] Keep critical in-app notifications enabled while respecting existing email
   preferences for corresponding email delivery
-- [ ] Retain notifications for 180 days and delete them in bounded worker batches
-- [ ] Add deduplication, worker retry, pagination, ownership, unread count, multi-tab,
+- [x] Retain notifications for 180 days and delete them in bounded worker batches
+- [x] Add deduplication, worker retry, pagination, ownership, unread count, multi-tab,
   inaccessible entity, accessibility, and E2E tests
 
 ## Acceptance criteria
@@ -51,3 +51,16 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 ## Dependencies
 
 - 047
+
+## Verification
+
+- `uv run ruff check app scripts db/migrations/versions/0015_in_app_notifications.py`
+- `uv run pytest -q` — 72 passed
+- migration upgrade → downgrade → upgrade on a clean SQLite database
+- `pnpm lint`
+- `pnpm build`
+- `pnpm test:e2e` — 7 passed
+- critical marketplace E2E verifies the bell, accessible feed, and cross-tab read
+  synchronization
+- notification E2E verifies that hidden tabs make no polling requests and refresh when
+  visible

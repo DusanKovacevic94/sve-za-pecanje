@@ -126,6 +126,33 @@ export type SearchBlacklistItem = {
   created_at: string;
 };
 
+export type NotificationType =
+  | "new_message"
+  | "listing_approved"
+  | "listing_rejected"
+  | "listing_expiring"
+  | "listing_expired"
+  | "listing_reserved"
+  | "listing_sold"
+  | "saved_search_matches"
+  | "review_received"
+  | "promotion_status"
+  | "shop_subscription_status"
+  | "moderation_status";
+
+export type NotificationItem = {
+  id: string;
+  type: NotificationType;
+  title: string;
+  body: string;
+  href: string | null;
+  is_accessible: boolean;
+  group_count: number;
+  read_at: string | null;
+  created_at: string;
+  last_event_at: string;
+};
+
 export type AttributeDisplay = {
   key: string;
   label_sr: string;

@@ -19,6 +19,7 @@ from app.models.search_discovery import (
     SearchDiscoveryState,
     SearchQueryBlacklist,
 )
+from app.models.notification import UserNotification
 from app.models.shop_subscription import ShopSubscriptionRequest
 from app.models.user import User
 
@@ -48,6 +49,7 @@ __all__ = [
     "PopularSearchQuery",
     "SearchDiscoveryState",
     "SearchQueryBlacklist",
+    "UserNotification",
     "ShopSubscriptionRequest",
     "User",
     "UserProfile",

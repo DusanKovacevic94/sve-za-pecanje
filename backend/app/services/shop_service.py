@@ -15,6 +15,7 @@ from app.models.shop_subscription import ShopSubscriptionRequest
 from app.models.user import User
 from app.schemas.shop import ShopProfileUpdate
 from app.services.email_service import EmailService
+from app.services.notification_service import NotificationService
 from app.services.listing_service import serialize_listing_card, slugify
 
 SHOP_SUBSCRIPTION_PLANS: dict[str, dict[str, object]] = {
@@ -193,6 +194,20 @@ class ShopService:
         request.ends_at = ends_at
         request.resolved_by_admin_id = admin.id
         EmailService(self.db).send_shop_subscription_started(request.user, profile.shop_name, ends_at)
+        NotificationService(self.db).create(
+            recipient_id=request.user_id,
+            type_="shop_subscription_status",
+            deduplication_key=f"shop-subscription-status:{request.id}",
+            actor_id=admin.id,
+            entity_type="shop_subscription",
+            entity_id=request.id,
+            payload={
+                "title": "Paket prodavnice je aktiviran",
+                "body": f'Paket za prodavnicu „{profile.shop_name}” je aktivan.',
+            },
+            event_id=f"shop-subscription:{request.id}:paid",
+            consolidate=True,
+        )
         self.db.commit()
         self.db.refresh(request)
         return request
@@ -204,6 +219,20 @@ class ShopService:
         request.status = "rejected"
         request.admin_note = note
         request.resolved_by_admin_id = admin.id
+        NotificationService(self.db).create(
+            recipient_id=request.user_id,
+            type_="shop_subscription_status",
+            deduplication_key=f"shop-subscription-status:{request.id}",
+            actor_id=admin.id,
+            entity_type="shop_subscription",
+            entity_id=request.id,
+            payload={
+                "title": "Paket prodavnice nije odobren",
+                "body": "Pregledajte status zahteva za paket prodavnice.",
+            },
+            event_id=f"shop-subscription:{request.id}:rejected",
+            consolidate=True,
+        )
         self.db.commit()
         self.db.refresh(request)
         return request

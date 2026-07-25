@@ -29,6 +29,7 @@ from app.services.attribute_service import validate_and_coerce_attributes
 from app.services.analytics_service import AnalyticsService
 from app.services.category_service import effective_loaded_attribute_definitions
 from app.services.filter_service import apply_listing_filters
+from app.services.notification_service import NotificationService
 
 DRAFT_RETENTION_DAYS = 90
 DRAFT_WARNING_DAYS = 7
@@ -96,6 +97,18 @@ class ListingService:
                 listing.id,
                 category_id=listing.category_id,
                 properties={"review_mode": "auto"},
+            )
+            NotificationService(self.db).create(
+                recipient_id=seller.id,
+                type_="listing_approved",
+                deduplication_key=f"listing-approved:{listing.id}",
+                entity_type="listing",
+                entity_id=listing.id,
+                payload={
+                    "title": "Oglas je odobren",
+                    "body": f'Vaš oglas „{listing.title}” je objavljen.',
+                },
+                event_id=f"approved:{listing.id}:{now.isoformat()}",
             )
         self.db.commit()
         self.db.refresh(listing)
@@ -297,6 +310,18 @@ class ListingService:
                 category_id=listing.category_id,
                 properties={"review_mode": "auto", "from_draft": True},
             )
+            NotificationService(self.db).create(
+                recipient_id=actor.id,
+                type_="listing_approved",
+                deduplication_key=f"listing-approved:{listing.id}",
+                entity_type="listing",
+                entity_id=listing.id,
+                payload={
+                    "title": "Oglas je odobren",
+                    "body": f'Vaš oglas „{listing.title}” je objavljen.',
+                },
+                event_id=f"approved:{listing.id}:{now.isoformat()}",
+            )
         self.db.commit()
         published = self.get_owned_or_admin(listing.id, actor)
         from app.services.risk_service import RiskService
@@ -466,6 +491,34 @@ class ListingService:
             listing.id,
             category_id=listing.category_id,
         )
+        notifications = NotificationService(self.db)
+        notifications.create(
+            recipient_id=listing.seller_id,
+            type_="listing_sold",
+            deduplication_key=f"listing-sold:{listing.id}",
+            actor_id=actor.id,
+            entity_type="listing",
+            entity_id=listing.id,
+            payload={
+                "title": "Oglas je označen kao prodat",
+                "body": f'„{listing.title}” je sada označen kao prodat.',
+            },
+            event_id=f"sold:{listing.id}:{listing.sold_at.isoformat()}",
+        )
+        if sold_to_user_id and sold_to_user_id != listing.seller_id:
+            notifications.create(
+                recipient_id=sold_to_user_id,
+                type_="listing_sold",
+                deduplication_key=f"listing-purchased:{listing.id}",
+                actor_id=actor.id,
+                entity_type="listing",
+                entity_id=listing.id,
+                payload={
+                    "title": "Kupovina je evidentirana",
+                    "body": f'Prodavac je označio „{listing.title}” kao prodat.',
+                },
+                event_id=f"sold-to:{listing.id}:{sold_to_user_id}",
+            )
         self.db.commit()
         self.db.refresh(listing)
         return listing
@@ -482,6 +535,20 @@ class ListingService:
         listing.reserved_at = datetime.now(UTC)
         listing.reserved_by_user_id = actor.id
         self._audit_state_change(actor, listing, "listing.reserved", "reserved")
+        NotificationService(self.db).create(
+            recipient_id=listing.seller_id,
+            type_="listing_reserved",
+            deduplication_key=f"listing-reserved:{listing.id}",
+            actor_id=actor.id,
+            entity_type="listing",
+            entity_id=listing.id,
+            payload={
+                "title": "Oglas je rezervisan",
+                "body": f'„{listing.title}” je sada rezervisan.',
+            },
+            event_id=f"reserved:{listing.id}:{listing.reserved_at.isoformat()}",
+            consolidate=True,
+        )
         self.db.commit()
         self.db.refresh(listing)
         return listing

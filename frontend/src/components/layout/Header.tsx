@@ -5,6 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { HeaderNavLink } from "@/components/layout/HeaderNavLink";
 import { LogoutButton } from "@/components/layout/LogoutButton";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 import { UnreadMessagesLink } from "@/components/layout/UnreadMessagesLink";
 
 export async function Header() {
@@ -30,6 +31,7 @@ export async function Header() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
+              <NotificationBell />
               <UnreadMessagesLink />
               <Button href="/nalog" variant="secondary" className="px-3">
                 <UserCircle size={18} /> Moj nalog
@@ -54,7 +56,12 @@ export async function Header() {
         <Link className="focus-ring rounded-md bg-river-50 px-3 py-2 text-sm font-semibold text-ink hover:bg-river-100" href="/nalog/omiljeni">
           <Heart size={15} className="inline" /> Omiljeni
         </Link>
-        {user ? <UnreadMessagesLink compact /> : null}
+        {user ? (
+          <>
+            <NotificationBell compact />
+            <UnreadMessagesLink compact />
+          </>
+        ) : null}
       </div>
     </header>
   );

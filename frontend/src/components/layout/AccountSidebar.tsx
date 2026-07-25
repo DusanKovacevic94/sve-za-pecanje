@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bell,
   Heart,
   LayoutDashboard,
   MessageSquare,
@@ -17,6 +18,7 @@ const accountLinks = [
   { href: "/nalog/oglasi", label: "Moji oglasi", Icon: Store },
   { href: "/nalog/prodavnica", label: "Prodavnica", Icon: Store },
   { href: "/nalog/poruke", label: "Poruke", Icon: MessageSquare },
+  { href: "/nalog/obavestenja", label: "Obaveštenja", Icon: Bell },
   { href: "/nalog/omiljeni", label: "Omiljeni", Icon: Heart },
   { href: "/nalog/sacuvane-pretrage", label: "Sačuvane pretrage", Icon: Search },
   { href: "/nalog/ocene", label: "Ocene", Icon: Star },

@@ -8,6 +8,7 @@ from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation, Message
 from app.models.user import User
 from app.services.analytics_service import AnalyticsService
+from app.services.notification_service import NotificationService
 
 
 class MessageService:
@@ -69,6 +70,11 @@ class MessageService:
                 conversation.buyer_unread_count = 0
             else:
                 conversation.seller_unread_count = 0
+            NotificationService(self.db).mark_entity_read(
+                user.id,
+                "conversation",
+                conversation.id,
+            )
             self.db.commit()
             self.db.refresh(conversation)
         return conversation
@@ -133,14 +139,36 @@ class MessageService:
         listing: Listing | None,
     ) -> Conversation:
         now = datetime.now(UTC)
-        self.db.add(Message(conversation_id=conversation.id, sender_id=sender.id, body=body))
+        message = Message(
+            conversation_id=conversation.id,
+            sender_id=sender.id,
+            body=body,
+        )
+        self.db.add(message)
+        self.db.flush()
         conversation.last_message_at = now
         if sender.id == conversation.buyer_id:
             conversation.seller_unread_count += 1
+            recipient_id = conversation.seller_id
         else:
             conversation.buyer_unread_count += 1
+            recipient_id = conversation.buyer_id
         if listing:
             listing.message_count += 1
+        NotificationService(self.db).create(
+            recipient_id=recipient_id,
+            type_="new_message",
+            deduplication_key=f"conversation:{conversation.id}",
+            actor_id=sender.id,
+            entity_type="conversation",
+            entity_id=conversation.id,
+            payload={
+                "title": f"Nova poruka od {sender.username}",
+                "body": "Otvorite razgovor da biste pročitali poruku.",
+            },
+            event_id=f"message:{message.id}",
+            consolidate=True,
+        )
         self.db.commit()
         self.db.refresh(conversation)
         return conversation

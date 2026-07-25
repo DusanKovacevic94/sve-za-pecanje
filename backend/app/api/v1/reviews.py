@@ -9,6 +9,7 @@ from app.models.listing import Listing
 from app.models.review import Review
 from app.models.user import User
 from app.schemas.review import ReviewCreate
+from app.services.notification_service import NotificationService
 
 router = APIRouter(prefix="/reviews", tags=["reviews"])
 
@@ -36,6 +37,20 @@ def create_review(
     )
     db.add(review)
     try:
+        db.flush()
+        NotificationService(db).create(
+            recipient_id=review.reviewee_id,
+            type_="review_received",
+            deduplication_key=f"review-received:{review.id}",
+            actor_id=user.id,
+            entity_type="review",
+            entity_id=review.id,
+            payload={
+                "title": "Dobili ste novu ocenu",
+                "body": f"{user.username} vam je ostavio/la ocenu.",
+            },
+            event_id=f"review:{review.id}",
+        )
         db.commit()
     except IntegrityError:
         db.rollback()

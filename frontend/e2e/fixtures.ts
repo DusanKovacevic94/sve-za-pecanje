@@ -32,7 +32,11 @@ type E2EHelpers = {
     account: Pick<TestAccount, "email" | "password">
   ) => Promise<void>;
   runBackgroundTask: (
-    taskName: "email_outbox" | "marketplace_metrics" | "search_discovery"
+    taskName:
+      | "email_outbox"
+      | "marketplace_metrics"
+      | "search_discovery"
+      | "notification_retention"
   ) => void;
 };
 

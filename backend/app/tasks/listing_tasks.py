@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.core.storage import delete_storage_object
 from app.services.listing_service import DRAFT_RETENTION_DAYS
+from app.services.notification_service import NotificationService
 
 
 def archive_expired_listings(db: Session, limit: int = 100) -> int:
@@ -20,6 +21,18 @@ def archive_expired_listings(db: Session, limit: int = 100) -> int:
         .limit(limit)
     ).all()
     for listing in listings:
+        NotificationService(db).create(
+            recipient_id=listing.seller_id,
+            type_="listing_expired",
+            deduplication_key=f"listing-expired:{listing.id}:{listing.expires_at.date()}",
+            entity_type="listing",
+            entity_id=listing.id,
+            payload={
+                "title": "Oglas je istekao",
+                "body": f'„{listing.title}” više nije aktivan.',
+            },
+            event_id=f"expired:{listing.id}:{listing.expires_at.isoformat()}",
+        )
         listing.status = "archived"
         listing.reserved_at = None
         listing.reserved_by_user_id = None

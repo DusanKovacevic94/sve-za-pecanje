@@ -1,10 +1,11 @@
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation, Message
+from app.models.notification import UserNotification
 from app.models.user import User
 from app.services.email_service import EmailService
 from app.services.notification_service import NotificationService
@@ -14,6 +15,7 @@ MESSAGE_EMAIL_DELAY = timedelta(minutes=10)
 MESSAGE_EMAIL_COOLDOWN = timedelta(hours=12)
 EXPIRY_NOTICE_WINDOW = timedelta(days=3)
 SHOP_EXPIRY_NOTICE_WINDOW = timedelta(days=7)
+NOTIFICATION_RETENTION_DAYS = 180
 
 
 def send_unread_message_notifications(db: Session, limit: int = 100) -> int:
@@ -103,12 +105,29 @@ def send_listing_expiry_reminders(db: Session, limit: int = 100) -> int:
     sent = 0
     for listing in listings:
         seller = listing.seller
-        if not seller or not NotificationService.can_send_listing_expiry_email(seller):
+        if not seller:
             continue
-        EmailService(db).send_listing_expiring(seller, listing.id, listing.title)
-        listing.expiry_notice_sent_at = now
-        sent += 1
-    if sent:
+        NotificationService(db).create(
+            recipient_id=seller.id,
+            type_="listing_expiring",
+            deduplication_key=f"listing-expiring:{listing.id}:{listing.expires_at.date()}",
+            entity_type="listing",
+            entity_id=listing.id,
+            payload={
+                "title": "Oglas uskoro ističe",
+                "body": f'„{listing.title}” ističe za manje od tri dana.',
+            },
+            event_id=f"expires:{listing.id}:{listing.expires_at.isoformat()}",
+        )
+        if NotificationService.can_send_listing_expiry_email(seller):
+            EmailService(db).send_listing_expiring(
+                seller,
+                listing.id,
+                listing.title,
+            )
+            listing.expiry_notice_sent_at = now
+            sent += 1
+    if listings:
         db.commit()
     return sent
 
@@ -132,9 +151,46 @@ def send_shop_subscription_expiry_reminders(db: Session, limit: int = 100) -> in
     for profile in profiles:
         if not profile.user:
             continue
+        NotificationService(db).create(
+            recipient_id=profile.user.id,
+            type_="shop_subscription_status",
+            deduplication_key=(
+                f"shop-expiring:{profile.user.id}:"
+                f"{profile.shop_active_until.date()}"
+            ),
+            entity_type="shop",
+            entity_id=profile.user.id,
+            payload={
+                "title": "Paket prodavnice uskoro ističe",
+                "body": (
+                    f'Paket za „{profile.shop_name or "Prodavnicu"}” '
+                    "ističe za manje od sedam dana."
+                ),
+            },
+            event_id=(
+                f"shop-expires:{profile.user.id}:"
+                f"{profile.shop_active_until.isoformat()}"
+            ),
+        )
         EmailService(db).send_shop_subscription_expiring(profile.user, profile.shop_name or "Prodavnica", profile.shop_active_until)
         profile.shop_expiry_notice_sent_at = now
         sent += 1
     if sent:
         db.commit()
     return sent
+
+
+def delete_old_notifications(db: Session, limit: int = 500) -> int:
+    cutoff = datetime.now(UTC) - timedelta(days=NOTIFICATION_RETENTION_DAYS)
+    ids = list(
+        db.scalars(
+            select(UserNotification.id)
+            .where(UserNotification.last_event_at < cutoff)
+            .order_by(UserNotification.last_event_at.asc())
+            .limit(min(max(limit, 1), 1_000))
+        ).all()
+    )
+    if ids:
+        db.execute(delete(UserNotification).where(UserNotification.id.in_(ids)))
+        db.commit()
+    return len(ids)
