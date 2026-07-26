@@ -20,8 +20,11 @@ def include_object(object, name, type_, reflected, compare_to):
     if reflected and type_ == "column" and name == "search_vector":
         return False
     if reflected and type_ == "index" and name in {
+        "ix_brands_name_trgm",
+        "ix_categories_name_sr_trgm",
         "ix_listings_attributes_gin",
         "ix_listings_search_vector",
+        "ix_listings_title_trgm",
     }:
         return False
     return True

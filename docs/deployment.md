@@ -71,6 +71,14 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 9. Run migrations and seed shared data:
 
+Install the search extension once with the PostgreSQL admin role before migration `0014`:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres \
+  sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"'
+```
+
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend alembic upgrade head
 docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backend python -m scripts.seed
