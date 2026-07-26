@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.responses import api_error
 from app.models.audit import AuditLog
+from app.models.conversation_safety import ConversationReport
 from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.moderation_case import ModerationCase
 from app.models.user import User
@@ -19,6 +20,11 @@ def serialize_case(case: ModerationCase, db: Session) -> dict:
     subject = db.get(User, case.subject_user_id) if case.subject_user_id else None
     listing = db.get(Listing, case.entity_id) if case.entity_type == "listing" else None
     display_entity_id = "anonymous" if case.entity_type == "network" else case.entity_id
+    conversation_report = (
+        db.get(ConversationReport, case.entity_id)
+        if case.entity_type == "conversation_report"
+        else None
+    )
     return {
         "id": case.id,
         "entity_type": case.entity_type,
@@ -26,6 +32,18 @@ def serialize_case(case: ModerationCase, db: Session) -> dict:
         "entity": (
             {"title": listing.title, "slug": listing.slug, "status": listing.status}
             if listing
+            else None
+        ),
+        "report_evidence": (
+            {
+                "reason": conversation_report.reason,
+                "explanation": conversation_report.explanation,
+                "message_level": bool(
+                    conversation_report.content_snapshot.get("target_message")
+                ),
+                "snapshot": conversation_report.content_snapshot,
+            }
+            if conversation_report
             else None
         ),
         "subject": (
@@ -103,6 +121,19 @@ class ModerationCaseService:
         ]
         if case.subject_user_id:
             case_filters.append(ModerationCase.subject_user_id == case.subject_user_id)
+        report = (
+            self.db.get(ConversationReport, case.entity_id)
+            if case.entity_type == "conversation_report"
+            else None
+        )
+        listing_snapshot = (
+            report.content_snapshot.get("listing") if report else None
+        )
+        if listing_snapshot and listing_snapshot.get("id"):
+            case_filters.append(
+                (ModerationCase.entity_type == "listing")
+                & (ModerationCase.entity_id == listing_snapshot["id"])
+            )
         cases = self.db.scalars(
             select(ModerationCase)
             .where(or_(*case_filters))

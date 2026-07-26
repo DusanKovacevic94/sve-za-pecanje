@@ -39,6 +39,10 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
           <p className="mt-2 text-sm text-slate-600">
             Pošaljite prvu poruku prodavcu. Razgovor će se pojaviti u listi čim poruka bude poslata.
           </p>
+          <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm font-semibold text-amber-950">
+            Ne šaljite kodove, podatke kartice ili novac unapred. Platforma ne posreduje
+            pri plaćanju ili isporuci.
+          </p>
           <div className="mt-4">
             <MessageForm mode="new" listingId={listingId} />
           </div>
@@ -70,6 +74,8 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
                   </h2>
                 </div>
                 <div className="flex items-center gap-2">
+                  {conversation.is_muted ? <Badge>Utišano</Badge> : null}
+                  {!conversation.conversation_available ? <Badge tone="warn">Nedostupno</Badge> : null}
                   {conversation.unread_count ? <Badge tone="accent">{conversation.unread_count} novo</Badge> : null}
                   {conversation.last_message_at ? (
                     <span className="text-xs font-semibold text-slate-500">

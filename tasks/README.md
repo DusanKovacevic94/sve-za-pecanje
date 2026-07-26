@@ -131,7 +131,7 @@ and retention, then address account governance and sustainable SEO.
 
 - [x] [053 — In-app notification center](053-in-app-notifications.md)
 - [x] [055 — SMS-ready phone verification and visible trust signals](055-phone-verification-trust.md)
-- [ ] [056 — Blocking, muting, and conversation reporting](056-conversation-safety.md)
+- [x] [056 — Blocking, muting, and conversation reporting](056-conversation-safety.md)
 - [ ] [057 — Account sessions, data export, and account closure](057-account-security-privacy.md)
 
 ## P2 — Retention and sustainable acquisition

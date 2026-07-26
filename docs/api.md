@@ -51,6 +51,10 @@ Implemented endpoint groups:
 - `GET /conversations/{id}`
 - `POST /listings/{id}/messages`
 - `POST /conversations/{id}/messages`
+- `PATCH /conversations/{id}/preferences`
+- `POST /conversations/{id}/block`
+- `DELETE /conversations/{id}/block`
+- `POST /conversations/{id}/reports`
 - `POST /reviews`
 - `GET /users/profile/{username}`
 - `GET /users/me/listings`

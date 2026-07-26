@@ -235,6 +235,7 @@ export type ListingDetail = ListingCard & {
   attributes: Record<string, string | number | boolean | string[]>;
   attributes_display: AttributeDisplay[];
   allow_messages: boolean;
+  can_message: boolean;
   phone_visible: boolean;
   view_count: number;
   favorite_count: number;
@@ -294,6 +295,9 @@ export type Conversation = {
   buyer_unread_count: number;
   seller_unread_count: number;
   unread_count: number;
+  is_muted: boolean;
+  conversation_available: boolean;
+  blocked_by_viewer: boolean;
   messages: ConversationMessage[];
   messages_meta: {
     page: number;

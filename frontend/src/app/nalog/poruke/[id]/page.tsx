@@ -1,6 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 
 import { MessageForm } from "@/components/messages/MessageForm";
+import {
+  ConversationSafetyControls,
+  SafetyReportButton,
+} from "@/components/messages/ConversationSafetyControls";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { TrustIndicators } from "@/components/trust/TrustIndicators";
@@ -81,6 +85,19 @@ export default async function ConversationPage({ params, searchParams }: Convers
             {conversation.listing.delivery_note}
           </p>
         ) : null}
+        <div className="mt-4 border-t border-slate-100 pt-4">
+          <ConversationSafetyControls
+            conversationId={conversation.id}
+            initialMuted={conversation.is_muted}
+            conversationAvailable={conversation.conversation_available}
+            blockedByViewer={conversation.blocked_by_viewer}
+          />
+        </div>
+        {!conversation.conversation_available ? (
+          <p className="mt-4 rounded-md bg-slate-100 p-3 text-sm font-semibold text-slate-700">
+            Razgovor trenutno nije dostupan. Prethodne poruke ostaju sačuvane.
+          </p>
+        ) : null}
 
         <div className="mt-5 space-y-4">
           {conversation.messages.map((message) => {
@@ -94,6 +111,12 @@ export default async function ConversationPage({ params, searchParams }: Convers
                     <span>{formatDate(message.created_at)}</span>
                   </div>
                   <p className="mt-2 whitespace-pre-line text-sm leading-6">{message.body}</p>
+                  {!own ? (
+                    <SafetyReportButton
+                      conversationId={conversation.id}
+                      messageId={message.id}
+                    />
+                  ) : null}
                 </div>
               </div>
             );
@@ -115,12 +138,18 @@ export default async function ConversationPage({ params, searchParams }: Convers
         ) : null}
       </section>
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <h2 className="text-xl font-black">Odgovor</h2>
-        <div className="mt-4">
-          <MessageForm mode="reply" conversationId={conversation.id} />
-        </div>
-      </section>
+      {conversation.conversation_available ? (
+        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-black">Odgovor</h2>
+          <p className="mt-2 text-sm text-amber-900">
+            Ne šaljite kodove, podatke kartice ili novac unapred. Platforma ne posreduje
+            pri plaćanju ili isporuci.
+          </p>
+          <div className="mt-4">
+            <MessageForm mode="reply" conversationId={conversation.id} />
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

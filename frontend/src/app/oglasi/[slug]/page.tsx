@@ -253,9 +253,13 @@ export default async function ListingDetailPage({ params }: PageProps) {
             <div className="mt-4 grid gap-2">
               {listing.status === "sold" ? (
                 <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
-              ) : (
+              ) : listing.can_message ? (
                 <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageSquare size={18} /> Pošalji poruku</Button>
-              )}
+              ) : !isOwner ? (
+                <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">
+                  Kontakt trenutno nije dostupan.
+                </p>
+              ) : null}
               {isOwner ? (
                 <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
               ) : (

@@ -54,6 +54,10 @@ Keep phone verification disabled. Task 055 provides only disabled production and
 deterministic test providers; it deliberately does not activate a paid SMS service. See
 [phone verification and trust signals](phone-verification.md).
 
+Task 056 conversation safety requires no new environment values or external provider.
+Apply migration `0017_conversation_safety` before deploying its frontend. See
+[conversation safety](conversation-safety.md).
+
 7. Validate the fully merged production configuration before building anything:
 
 ```bash

@@ -8,6 +8,7 @@ from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation, Message
 from app.models.user import User
 from app.services.analytics_service import AnalyticsService
+from app.services.conversation_safety_service import ConversationSafetyService
 from app.services.notification_service import NotificationService
 
 
@@ -99,6 +100,9 @@ class MessageService:
             raise api_error("VALIDATION_ERROR", "Ne možete poslati poruku za sopstveni oglas.", 400)
         if not listing.allow_messages:
             raise api_error("LISTING_NOT_ACTIVE", "Prodavac ne prima poruke za ovaj oglas.", 400)
+        ConversationSafetyService(self.db).enforce_available(
+            sender.id, listing.seller_id
+        )
         conversation = self.db.scalar(
             select(Conversation).where(
                 Conversation.listing_id == listing.id,
@@ -126,6 +130,14 @@ class MessageService:
 
     def reply(self, conversation_id: str, sender: User, body: str) -> Conversation:
         conversation = self.get_conversation(conversation_id, sender)
+        counterpart_id = (
+            conversation.seller_id
+            if sender.id == conversation.buyer_id
+            else conversation.buyer_id
+        )
+        ConversationSafetyService(self.db).enforce_available(
+            sender.id, counterpart_id
+        )
         listing = self.db.get(Listing, conversation.listing_id)
         if listing and listing.status not in PUBLIC_LISTING_STATUSES:
             raise api_error("LISTING_NOT_ACTIVE", "Nije moguće poslati poruku za ovaj oglas.", 400)
@@ -155,20 +167,23 @@ class MessageService:
             recipient_id = conversation.buyer_id
         if listing:
             listing.message_count += 1
-        NotificationService(self.db).create(
-            recipient_id=recipient_id,
-            type_="new_message",
-            deduplication_key=f"conversation:{conversation.id}",
-            actor_id=sender.id,
-            entity_type="conversation",
-            entity_id=conversation.id,
-            payload={
-                "title": f"Nova poruka od {sender.username}",
-                "body": "Otvorite razgovor da biste pročitali poruku.",
-            },
-            event_id=f"message:{message.id}",
-            consolidate=True,
-        )
+        if not ConversationSafetyService(self.db).is_muted(
+            conversation.id, recipient_id
+        ):
+            NotificationService(self.db).create(
+                recipient_id=recipient_id,
+                type_="new_message",
+                deduplication_key=f"conversation:{conversation.id}",
+                actor_id=sender.id,
+                entity_type="conversation",
+                entity_id=conversation.id,
+                payload={
+                    "title": f"Nova poruka od {sender.username}",
+                    "body": "Otvorite razgovor da biste pročitali poruku.",
+                },
+                event_id=f"message:{message.id}",
+                consolidate=True,
+            )
         self.db.commit()
         self.db.refresh(conversation)
         return conversation
@@ -202,6 +217,9 @@ def serialize_conversation(
     page: int = 1,
     page_size: int = 50,
     trust_summaries: dict[str, dict] | None = None,
+    is_muted: bool = False,
+    conversation_available: bool = True,
+    blocked_by_viewer: bool = False,
 ) -> dict:
     message_rows = messages if messages is not None else []
     counterpart = conversation.seller if viewer.id == conversation.buyer_id else conversation.buyer
@@ -241,6 +259,9 @@ def serialize_conversation(
         "buyer_unread_count": conversation.buyer_unread_count,
         "seller_unread_count": conversation.seller_unread_count,
         "unread_count": unread_count,
+        "is_muted": is_muted,
+        "conversation_available": conversation_available,
+        "blocked_by_viewer": blocked_by_viewer,
         "messages": [_serialize_message(message) for message in message_rows],
         "messages_meta": {
             "page": page,

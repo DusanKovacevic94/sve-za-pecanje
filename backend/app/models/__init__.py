@@ -3,6 +3,11 @@ from app.models.audit import AuditLog
 from app.models.auth_session import AuthSession
 from app.models.brand import Brand
 from app.models.category import AttributeDefinition, Category, City
+from app.models.conversation_safety import (
+    ConversationPreference,
+    ConversationReport,
+    UserBlock,
+)
 from app.models.email_outbox import EmailOutbox
 from app.models.feature_request import FeatureRequest, PromotionOrder
 from app.models.favorite import Favorite
@@ -34,6 +39,8 @@ __all__ = [
     "Category",
     "City",
     "Conversation",
+    "ConversationPreference",
+    "ConversationReport",
     "EmailOutbox",
     "FeatureRequest",
     "PromotionOrder",
@@ -51,6 +58,7 @@ __all__ = [
     "SearchDiscoveryState",
     "SearchQueryBlacklist",
     "UserNotification",
+    "UserBlock",
     "PhoneVerificationChallenge",
     "ShopSubscriptionRequest",
     "User",

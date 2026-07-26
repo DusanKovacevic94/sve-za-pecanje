@@ -277,6 +277,46 @@ test("registration-to-sale marketplace journey", async ({
     await expect(buyerPage.getByText(sellerReply)).toBeVisible();
   });
 
+  await test.step("buyer mutes, reports, blocks, and safely restores the conversation", async () => {
+    await buyerPage.getByRole("button", { name: "Utišaj razgovor" }).click();
+    await expect(
+      buyerPage.getByRole("button", { name: "Uključi obaveštenja" })
+    ).toBeVisible();
+
+    await buyerPage.getByRole("button", { name: "Prijavi poruku" }).click();
+    await buyerPage.getByLabel("Razlog").selectOption("off_platform_payment");
+    await buyerPage
+      .getByLabel(/Dodatno objašnjenje/)
+      .fill(`E2E bezbednosna prijava ${suffix}`);
+    await buyerPage.getByRole("button", { name: "Pošalji prijavu" }).click();
+    await expect(buyerPage.getByText("Prijavljeno", { exact: true })).toBeVisible();
+
+    buyerPage.once("dialog", (dialog) => dialog.accept());
+    await buyerPage.getByRole("button", { name: "Blokiraj korisnika" }).click();
+    await expect(
+      buyerPage.getByText("Razgovor trenutno nije dostupan. Prethodne poruke ostaju sačuvane.")
+    ).toBeVisible();
+    await expect(buyerPage.getByPlaceholder("Napišite odgovor...")).toHaveCount(0);
+
+    await sellerPage.reload();
+    await expect(
+      sellerPage.getByText("Razgovor trenutno nije dostupan. Prethodne poruke ostaju sačuvane.")
+    ).toBeVisible();
+    await expect(
+      sellerPage.getByRole("button", { name: "Ukloni moju blokadu" })
+    ).toHaveCount(0);
+
+    await buyerPage.getByRole("button", { name: "Ukloni moju blokadu" }).click();
+    await expect(buyerPage.getByPlaceholder("Napišite odgovor...")).toBeVisible();
+
+    await adminPage.goto("/admin/rizik?entity_type=conversation_report");
+    const safetyCase = adminPage.locator("article").filter({
+      hasText: `E2E bezbednosna prijava ${suffix}`,
+    });
+    await expect(safetyCase).toBeVisible();
+    await expect(safetyCase.getByText(sellerReply)).toBeVisible();
+  });
+
   await test.step("administrator resolves the buyer report", async () => {
     await adminPage.goto("/admin/prijave");
     let report = adminPage.locator("article").filter({ hasText: reportDescription });

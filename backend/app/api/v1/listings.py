@@ -35,6 +35,7 @@ from app.models.favorite import Favorite
 from app.services.feature_service import FeatureService, serialize_feature_request
 from app.services.filter_service import parse_query_params
 from app.services.analytics_service import AnalyticsService
+from app.services.conversation_safety_service import ConversationSafetyService
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
@@ -160,7 +161,25 @@ def get_listing(
         "active_listing_count": int(active_listing_count or 0),
         "trust": trust,
     }
-    return data_response(serialize_listing_detail(listing, is_favorited=is_favorited, seller_stats=seller_stats))
+    can_message = bool(
+        listing.allow_messages
+        and listing.status in PUBLIC_LISTING_STATUSES
+        and (not user or user.id != listing.seller_id)
+        and (
+            not user
+            or ConversationSafetyService(db).is_available_between(
+                user.id, listing.seller_id
+            )
+        )
+    )
+    return data_response(
+        serialize_listing_detail(
+            listing,
+            is_favorited=is_favorited,
+            seller_stats=seller_stats,
+            can_message=can_message,
+        )
+    )
 
 
 @router.get("/{listing_id}/similar")

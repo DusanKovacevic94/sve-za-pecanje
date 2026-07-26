@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.responses import api_error
 from app.core.security import hash_token
 from app.models.feature_request import PromotionOrder
+from app.models.conversation_safety import UserBlock
 from app.models.listing import Listing
 from app.models.message import Conversation
 from app.models.notification import UserNotification
@@ -72,9 +73,20 @@ class NotificationService:
         payload: dict | None = None,
         event_id: str | None = None,
         consolidate: bool = False,
-    ) -> UserNotification:
+    ) -> UserNotification | None:
         if type_ not in NOTIFICATION_TYPES:
             raise ValueError(f"Unsupported notification type: {type_}")
+        if actor_id and self.db.scalar(
+            select(UserBlock.id).where(
+                or_(
+                    (UserBlock.blocker_id == recipient_id)
+                    & (UserBlock.blocked_id == actor_id),
+                    (UserBlock.blocker_id == actor_id)
+                    & (UserBlock.blocked_id == recipient_id),
+                )
+            )
+        ):
+            return None
         deduplication_key = deduplication_key.strip()[:180]
         if not deduplication_key:
             raise ValueError("A notification deduplication key is required.")

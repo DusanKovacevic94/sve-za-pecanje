@@ -1,6 +1,6 @@
 # 056 — Blocking, muting, and conversation reporting
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Problem
@@ -13,28 +13,30 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Add unique directed user blocks and per-user conversation preferences for mute state
-- [ ] Enforce a block on every message-creation path so neither participant can continue the
+- [x] Add unique directed user blocks and per-user conversation preferences for mute state
+- [x] Enforce a block on every message-creation path so neither participant can continue the
   conversation after either party blocks the other
-- [ ] Hide contact actions between blocked users across all listings, not just the listing
+- [x] Hide contact actions between blocked users across all listings, not just the listing
   that started the original conversation
-- [ ] Stop follow relationships and non-essential notifications between blocked users
-- [ ] Preserve existing messages, reviews, reports, and sale history for the participants
+- [x] Stop non-essential notifications between blocked users; seller following is not
+  implemented yet, and Task 054 is required to remove/refuse follows through the same
+  centralized block check
+- [x] Preserve existing messages, reviews, reports, and sale history for the participants
   and authorized moderators
-- [ ] Return a generic `conversation_unavailable` error rather than revealing who initiated
+- [x] Return a generic `conversation_unavailable` error rather than revealing who initiated
   a block
-- [ ] Allow unblock without automatically recreating follows, notifications, or archived UI
+- [x] Allow unblock without automatically recreating follows, notifications, or archived UI
   state
-- [ ] Make muting affect only the current user's notifications; keep the conversation
+- [x] Make muting affect only the current user's notifications; keep the conversation
   accessible and do not reveal mute state to the other participant
-- [ ] Add message-level and conversation-level reporting with a structured reason and
+- [x] Add message-level and conversation-level reporting with a structured reason and
   optional explanation
-- [ ] Store an audit-safe content snapshot with the report so later edits/deletion do not
+- [x] Store an audit-safe content snapshot with the report so later edits/deletion do not
   remove moderation evidence
-- [ ] Send reports and related account/listing history to the task 049 moderation queue
-- [ ] Add Serbian safety guidance near first contact and report/block controls without
+- [x] Send reports and related account/listing history to the task 049 moderation queue
+- [x] Add Serbian safety guidance near first contact and report/block controls without
   claiming that the platform mediates payment
-- [ ] Add block/unblock, cross-listing bypass, mute/unmute, notification suppression,
+- [x] Add block/unblock, cross-listing bypass, mute/unmute, notification suppression,
   report, deleted content, suspended account, authorization, and E2E tests
 
 ## Acceptance criteria

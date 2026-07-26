@@ -859,6 +859,7 @@ def serialize_listing_detail(
     listing: Listing,
     is_favorited: bool = False,
     seller_stats: dict[str, int | float | None] | None = None,
+    can_message: bool | None = None,
 ) -> dict:
     data = serialize_listing_card(listing)
     if seller_stats:
@@ -874,6 +875,7 @@ def serialize_listing_detail(
             "attributes": listing.attributes,
             "attributes_display": display_attributes,
             "allow_messages": listing.allow_messages,
+            "can_message": listing.allow_messages if can_message is None else can_message,
             "phone_visible": listing.phone_visible,
             "view_count": listing.view_count,
             "favorite_count": listing.favorite_count,

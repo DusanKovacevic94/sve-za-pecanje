@@ -11,6 +11,21 @@ export type ModerationCase = {
   entity_type: string;
   entity_id: string;
   entity: { title: string; slug: string; status: string } | null;
+  report_evidence: {
+    reason: string;
+    explanation: string | null;
+    message_level: boolean;
+    snapshot: {
+      target_message: { body: string } | null;
+      listing: { title: string; slug: string; status: string } | null;
+      reported_account: {
+        username: string;
+        status: string;
+        prior_listing_reports: number;
+        prior_conversation_reports: number;
+      } | null;
+    };
+  } | null;
   subject: { id: string; username: string; status: string } | null;
   risk_score: number;
   reason_codes: string[];
@@ -35,7 +50,14 @@ const reasonLabels: Record<string, string> = {
   repeated_rejection_history: "Ponovljena odbijanja",
   repeated_failed_challenge: "Neuspele bezbednosne provere",
   duplicate_same_user: "Duplikat istog prodavca",
-  duplicate_cross_user: "Duplikat između naloga"
+  duplicate_cross_user: "Duplikat između naloga",
+  conversation_report: "Prijava razgovora",
+  conversation_report_spam: "Neželjene poruke",
+  conversation_report_harassment: "Uznemiravanje ili pretnje",
+  conversation_report_scam: "Sumnja na prevaru",
+  conversation_report_off_platform_payment: "Pritisak za uplatu van platforme",
+  conversation_report_inappropriate_content: "Neprimeren sadržaj",
+  conversation_report_other: "Drugo"
 };
 
 export function ModerationRiskQueue({ initialCases }: { initialCases: ModerationCase[] }) {
@@ -170,6 +192,32 @@ export function ModerationRiskQueue({ initialCases }: { initialCases: Moderation
                   <p className="mt-2 text-sm text-slate-700">
                     {item.reason_codes.map((code) => reasonLabels[code] ?? code).join(" · ")}
                   </p>
+                  {item.report_evidence ? (
+                    <div className="mt-3 space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                      <p className="font-black">
+                        {item.report_evidence.message_level ? "Prijavljena poruka" : "Prijavljen razgovor"}
+                        {item.report_evidence.snapshot.listing
+                          ? ` · ${item.report_evidence.snapshot.listing.title}`
+                          : ""}
+                      </p>
+                      {item.report_evidence.explanation ? (
+                        <p>{item.report_evidence.explanation}</p>
+                      ) : null}
+                      {item.report_evidence.snapshot.target_message ? (
+                        <blockquote className="whitespace-pre-wrap border-l-2 border-amber-400 pl-3">
+                          {item.report_evidence.snapshot.target_message.body}
+                        </blockquote>
+                      ) : null}
+                      {item.report_evidence.snapshot.reported_account ? (
+                        <p className="text-xs font-semibold">
+                          Nalog: {item.report_evidence.snapshot.reported_account.username} ·{" "}
+                          {item.report_evidence.snapshot.reported_account.status} · ranije prijave oglasa:{" "}
+                          {item.report_evidence.snapshot.reported_account.prior_listing_reports} · razgovora:{" "}
+                          {item.report_evidence.snapshot.reported_account.prior_conversation_reports}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
                   {item.internal_notes ? (
                     <pre className="mt-3 whitespace-pre-wrap rounded-md bg-slate-50 p-3 text-xs text-slate-700">
                       {item.internal_notes}

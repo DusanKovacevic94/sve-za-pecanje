@@ -10,6 +10,7 @@ from app.models.user import User
 from app.services.email_service import EmailService
 from app.services.notification_service import NotificationService
 from app.models.profile import UserProfile
+from app.services.conversation_safety_service import ConversationSafetyService
 
 MESSAGE_EMAIL_DELAY = timedelta(minutes=10)
 MESSAGE_EMAIL_COOLDOWN = timedelta(hours=12)
@@ -52,7 +53,12 @@ def _maybe_send_message_email(db: Session, conversation: Conversation, side: str
         if side == "buyer"
         else conversation.seller_message_email_sent_at
     )
-    if unread_count <= 0 or not recipient or not NotificationService.can_send_message_email(recipient):
+    if (
+        unread_count <= 0
+        or not recipient
+        or ConversationSafetyService(db).is_muted(conversation.id, recipient.id)
+        or not NotificationService.can_send_message_email(recipient)
+    ):
         return 0
     if sent_at and _as_utc(sent_at) > now - MESSAGE_EMAIL_COOLDOWN:
         return 0
