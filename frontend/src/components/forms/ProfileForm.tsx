@@ -8,12 +8,13 @@ import { z } from "zod";
 import { apiFetch, type UserProfile } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Textarea } from "@/components/ui/Field";
+import { PhoneVerificationPanel } from "@/components/forms/PhoneVerificationPanel";
 
 const profileSchema = z.object({
   display_name: z.string().max(120).optional(),
   city: z.string().max(120).optional(),
   municipality: z.string().max(120).optional(),
-  phone_number: z.string().max(120).optional(),
+  phone_number: z.string().max(40).optional(),
   phone_visible: z.boolean().default(false),
   bio: z.string().max(2000).optional(),
   fishing_styles: z.string().max(500).optional(),
@@ -25,23 +26,33 @@ const profileSchema = z.object({
 type ProfileFormInput = z.input<typeof profileSchema>;
 type ProfileFormOutput = z.output<typeof profileSchema>;
 
+function profileDefaults(profile: UserProfile): ProfileFormInput {
+  return {
+    display_name: profile.display_name ?? "",
+    city: profile.city ?? "",
+    municipality: profile.municipality ?? "",
+    phone_number: profile.phone_number ?? "",
+    phone_visible: profile.phone_visible,
+    bio: profile.bio ?? "",
+    fishing_styles: profile.fishing_styles.join(", "),
+    notify_messages: profile.notify_messages,
+    notify_saved_searches: profile.notify_saved_searches,
+    notify_listing_expiry: profile.notify_listing_expiry,
+  };
+}
+
 export function ProfileForm({ profile }: { profile: UserProfile }) {
+  const [currentProfile, setCurrentProfile] = useState(profile);
   const [message, setMessage] = useState<string | null>(null);
-  const { register, handleSubmit, formState } = useForm<ProfileFormInput, unknown, ProfileFormOutput>({
+  const { register, handleSubmit, formState, reset } = useForm<ProfileFormInput, unknown, ProfileFormOutput>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      display_name: profile.display_name ?? "",
-      city: profile.city ?? "",
-      municipality: profile.municipality ?? "",
-      phone_number: profile.phone_number ?? "",
-      phone_visible: profile.phone_visible,
-      bio: profile.bio ?? "",
-      fishing_styles: profile.fishing_styles.join(", "),
-      notify_messages: profile.notify_messages,
-      notify_saved_searches: profile.notify_saved_searches,
-      notify_listing_expiry: profile.notify_listing_expiry
-    }
+    defaultValues: profileDefaults(profile),
   });
+
+  function applyProfile(nextProfile: UserProfile) {
+    setCurrentProfile(nextProfile);
+    reset(profileDefaults(nextProfile));
+  }
 
   async function onSubmit(data: ProfileFormOutput) {
     setMessage(null);
@@ -53,10 +64,11 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
         .filter(Boolean),
     };
     try {
-      await apiFetch<UserProfile>("/users/me/profile", {
+      const response = await apiFetch<UserProfile>("/users/me/profile", {
         method: "PATCH",
         body: JSON.stringify(payload)
       });
+      applyProfile(response.data);
       setMessage("Profil je ažuriran.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
@@ -95,6 +107,11 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
           <input type="checkbox" {...register("phone_visible")} />
           Prikaži telefon prijavljenim korisnicima
         </label>
+        <PhoneVerificationPanel
+          profile={currentProfile}
+          phoneDirty={Boolean(formState.dirtyFields.phone_number)}
+          onVerified={applyProfile}
+        />
         <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-4 md:col-span-2">
           <p className="text-sm font-black text-slate-800">Email notifikacije</p>
           <label className="flex items-center gap-3 text-sm font-semibold">

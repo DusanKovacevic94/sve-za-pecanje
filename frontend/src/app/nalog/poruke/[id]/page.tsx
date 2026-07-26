@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { MessageForm } from "@/components/messages/MessageForm";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { TrustIndicators } from "@/components/trust/TrustIndicators";
 import { ApiError, type Conversation } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -48,6 +49,9 @@ export default async function ConversationPage({ params, searchParams }: Convers
           <p className="mt-2 text-slate-600">
             Razgovor sa {conversation.counterpart.display_name ?? conversation.counterpart.username}
           </p>
+          {conversation.counterpart.trust ? (
+            <TrustIndicators trust={conversation.counterpart.trust} compact />
+          ) : null}
         </div>
         <Button href={`/oglasi/${conversation.listing.slug}`} variant="secondary">Otvori oglas</Button>
       </div>

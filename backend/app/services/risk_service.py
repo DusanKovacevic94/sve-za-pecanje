@@ -16,6 +16,7 @@ from app.models.audit import AuditLog
 from app.models.listing import Listing
 from app.models.moderation_case import AbuseSignal, ListingFingerprint, ModerationCase
 from app.models.report import Report
+from app.models.user import User
 
 ACTION_RULES: dict[str, tuple[int, timedelta, int, str]] = {
     "registration_attempt": (3, timedelta(minutes=10), 60, "registration_velocity"),
@@ -43,6 +44,16 @@ def normalized_text(value: str) -> str:
 class RiskService:
     def __init__(self, db: Session):
         self.db = db
+
+    @staticmethod
+    def verification_context(user: User) -> dict[str, bool]:
+        """Factual inputs future rules may inspect without enforcing them today."""
+        return {
+            "email_verified": bool(user.email_verified_at),
+            "phone_verified": bool(
+                user.profile and user.profile.phone_verified_at
+            ),
+        }
 
     def enforce(
         self,

@@ -22,7 +22,12 @@ class UserProfile(Base, TimestampMixin):
     avatar_url: Mapped[str | None] = mapped_column(String(500))
     city: Mapped[str | None] = mapped_column(String(120), index=True)
     municipality: Mapped[str | None] = mapped_column(String(120))
-    phone_number: Mapped[str | None] = mapped_column(String(255))
+    phone_number: Mapped[str | None] = mapped_column(String(16), index=True)
+    phone_number_display: Mapped[str | None] = mapped_column(String(40))
+    phone_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        index=True,
+    )
     phone_visible: Mapped[bool] = mapped_column(Boolean, default=False)
     bio: Mapped[str | None] = mapped_column(Text)
     fishing_styles: Mapped[list[str]] = mapped_column(JSON, default=list)

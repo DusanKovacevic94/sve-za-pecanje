@@ -163,6 +163,15 @@ export type AttributeDisplay = {
 export type PriceType = "fixed" | "negotiable" | "on_request" | "free";
 export type DeliveryMethod = "personal_pickup" | "courier" | "seller_arrangement";
 
+export type TrustSummary = {
+  email_verified: boolean;
+  phone_verified: boolean;
+  member_since: string;
+  review_count: number;
+  rating_average: number | null;
+  completed_sale_count: number;
+};
+
 export type AdminBrand = Brand & {
   aliases: string[];
   category_scope: string[];
@@ -196,6 +205,8 @@ export type ListingCard = {
     rating_average?: number | null;
     review_count?: number | null;
     active_listing_count?: number | null;
+    completed_sale_count?: number;
+    trust?: TrustSummary;
   };
   category: { id: string; slug: string; name_sr: string };
   brand: Brand | null;
@@ -248,6 +259,7 @@ export type MessageUser = {
   id: string;
   username: string;
   display_name: string | null;
+  trust?: TrustSummary | null;
 };
 
 export type ConversationMessage = {
@@ -363,7 +375,10 @@ export type UserProfile = {
   city: string | null;
   municipality: string | null;
   phone_number: string | null;
+  phone_number_e164: string | null;
   phone_visible: boolean;
+  phone_verified_at: string | null;
+  phone_verification_enabled: boolean;
   bio: string | null;
   fishing_styles: string[];
   member_badges: string[];

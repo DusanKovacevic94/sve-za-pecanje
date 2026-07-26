@@ -28,6 +28,7 @@ TURNSTILE_ENABLED=false
 TURNSTILE_SITE_KEY=<turnstile-site-key>
 TURNSTILE_SECRET_KEY=<turnstile-secret-key>
 NEXT_PUBLIC_TURNSTILE_SITE_KEY=<turnstile-site-key>
+PHONE_VERIFICATION_ENABLED=false
 POSTGRES_DB=fishing_marketplace
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=<strong-postgres-admin-password>
@@ -48,6 +49,10 @@ BACKUP_REMOTE=<rclone-remote>:sve-za-pecanje/postgres
 Keep Turnstile disabled for the first deployment of its keys, confirm the frontend widget
 loads, then enable it. See [adaptive anti-abuse and moderation](anti-abuse.md) for thresholds,
 failure behavior, and test credentials.
+
+Keep phone verification disabled. Task 055 provides only disabled production and
+deterministic test providers; it deliberately does not activate a paid SMS service. See
+[phone verification and trust signals](phone-verification.md).
 
 7. Validate the fully merged production configuration before building anything:
 

@@ -20,6 +20,7 @@ from app.models.search_discovery import (
     SearchQueryBlacklist,
 )
 from app.models.notification import UserNotification
+from app.models.phone_verification import PhoneVerificationChallenge
 from app.models.shop_subscription import ShopSubscriptionRequest
 from app.models.user import User
 
@@ -50,6 +51,7 @@ __all__ = [
     "SearchDiscoveryState",
     "SearchQueryBlacklist",
     "UserNotification",
+    "PhoneVerificationChallenge",
     "ShopSubscriptionRequest",
     "User",
     "UserProfile",

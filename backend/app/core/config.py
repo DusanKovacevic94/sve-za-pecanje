@@ -69,6 +69,7 @@ class Settings(BaseSettings):
     turnstile_site_key: str = ""
     turnstile_secret_key: str = ""
     turnstile_timeout_seconds: float = 5.0
+    phone_verification_enabled: bool = False
     abuse_signal_retention_days: int = 7
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.0

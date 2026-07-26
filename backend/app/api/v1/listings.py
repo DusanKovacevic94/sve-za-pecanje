@@ -24,11 +24,11 @@ from app.services.listing_service import (
     serialize_listing_card,
     serialize_listing_detail,
 )
+from app.services.trust_service import factual_trust_summary
 from app.services.view_service import track_listing_view
 from app.models.report import Report
 from app.models.listing import PUBLIC_LISTING_STATUSES, Listing
 from app.models.message import Conversation
-from app.models.review import Review
 from app.models.user import User as UserModel
 from app.models.category import Category
 from app.models.favorite import Favorite
@@ -145,12 +145,7 @@ def get_listing(
             db.scalar(select(Favorite.id).where(Favorite.user_id == user.id, Favorite.listing_id == listing.id))
             is not None
         )
-    rating_average, review_count = db.execute(
-        select(func.avg(Review.rating), func.count(Review.id)).where(
-            Review.reviewee_id == listing.seller_id,
-            Review.status == "published",
-        )
-    ).one()
+    trust = factual_trust_summary(db, listing.seller)
     active_listing_count = db.scalar(
         select(func.count(Listing.id)).where(
             Listing.seller_id == listing.seller_id,
@@ -158,10 +153,12 @@ def get_listing(
         )
     )
     seller_stats = {
-        "member_since": listing.seller.created_at,
-        "rating_average": round(float(rating_average), 1) if rating_average else None,
-        "review_count": int(review_count or 0),
+        "member_since": trust["member_since"],
+        "rating_average": trust["rating_average"],
+        "review_count": trust["review_count"],
+        "completed_sale_count": trust["completed_sale_count"],
         "active_listing_count": int(active_listing_count or 0),
+        "trust": trust,
     }
     return data_response(serialize_listing_detail(listing, is_favorited=is_favorited, seller_stats=seller_stats))
 

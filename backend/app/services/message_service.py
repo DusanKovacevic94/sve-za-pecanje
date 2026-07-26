@@ -174,12 +174,13 @@ class MessageService:
         return conversation
 
 
-def _serialize_user(user: User) -> dict:
+def _serialize_user(user: User, trust: dict | None = None) -> dict:
     profile = user.profile if user else None
     return {
         "id": user.id,
         "username": user.username,
         "display_name": profile.display_name if profile else None,
+        "trust": trust,
     }
 
 
@@ -200,6 +201,7 @@ def serialize_conversation(
     total_messages: int | None = None,
     page: int = 1,
     page_size: int = 50,
+    trust_summaries: dict[str, dict] | None = None,
 ) -> dict:
     message_rows = messages if messages is not None else []
     counterpart = conversation.seller if viewer.id == conversation.buyer_id else conversation.buyer
@@ -223,9 +225,18 @@ def serialize_conversation(
         },
         "buyer_id": conversation.buyer_id,
         "seller_id": conversation.seller_id,
-        "buyer": _serialize_user(conversation.buyer),
-        "seller": _serialize_user(conversation.seller),
-        "counterpart": _serialize_user(counterpart),
+        "buyer": _serialize_user(
+            conversation.buyer,
+            (trust_summaries or {}).get(conversation.buyer_id),
+        ),
+        "seller": _serialize_user(
+            conversation.seller,
+            (trust_summaries or {}).get(conversation.seller_id),
+        ),
+        "counterpart": _serialize_user(
+            counterpart,
+            (trust_summaries or {}).get(counterpart.id),
+        ),
         "last_message_at": conversation.last_message_at,
         "buyer_unread_count": conversation.buyer_unread_count,
         "seller_unread_count": conversation.seller_unread_count,

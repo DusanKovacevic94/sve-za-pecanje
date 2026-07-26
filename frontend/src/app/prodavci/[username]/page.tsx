@@ -2,7 +2,14 @@ import { notFound } from "next/navigation";
 
 import { ListingCard } from "@/components/listings/ListingCard";
 import { Badge } from "@/components/ui/Badge";
-import { ApiError, apiFetch, ListingCard as ListingCardType, type ReviewItem } from "@/lib/api";
+import { TrustIndicators } from "@/components/trust/TrustIndicators";
+import {
+  ApiError,
+  apiFetch,
+  ListingCard as ListingCardType,
+  type ReviewItem,
+  type TrustSummary,
+} from "@/lib/api";
 import { formatDate } from "@/lib/format";
 
 type SellerProfile = {
@@ -12,7 +19,10 @@ type SellerProfile = {
   bio: string | null;
   fishing_styles: string[];
   active_listings_count: number;
+  completed_sale_count: number;
+  member_since: string;
   rating: number | null;
+  trust: TrustSummary;
   reviews: ReviewItem[];
   listings: ListingCardType[];
 };
@@ -32,8 +42,8 @@ export default async function SellerPage({ params }: { params: Promise<{ usernam
         <p className="mt-2 text-slate-600">{profile.city ?? "Lokacija nije navedena"}</p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
           <span>Aktivni oglasi: {profile.active_listings_count}</span>
-          <span>Ocena: {profile.rating ? profile.rating.toFixed(1) : "Još nema ocena"}</span>
         </div>
+        <TrustIndicators trust={profile.trust} />
         {profile.bio ? <p className="mt-4 max-w-3xl text-slate-700">{profile.bio}</p> : null}
       </section>
       <h2 className="mt-8 text-2xl font-black">Ocene</h2>

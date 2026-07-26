@@ -1,6 +1,6 @@
 # 055 — SMS-ready phone verification and visible trust signals
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Problem
@@ -14,28 +14,28 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Normalize stored phone numbers to E.164 while retaining a user-entered display format
+- [x] Normalize stored phone numbers to E.164 while retaining a user-entered display format
   where appropriate
-- [ ] Keep phone ownership verification independent from `phone_visible`; verification must
+- [x] Keep phone ownership verification independent from `phone_visible`; verification must
   never make a private number public
-- [ ] Add phone-verification challenges with user/phone association, hashed code, expiry,
+- [x] Add phone-verification challenges with user/phone association, hashed code, expiry,
   attempt count, resend timestamp, consumed timestamp, and optional provider reference
-- [ ] Add request and confirmation operations with a 10-minute code lifetime, five
+- [x] Add request and confirmation operations with a 10-minute code lifetime, five
   confirmation attempts, 60-second resend cooldown, and per-user/per-number daily limits
-- [ ] Add a provider interface with disabled and deterministic test implementations
-- [ ] Guard the complete UI and request operation with `PHONE_VERIFICATION_ENABLED`; paid
+- [x] Add a provider interface with disabled and deterministic test implementations
+- [x] Guard the complete UI and request operation with `PHONE_VERIFICATION_ENABLED`; paid
   SMS activation and provider selection are not part of this task
-- [ ] Never log verification codes, provider secrets, or full phone numbers
-- [ ] Clear `phone_verified_at` whenever the normalized phone number changes
-- [ ] Add factual trust indicators for verified email, verified phone, member-since date,
+- [x] Never log verification codes, provider secrets, or full phone numbers
+- [x] Clear `phone_verified_at` whenever the normalized phone number changes
+- [x] Add factual trust indicators for verified email, verified phone, member-since date,
   review count/rating, and completed sale count
-- [ ] Display trust indicators consistently on profiles, listing seller panels, and
+- [x] Display trust indicators consistently on profiles, listing seller panels, and
   conversation headers
-- [ ] Do not expose internal abuse scores or describe verification as a guarantee of a safe
+- [x] Do not expose internal abuse scores or describe verification as a guarantee of a safe
   transaction
-- [ ] Allow task 049 risk rules to request stronger verification in the future without
+- [x] Allow task 049 risk rules to request stronger verification in the future without
   making phone verification mandatory during soft launch
-- [ ] Add normalization, disabled-provider, expiry, reuse, brute-force, rate-limit, phone
+- [x] Add normalization, disabled-provider, expiry, reuse, brute-force, rate-limit, phone
   change, privacy, authorization, and UI tests
 
 ## Acceptance criteria
@@ -50,3 +50,16 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 ## Dependencies
 
 - 049
+
+## Verification
+
+- `uv run ruff check app db/migrations/versions/0016_phone_verification_trust.py`
+- `uv run pytest -q` — 86 passed
+- migration upgrade → downgrade → upgrade on a clean SQLite database
+- `pnpm lint`
+- `pnpm build`
+- `pnpm test:e2e` — 8 passed
+- phone-verification E2E covers profile save, deterministic confirmation, public privacy,
+  factual trust rendering, and verification removal after a phone change
+- backend tests cover normalization, disabled feature/provider, expiry, reuse, brute force,
+  resend and daily limits, ownership, privacy, and factual trust aggregation

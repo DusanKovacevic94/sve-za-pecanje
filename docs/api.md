@@ -55,6 +55,8 @@ Implemented endpoint groups:
 - `GET /users/profile/{username}`
 - `GET /users/me/listings`
 - `PATCH /users/me/profile`
+- `POST /users/me/phone-verification/request`
+- `POST /users/me/phone-verification/confirm`
 - `GET /admin/dashboard`
 - `GET /admin/listings`
 - `POST /admin/listings/{id}/approve`
@@ -64,4 +66,3 @@ Implemented endpoint groups:
 - `POST /admin/users/{id}/suspend`
 - `GET /admin/reports`
 - `POST /admin/reports/{id}/resolve`
-

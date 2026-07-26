@@ -45,6 +45,7 @@ const backendURL = "http://127.0.0.1:8011";
 const testEnvironment = {
   ...process.env,
   APP_ENV: "test",
+  PHONE_VERIFICATION_ENABLED: "true",
   DATABASE_URL: "sqlite:///./e2e.db",
   SECRET_KEY: "e2e-secret-key-123456789012345678901234",
   JWT_SECRET: "e2e-jwt-secret-123456789012345678901234",

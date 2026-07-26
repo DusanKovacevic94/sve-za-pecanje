@@ -10,6 +10,7 @@ from app.models.user import User
 from app.models.message import Conversation
 from app.schemas.message import MessageCreate
 from app.services.message_service import MessageService, serialize_conversation
+from app.services.trust_service import factual_trust_summaries
 
 router = APIRouter(tags=["messages"])
 
@@ -18,6 +19,15 @@ router = APIRouter(tags=["messages"])
 def list_conversations(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     service = MessageService(db)
     conversations = service.list_conversations(user)
+    conversation_users = {
+        item.id: item
+        for conversation in conversations
+        for item in (conversation.buyer, conversation.seller)
+    }
+    trust_summaries = factual_trust_summaries(
+        db,
+        list(conversation_users.values()),
+    )
     latest_messages = service.get_latest_messages([conversation.id for conversation in conversations])
     return data_response(
         [
@@ -28,6 +38,7 @@ def list_conversations(user: User = Depends(get_current_user), db: Session = Dep
                 total_messages=1 if conversation.id in latest_messages else 0,
                 page=1,
                 page_size=1,
+                trust_summaries=trust_summaries,
             )
             for conversation in conversations
         ]
@@ -45,6 +56,10 @@ def get_conversation(
     service = MessageService(db)
     conversation = service.get_conversation(conversation_id, user, mark_read=True)
     messages, total = service.get_messages(conversation, page=page, page_size=page_size)
+    trust_summaries = factual_trust_summaries(
+        db,
+        [conversation.buyer, conversation.seller],
+    )
     return data_response(
         serialize_conversation(
             conversation,
@@ -53,6 +68,7 @@ def get_conversation(
             total_messages=total,
             page=max(page, 1),
             page_size=min(max(page_size, 1), 100),
+            trust_summaries=trust_summaries,
         )
     )
 
@@ -86,7 +102,17 @@ def send_listing_message(
         )
         risk.record_action("first_message", request, user.id, "listing", listing_id)
     conversation = MessageService(db).send_for_listing(listing_id, user, payload.body)
-    return data_response(serialize_conversation(conversation, user))
+    trust_summaries = factual_trust_summaries(
+        db,
+        [conversation.buyer, conversation.seller],
+    )
+    return data_response(
+        serialize_conversation(
+            conversation,
+            user,
+            trust_summaries=trust_summaries,
+        )
+    )
 
 
 @router.post("/conversations/{conversation_id}/messages")
@@ -99,4 +125,14 @@ def reply_message(
 ):
     check_rate_limit(request, f"message:{user.id}", 20, 60 * 60)
     conversation = MessageService(db).reply(conversation_id, user, payload.body)
-    return data_response(serialize_conversation(conversation, user))
+    trust_summaries = factual_trust_summaries(
+        db,
+        [conversation.buyer, conversation.seller],
+    )
+    return data_response(
+        serialize_conversation(
+            conversation,
+            user,
+            trust_summaries=trust_summaries,
+        )
+    )

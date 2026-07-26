@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, Eye, Heart, MessageSquare, Pencil, ShieldCheck, Star, Store } from "lucide-react";
+import { Eye, Heart, MessageSquare, Pencil, ShieldCheck, Store } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -10,6 +10,7 @@ import { ListingGallery } from "@/components/listings/ListingGallery";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingViewTracker } from "@/components/listings/ListingViewTracker";
 import { ShareButton } from "@/components/listings/ShareButton";
+import { TrustIndicators } from "@/components/trust/TrustIndicators";
 import { ApiError, apiFetch, ListingCard as ListingCardType, ListingDetail } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -17,7 +18,6 @@ import {
   deliveryMethodLabels,
   formatDate,
   formatListingPrice,
-  formatMonthYear,
   priceTypeLabels
 } from "@/lib/format";
 
@@ -235,17 +235,10 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 <p className="text-sm text-slate-600">{listing.city}</p>
               </div>
             </div>
+            {listing.seller.trust ? (
+              <TrustIndicators trust={listing.seller.trust} />
+            ) : null}
             <div className="mt-5 grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-md bg-slate-50 p-3">
-                <Star className="text-reed-500" size={17} />
-                <p className="mt-1 font-black">{listing.seller.rating_average ?? "Nema"}</p>
-                <p className="text-xs text-slate-500">{listing.seller.review_count ?? 0} ocena</p>
-              </div>
-              <div className="rounded-md bg-slate-50 p-3">
-                <CalendarDays className="text-river-700" size={17} />
-                <p className="mt-1 font-black">{formatMonthYear(listing.seller.member_since)}</p>
-                <p className="text-xs text-slate-500">član od</p>
-              </div>
               <div className="rounded-md bg-slate-50 p-3">
                 <Eye className="text-river-700" size={17} />
                 <p className="mt-1 font-black">{listing.view_count}</p>
