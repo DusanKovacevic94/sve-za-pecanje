@@ -73,18 +73,23 @@ class AuthService:
         self.db.commit()
         self.send_verification_email(user, token)
 
-    def login(self, email: str, password: str) -> tuple[User, str]:
+    def login(
+        self, email: str, password: str, user_agent: str | None = None
+    ) -> tuple[User, str]:
         user = self.db.scalar(select(User).where(User.email == email.lower()))
         if not user or not verify_password(password, user.password_hash):
             raise api_error("UNAUTHORIZED", "Email ili lozinka nisu ispravni.", 401)
         if user.status == "suspended":
             raise api_error("FORBIDDEN", "Nalog je suspendovan.", 403)
+        if user.status == "deleted":
+            raise api_error("FORBIDDEN", "Nalog više nije dostupan.", 403)
         user.last_login_at = datetime.now(UTC)
         if user.status == "pending_verification" and user.email_verified_at:
             user.status = "active"
         session = AuthSession(
             user_id=user.id,
             expires_at=datetime.now(UTC) + timedelta(minutes=settings.session_lifetime_minutes),
+            user_agent=(user_agent or "")[:300] or None,
         )
         self.db.add(session)
         self.db.flush()

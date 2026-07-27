@@ -27,6 +27,11 @@ from app.tasks.notification_tasks import (
     send_unread_message_notifications,
 )
 from app.tasks.saved_search_tasks import send_saved_search_digests
+from app.services.account_service import (
+    cleanup_expired_exports,
+    finalize_account_closures,
+    process_data_exports,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +64,9 @@ def run_cycle() -> None:
     run_task("send_listing_expiry_reminders", send_listing_expiry_reminders)
     run_task("send_shop_subscription_expiry_reminders", send_shop_subscription_expiry_reminders)
     run_task("delete_old_notifications", delete_old_notifications)
+    run_task("process_data_exports", process_data_exports)
+    run_task("cleanup_expired_exports", cleanup_expired_exports)
+    run_task("finalize_account_closures", finalize_account_closures)
 
 
 def write_heartbeat() -> None:

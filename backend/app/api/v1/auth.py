@@ -40,7 +40,11 @@ def login(payload: LoginRequest, response: Response, request: Request, db: Sessi
     risk = RiskService(db)
     risk.enforce("login_attempt", request, token=payload.turnstile_token)
     risk.record_action("login_attempt", request)
-    user, token = AuthService(db).login(payload.email, payload.password)
+    user, token = AuthService(db).login(
+        payload.email,
+        payload.password,
+        request.headers.get("user-agent"),
+    )
     response.set_cookie(
         settings.session_cookie_name,
         token,

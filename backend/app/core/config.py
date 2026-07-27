@@ -70,6 +70,8 @@ class Settings(BaseSettings):
     turnstile_secret_key: str = ""
     turnstile_timeout_seconds: float = 5.0
     phone_verification_enabled: bool = False
+    account_closure_enabled: bool = False
+    account_closure_policy_approved: bool = False
     abuse_signal_retention_days: int = 7
     sentry_dsn: str = ""
     sentry_traces_sample_rate: float = 0.0
@@ -79,6 +81,11 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def reject_default_secrets_in_production(self) -> "Settings":
         if self.app_env == "production":
+            if self.account_closure_enabled and not self.account_closure_policy_approved:
+                raise ValueError(
+                    "Refusing to enable ACCOUNT_CLOSURE_ENABLED before "
+                    "ACCOUNT_CLOSURE_POLICY_APPROVED=true."
+                )
             insecure = [
                 name
                 for name, value in (("SECRET_KEY", self.secret_key), ("JWT_SECRET", self.jwt_secret))

@@ -58,6 +58,12 @@ Task 056 conversation safety requires no new environment values or external prov
 Apply migration `0017_conversation_safety` before deploying its frontend. See
 [conversation safety](conversation-safety.md).
 
+Task 057 requires migration `0018_account_security_privacy`. Keep
+`ACCOUNT_CLOSURE_ENABLED=false` and `ACCOUNT_CLOSURE_POLICY_APPROVED=false` until the
+retention matrix has completed policy/legal review. Session control and encrypted exports
+remain available with closure disabled. See
+[account security and privacy](account-security-privacy.md).
+
 7. Validate the fully merged production configuration before building anything:
 
 ```bash

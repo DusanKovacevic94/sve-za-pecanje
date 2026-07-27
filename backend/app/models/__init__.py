@@ -1,4 +1,5 @@
 from app.models.analytics import AnalyticsEvent, MarketplaceMetricDaily
+from app.models.account_privacy import AccountClosure, DataExportRequest
 from app.models.audit import AuditLog
 from app.models.auth_session import AuthSession
 from app.models.brand import Brand
@@ -31,6 +32,8 @@ from app.models.user import User
 
 __all__ = [
     "AnalyticsEvent",
+    "AccountClosure",
+    "DataExportRequest",
     "MarketplaceMetricDaily",
     "AuditLog",
     "AuthSession",

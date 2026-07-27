@@ -23,6 +23,7 @@ from app.services.phone_verification_service import (
 )
 from app.services.shop_service import serialize_shop_profile
 from app.services.trust_service import factual_trust_summary
+from app.services.account_service import send_security_email
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -115,7 +116,7 @@ def list_reviews(db: Session, *filters) -> list[dict]:
 @router.get("/profile/{username}")
 def public_profile(username: str, db: Session = Depends(get_db)):
     user = db.scalar(select(User).options(selectinload(User.profile)).where(User.username == username))
-    if not user or user.status == "suspended":
+    if not user or user.status in {"suspended", "pending_deletion", "deleted"}:
         raise api_error("NOT_FOUND", "Prodavac nije pronađen.", 404)
     listings = db.scalars(
         select(Listing)
@@ -277,6 +278,7 @@ def update_profile(
     if not user.profile:
         user.profile = UserProfile(display_name=user.username)
     data = payload.model_dump(exclude_unset=True)
+    verified_phone_changed = False
     if "phone_number" in data:
         phone_number = data.pop("phone_number")
         previous = user.profile.phone_number
@@ -295,6 +297,7 @@ def update_profile(
         user.profile.phone_number = normalized
         user.profile.phone_number_display = display
         if normalized != previous:
+            verified_phone_changed = bool(user.profile.phone_verified_at)
             user.profile.phone_verified_at = None
         if normalized is None:
             user.profile.phone_visible = False
@@ -302,6 +305,14 @@ def update_profile(
         setattr(user.profile, key, value)
     if not user.profile.phone_number:
         user.profile.phone_visible = False
+    if verified_phone_changed:
+        send_security_email(
+            db,
+            user,
+            "Potvrđeni broj telefona je promenjen",
+            "Potvrđeni broj telefona na vašem nalogu je promenjen i mora ponovo "
+            "da se potvrdi. Ako ovo niste uradili vi, odmah proverite nalog.",
+        )
     db.commit()
     db.refresh(user.profile)
     db.refresh(user)

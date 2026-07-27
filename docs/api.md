@@ -29,6 +29,15 @@ Implemented endpoint groups:
 - `POST /auth/verify-email`
 - `POST /auth/forgot-password`
 - `POST /auth/reset-password`
+- `GET /account/sessions`
+- `DELETE /account/sessions/{id}`
+- `POST /account/sessions/revoke-others`
+- `GET /account/exports`
+- `POST /account/exports`
+- `GET /account/exports/download?token=...`
+- `GET /account/closure`
+- `POST /account/closure`
+- `POST /account/closure/cancel`
 - `GET /categories`
 - `GET /categories/{slug}`
 - `GET /categories/cities`

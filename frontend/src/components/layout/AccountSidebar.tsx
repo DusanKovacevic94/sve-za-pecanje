@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Search,
+  ShieldCheck,
   Settings,
   Star,
   Store,
@@ -23,6 +24,7 @@ const accountLinks = [
   { href: "/nalog/sacuvane-pretrage", label: "Sačuvane pretrage", Icon: Search },
   { href: "/nalog/ocene", label: "Ocene", Icon: Star },
   { href: "/nalog/profil", label: "Profil", Icon: Settings },
+  { href: "/nalog/bezbednost", label: "Bezbednost", Icon: ShieldCheck },
 ];
 
 export function AccountSidebar({ username }: { username: string }) {

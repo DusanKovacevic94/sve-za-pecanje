@@ -23,6 +23,7 @@ from app.models.user import User
 from app.tasks.analytics_tasks import refresh_marketplace_metrics, refresh_search_discovery
 from app.tasks.email_tasks import process_email_outbox
 from app.tasks.notification_tasks import delete_old_notifications
+from app.services.account_service import process_data_exports
 
 ADMIN_EMAIL = "e2e-admin@example.com"
 ADMIN_USERNAME = "e2e_admin"
@@ -87,6 +88,7 @@ def run_task(db: Session, task_name: str) -> None:
         "marketplace_metrics": refresh_marketplace_metrics,
         "search_discovery": refresh_search_discovery,
         "notification_retention": delete_old_notifications,
+        "data_exports": process_data_exports,
     }
     task = tasks.get(task_name)
     if task is None:

@@ -37,6 +37,7 @@ type E2EHelpers = {
       | "marketplace_metrics"
       | "search_discovery"
       | "notification_retention"
+      | "data_exports"
   ) => void;
 };
 
@@ -46,6 +47,10 @@ const testEnvironment = {
   ...process.env,
   APP_ENV: "test",
   PHONE_VERIFICATION_ENABLED: "true",
+  ACCOUNT_CLOSURE_ENABLED: "true",
+  ACCOUNT_CLOSURE_POLICY_APPROVED: "true",
+  STORAGE_BACKEND: "local",
+  LOCAL_STORAGE_PATH: "/tmp/szp-e2e-uploads",
   DATABASE_URL: "sqlite:///./e2e.db",
   SECRET_KEY: "e2e-secret-key-123456789012345678901234",
   JWT_SECRET: "e2e-jwt-secret-123456789012345678901234",

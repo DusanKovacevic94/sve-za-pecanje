@@ -401,6 +401,31 @@ export type UserProfile = {
   created_at: string;
 };
 
+export type AccountSession = {
+  id: string;
+  device: string;
+  created_at: string;
+  last_seen_at: string | null;
+  expires_at: string;
+  is_current: boolean;
+};
+
+export type DataExport = {
+  id: string;
+  status: "pending" | "processing" | "ready" | "downloaded" | "expired" | "failed";
+  created_at: string;
+  expires_at?: string | null;
+  downloaded_at?: string | null;
+};
+
+export type AccountClosureStatus = {
+  enabled: boolean;
+  status: "grace_period" | "cancelled" | "completed" | null;
+  requested_at: string | null;
+  scheduled_for: string | null;
+  cancelled_at: string | null;
+};
+
 export type ShopProfile = {
   shop_name: string | null;
   shop_slug: string | null;
