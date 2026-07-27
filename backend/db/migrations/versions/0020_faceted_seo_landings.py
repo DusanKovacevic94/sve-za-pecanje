@@ -64,7 +64,6 @@ def upgrade() -> None:
             ondelete="SET NULL",
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("scope_key"),
     )
     op.create_index(
         op.f("ix_seo_landing_pages_scope_key"),
