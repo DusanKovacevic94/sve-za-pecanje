@@ -38,11 +38,19 @@ export async function apiFetch<T>(path: string, init?: ApiFetchInit): Promise<Ap
   if (!(init?.body instanceof FormData) && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
-  const cacheOptions = init?.cache || init?.next ? {} : { cache: "no-store" as RequestCache };
+  const requestInit =
+    typeof window === "undefined" &&
+    process.env.E2E_DISABLE_FETCH_CACHE === "true"
+      ? { ...init, cache: "no-store" as RequestCache, next: undefined }
+      : init;
+  const cacheOptions =
+    requestInit?.cache || requestInit?.next
+      ? {}
+      : { cache: "no-store" as RequestCache };
   const { signal, cleanup } = createServerTimeoutSignal(init?.signal);
   try {
     const response = await fetch(`${baseUrl}${path}`, {
-      ...init,
+      ...requestInit,
       ...cacheOptions,
       credentials: "include",
       headers,

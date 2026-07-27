@@ -25,7 +25,7 @@ export default defineConfig({
       reuseExistingServer: false
     },
     {
-      command: `sh -c 'rm -rf .next && NEXT_PUBLIC_API_URL=http://127.0.0.1:${backendPort}/api/v1 INTERNAL_API_URL=http://127.0.0.1:${backendPort}/api/v1 pnpm dev --port ${frontendPort}'`,
+      command: `sh -c 'rm -rf .next && E2E_DISABLE_FETCH_CACHE=true NEXT_PUBLIC_API_URL=http://127.0.0.1:${backendPort}/api/v1 INTERNAL_API_URL=http://127.0.0.1:${backendPort}/api/v1 pnpm dev --port ${frontendPort}'`,
       url: `http://127.0.0.1:${frontendPort}`,
       reuseExistingServer: false
     }

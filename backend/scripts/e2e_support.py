@@ -12,6 +12,7 @@ import re
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import parse_qs, urlparse
+from uuid import uuid4
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -69,56 +70,60 @@ def seed(db: Session) -> None:
 
 
 def seed_seo(db: Session) -> None:
-    category = db.scalar(
-        select(Category).where(Category.slug == "spin-stapovi")
+    suffix = uuid4().hex[:8]
+    category = Category(
+        slug=f"e2e-seo-spin-stapovi-{suffix}",
+        name_sr=f"E2E spin štapovi {suffix}",
+        name_en=f"E2E spinning rods {suffix}",
+        description_sr="Izolovana kategorija za E2E proveru SEO landing stranica.",
+        sort_order=999,
+        is_active=True,
     )
-    brand = db.scalar(select(Brand).where(Brand.slug == "shimano"))
-    if not category or not brand:
-        raise SystemExit("Seeded spin-stapovi category and Shimano brand are required.")
-    seller = db.scalar(
-        select(User).where(User.email == "e2e-seo-seller@example.com")
+    brand = Brand(
+        name=f"Shimano E2E {suffix}",
+        slug=f"e2e-shimano-{suffix}",
+        aliases=[],
+        category_scope=[],
+        is_verified=True,
     )
-    if not seller:
-        seller = User(
-            email="e2e-seo-seller@example.com",
-            username="e2e_seo_seller",
-            password_hash=hash_password("E2eSeoSeller123!"),
-            role="user",
-            status="active",
-            email_verified_at=datetime.now(UTC),
-        )
-        seller.profile = UserProfile(display_name="E2E SEO prodavac")
-        db.add(seller)
-        db.flush()
+    seller = User(
+        email=f"e2e-seo-seller-{suffix}@example.com",
+        username=f"e2e_seo_seller_{suffix}",
+        password_hash=hash_password("E2eSeoSeller123!"),
+        role="user",
+        status="active",
+        email_verified_at=datetime.now(UTC),
+    )
+    seller.profile = UserProfile(display_name=f"E2E SEO prodavac {suffix}")
+    db.add_all([category, brand, seller])
+    db.flush()
+
     listings = []
     for index in range(5):
-        slug = f"e2e-seo-spin-stap-{index}"
-        listing = db.scalar(select(Listing).where(Listing.slug == slug))
-        if not listing:
-            listing = Listing(
-                public_id=f"seo{index:05d}",
-                seller_id=seller.id,
-                category_id=category.id,
-                brand_id=brand.id,
-                title=f"E2E SEO Shimano spin štap {index + 1}",
-                slug=slug,
-                description=(
-                    "Detaljan E2E SEO opis aktivnog Shimano spin štapa "
-                    "sa stanjem, cenom i načinom dostave."
-                ),
-                condition="used_good",
-                price_amount=Decimal(10000 + index * 1000),
-                currency="RSD",
-                delivery_methods=["courier"],
-                city="Beograd",
-                status="active",
-                attributes={},
-                allow_messages=True,
-                phone_visible=False,
-                approved_at=datetime.now(UTC),
-                expires_at=datetime.now(UTC) + timedelta(days=30),
-            )
-            db.add(listing)
+        listing = Listing(
+            public_id=f"seo{suffix}{index}",
+            seller_id=seller.id,
+            category_id=category.id,
+            brand_id=brand.id,
+            title=f"E2E SEO Shimano spin štap {index + 1}",
+            slug=f"e2e-seo-spin-stap-{suffix}-{index}",
+            description=(
+                "Detaljan E2E SEO opis aktivnog Shimano spin štapa "
+                "sa stanjem, cenom i načinom dostave."
+            ),
+            condition="used_good",
+            price_amount=Decimal(10000 + index * 1000),
+            currency="RSD",
+            delivery_methods=["courier"],
+            city="Beograd",
+            status="active",
+            attributes={},
+            allow_messages=True,
+            phone_visible=False,
+            approved_at=datetime.now(UTC),
+            expires_at=datetime.now(UTC) + timedelta(days=30),
+        )
+        db.add(listing)
         listings.append(listing)
     db.commit()
     print(
