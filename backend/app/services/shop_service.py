@@ -112,8 +112,10 @@ class ShopService:
         return list(
             self.db.scalars(
                 select(UserProfile)
+                .join(User, User.id == UserProfile.user_id)
                 .options(selectinload(UserProfile.user))
                 .where(
+                    User.status == "active",
                     UserProfile.shop_name.is_not(None),
                     UserProfile.shop_slug.is_not(None),
                     UserProfile.shop_active_until.is_not(None),
@@ -130,7 +132,11 @@ class ShopService:
             .options(selectinload(UserProfile.user))
             .where(UserProfile.shop_slug == slug)
         )
-        if not profile or not self.is_shop_active(profile):
+        if (
+            not profile
+            or profile.user.status != "active"
+            or not self.is_shop_active(profile)
+        ):
             raise api_error("NOT_FOUND", "Prodavnica nije pronađena.", 404)
         return profile
 

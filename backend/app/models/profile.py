@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -15,6 +15,13 @@ if TYPE_CHECKING:
 
 class UserProfile(Base, TimestampMixin):
     __tablename__ = "user_profiles"
+    __table_args__ = (
+        Index(
+            "ix_user_profiles_follow_digest_due",
+            "notify_followed_sellers",
+            "followed_seller_digest_sent_at",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
@@ -43,5 +50,9 @@ class UserProfile(Base, TimestampMixin):
     notify_messages: Mapped[bool] = mapped_column(Boolean, default=True)
     notify_saved_searches: Mapped[bool] = mapped_column(Boolean, default=True)
     notify_listing_expiry: Mapped[bool] = mapped_column(Boolean, default=True)
+    notify_followed_sellers: Mapped[bool] = mapped_column(Boolean, default=True)
+    followed_seller_digest_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
 
     user: Mapped["User"] = relationship(back_populates="profile")

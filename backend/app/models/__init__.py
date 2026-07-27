@@ -20,6 +20,7 @@ from app.models.profile import UserProfile
 from app.models.report import Report
 from app.models.review import Review
 from app.models.saved_search import SavedSearch
+from app.models.seller_follow import SellerFollow
 from app.models.search_discovery import (
     PopularSearchQuery,
     SearchDiscoveryState,
@@ -57,6 +58,7 @@ __all__ = [
     "Report",
     "Review",
     "SavedSearch",
+    "SellerFollow",
     "PopularSearchQuery",
     "SearchDiscoveryState",
     "SearchQueryBlacklist",

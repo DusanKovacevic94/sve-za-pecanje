@@ -8,6 +8,7 @@ from app.api.v1 import (
     brands,
     categories,
     contact,
+    follows,
     listings,
     messages,
     notifications,
@@ -26,6 +27,7 @@ api_router.include_router(auth.router)
 api_router.include_router(categories.router)
 api_router.include_router(brands.router)
 api_router.include_router(contact.router)
+api_router.include_router(follows.router)
 api_router.include_router(analytics.router)
 api_router.include_router(listings.router)
 api_router.include_router(promotions.router)

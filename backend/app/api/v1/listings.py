@@ -36,6 +36,7 @@ from app.services.feature_service import FeatureService, serialize_feature_reque
 from app.services.filter_service import parse_query_params
 from app.services.analytics_service import AnalyticsService
 from app.services.conversation_safety_service import ConversationSafetyService
+from app.services.follow_service import FollowService
 
 router = APIRouter(prefix="/listings", tags=["listings"])
 
@@ -160,6 +161,10 @@ def get_listing(
         "completed_sale_count": trust["completed_sale_count"],
         "active_listing_count": int(active_listing_count or 0),
         "trust": trust,
+        **FollowService(db).relationship_stats(
+            listing.seller_id,
+            user.id if user else None,
+        ),
     }
     can_message = bool(
         listing.allow_messages

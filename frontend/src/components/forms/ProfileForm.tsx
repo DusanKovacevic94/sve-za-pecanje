@@ -20,7 +20,8 @@ const profileSchema = z.object({
   fishing_styles: z.string().max(500).optional(),
   notify_messages: z.boolean().default(true),
   notify_saved_searches: z.boolean().default(true),
-  notify_listing_expiry: z.boolean().default(true)
+  notify_listing_expiry: z.boolean().default(true),
+  notify_followed_sellers: z.boolean().default(true)
 });
 
 type ProfileFormInput = z.input<typeof profileSchema>;
@@ -38,6 +39,7 @@ function profileDefaults(profile: UserProfile): ProfileFormInput {
     notify_messages: profile.notify_messages,
     notify_saved_searches: profile.notify_saved_searches,
     notify_listing_expiry: profile.notify_listing_expiry,
+    notify_followed_sellers: profile.notify_followed_sellers,
   };
 }
 
@@ -125,6 +127,10 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
           <label className="flex items-center gap-3 text-sm font-semibold">
             <input type="checkbox" {...register("notify_listing_expiry")} />
             Isticanje oglasa
+          </label>
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input type="checkbox" {...register("notify_followed_sellers")} />
+            Dnevni pregled oglasa prodavaca koje pratim
           </label>
         </div>
       </div>

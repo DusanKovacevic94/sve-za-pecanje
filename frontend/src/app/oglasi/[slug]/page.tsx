@@ -11,8 +11,10 @@ import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingViewTracker } from "@/components/listings/ListingViewTracker";
 import { ShareButton } from "@/components/listings/ShareButton";
 import { TrustIndicators } from "@/components/trust/TrustIndicators";
+import { FollowSellerButton } from "@/components/following/FollowSellerButton";
 import { ApiError, apiFetch, ListingCard as ListingCardType, ListingDetail } from "@/lib/api";
 import { getCurrentUser } from "@/lib/auth";
+import { serverApiFetch } from "@/lib/server-api";
 import {
   conditionLabels,
   deliveryMethodLabels,
@@ -57,7 +59,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ListingDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const [response, user] = await Promise.all([
-    apiFetch<ListingDetail>(`/listings/${slug}`, { cache: "no-store" }).catch((error) => {
+    serverApiFetch<ListingDetail>(`/listings/${slug}`, { cache: "no-store" }).catch((error) => {
       if (error instanceof ApiError && error.status === 404) notFound();
       throw error;
     }),
@@ -251,6 +253,13 @@ export default async function ListingDetailPage({ params }: PageProps) {
               </div>
             </div>
             <div className="mt-4 grid gap-2">
+              {!isOwner ? (
+                <FollowSellerButton
+                  sellerId={listing.seller.id}
+                  initialFollowing={Boolean(listing.seller.is_following)}
+                  initialFollowerCount={listing.seller.follower_count ?? 0}
+                />
+              ) : null}
               {listing.status === "sold" ? (
                 <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
               ) : listing.can_message ? (

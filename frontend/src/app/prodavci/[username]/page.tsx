@@ -3,16 +3,19 @@ import { notFound } from "next/navigation";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { Badge } from "@/components/ui/Badge";
 import { TrustIndicators } from "@/components/trust/TrustIndicators";
+import { FollowSellerButton } from "@/components/following/FollowSellerButton";
 import {
   ApiError,
-  apiFetch,
   ListingCard as ListingCardType,
   type ReviewItem,
   type TrustSummary,
 } from "@/lib/api";
 import { formatDate } from "@/lib/format";
+import { getCurrentUser } from "@/lib/auth";
+import { serverApiFetch } from "@/lib/server-api";
 
 type SellerProfile = {
+  id: string;
   username: string;
   display_name: string | null;
   city: string | null;
@@ -25,14 +28,19 @@ type SellerProfile = {
   trust: TrustSummary;
   reviews: ReviewItem[];
   listings: ListingCardType[];
+  follower_count: number;
+  is_following: boolean;
 };
 
 export default async function SellerPage({ params }: { params: Promise<{ username: string }> }) {
   const { username } = await params;
-  const response = await apiFetch<SellerProfile>(`/users/profile/${username}`).catch((error) => {
-    if (error instanceof ApiError && error.status === 404) notFound();
-    throw error;
-  });
+  const [response, user] = await Promise.all([
+    serverApiFetch<SellerProfile>(`/users/profile/${username}`).catch((error) => {
+      if (error instanceof ApiError && error.status === 404) notFound();
+      throw error;
+    }),
+    getCurrentUser(),
+  ]);
   const profile = response.data;
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -42,7 +50,16 @@ export default async function SellerPage({ params }: { params: Promise<{ usernam
         <p className="mt-2 text-slate-600">{profile.city ?? "Lokacija nije navedena"}</p>
         <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
           <span>Aktivni oglasi: {profile.active_listings_count}</span>
+          <span>Pratioci: {profile.follower_count}</span>
         </div>
+        {user?.id !== profile.id ? (
+          <FollowSellerButton
+            sellerId={profile.id}
+            initialFollowing={profile.is_following}
+            initialFollowerCount={profile.follower_count}
+            className="mt-5 max-w-xs"
+          />
+        ) : null}
         <TrustIndicators trust={profile.trust} />
         {profile.bio ? <p className="mt-4 max-w-3xl text-slate-700">{profile.bio}</p> : null}
       </section>

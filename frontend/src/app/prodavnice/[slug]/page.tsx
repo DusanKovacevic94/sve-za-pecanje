@@ -4,7 +4,10 @@ import { notFound } from "next/navigation";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { FollowSellerButton } from "@/components/following/FollowSellerButton";
 import { ApiError, apiFetch, type ShopDetail } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
+import { serverApiFetch } from "@/lib/server-api";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -22,10 +25,13 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ShopDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const response = await apiFetch<ShopDetail>(`/shops/${slug}`, { next: { revalidate: 120 } }).catch((error) => {
-    if (error instanceof ApiError && error.status === 404) notFound();
-    throw error;
-  });
+  const [response, user] = await Promise.all([
+    serverApiFetch<ShopDetail>(`/shops/${slug}`).catch((error) => {
+      if (error instanceof ApiError && error.status === 404) notFound();
+      throw error;
+    }),
+    getCurrentUser(),
+  ]);
   const shop = response.data;
 
   return (
@@ -46,6 +52,18 @@ export default async function ShopDetailPage({ params }: PageProps) {
             </div>
             {shop.shop_description ? <p className="mt-2 max-w-3xl whitespace-pre-line text-slate-600">{shop.shop_description}</p> : null}
             <p className="mt-2 text-sm font-semibold text-slate-500">{shop.listings.length} aktivnih oglasa</p>
+            {user?.id !== shop.user_id ? (
+              <FollowSellerButton
+                sellerId={shop.user_id}
+                initialFollowing={shop.is_following}
+                initialFollowerCount={shop.follower_count}
+                className="mt-4 max-w-xs"
+              />
+            ) : (
+              <p className="mt-2 text-sm text-slate-500">
+                {shop.follower_count} {shop.follower_count === 1 ? "pratilac" : "pratilaca"}
+              </p>
+            )}
           </div>
         </div>
       </section>

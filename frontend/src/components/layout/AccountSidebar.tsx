@@ -10,6 +10,7 @@ import {
   Settings,
   Star,
   Store,
+  UsersRound,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,6 +22,7 @@ const accountLinks = [
   { href: "/nalog/poruke", label: "Poruke", Icon: MessageSquare },
   { href: "/nalog/obavestenja", label: "Obaveštenja", Icon: Bell },
   { href: "/nalog/omiljeni", label: "Omiljeni", Icon: Heart },
+  { href: "/nalog/pratim", label: "Pratim", Icon: UsersRound },
   { href: "/nalog/sacuvane-pretrage", label: "Sačuvane pretrage", Icon: Search },
   { href: "/nalog/ocene", label: "Ocene", Icon: Star },
   { href: "/nalog/profil", label: "Profil", Icon: Settings },

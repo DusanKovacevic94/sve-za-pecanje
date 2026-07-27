@@ -32,6 +32,7 @@ from app.services.account_service import (
     finalize_account_closures,
     process_data_exports,
 )
+from app.services.follow_service import send_followed_seller_digests
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ def run_cycle() -> None:
     run_task("clear_expired_featured_listings", clear_expired_featured_listings)
     run_task("delete_stale_listing_drafts", delete_stale_listing_drafts)
     run_task("saved_search_digests", send_saved_search_digests)
+    run_task("followed_seller_digests", send_followed_seller_digests)
     run_task("delete_old_analytics_events", delete_old_analytics_events)
     run_task("purge_expired_abuse_signals", purge_expired_abuse_signals)
     run_task("cleanup_orphan_local_uploads", cleanup_orphan_local_uploads)

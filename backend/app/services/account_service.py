@@ -33,6 +33,7 @@ from app.models.notification import UserNotification
 from app.models.phone_verification import PhoneVerificationChallenge
 from app.models.review import Review
 from app.models.saved_search import SavedSearch
+from app.models.seller_follow import SellerFollow
 from app.models.shop_subscription import ShopSubscriptionRequest
 from app.models.user import User
 
@@ -309,6 +310,9 @@ class AccountService:
                 "messages": profile.notify_messages if profile else True,
                 "saved_searches": profile.notify_saved_searches if profile else True,
                 "listing_expiry": profile.notify_listing_expiry if profile else True,
+                "followed_sellers": (
+                    profile.notify_followed_sellers if profile else True
+                ),
             },
             "enabled_saved_search_ids": [
                 item.id for item in saved_searches if item.notification_enabled
@@ -340,6 +344,7 @@ class AccountService:
             profile.notify_messages = False
             profile.notify_saved_searches = False
             profile.notify_listing_expiry = False
+            profile.notify_followed_sellers = False
         for saved_search in saved_searches:
             saved_search.notification_enabled = False
         user.status = "pending_deletion"
@@ -406,6 +411,9 @@ class AccountService:
             )
             profile.notify_listing_expiry = bool(
                 preferences.get("listing_expiry", True)
+            )
+            profile.notify_followed_sellers = bool(
+                preferences.get("followed_sellers", True)
             )
         enabled_search_ids = snapshot.get("enabled_saved_search_ids", [])
         if enabled_search_ids:
@@ -503,6 +511,13 @@ def build_export_payload(db: Session, user: User) -> dict:
     favorites = list(
         db.scalars(select(Favorite).where(Favorite.user_id == user.id)).all()
     )
+    follows = list(
+        db.scalars(
+            select(SellerFollow)
+            .where(SellerFollow.follower_id == user.id)
+            .order_by(SellerFollow.created_at)
+        ).all()
+    )
     searches = list(
         db.scalars(select(SavedSearch).where(SavedSearch.user_id == user.id)).all()
     )
@@ -565,6 +580,8 @@ def build_export_payload(db: Session, user: User) -> dict:
                     "notify_messages",
                     "notify_saved_searches",
                     "notify_listing_expiry",
+                    "notify_followed_sellers",
+                    "followed_seller_digest_sent_at",
                 ),
             )
             if profile
@@ -611,6 +628,9 @@ def build_export_payload(db: Session, user: User) -> dict:
         ],
         "favorites": [
             _row(favorite, ("listing_id", "created_at")) for favorite in favorites
+        ],
+        "following": [
+            _row(follow, ("seller_id", "created_at")) for follow in follows
         ],
         "saved_searches": [
             _row(
@@ -871,8 +891,18 @@ def finalize_account_closures(db: Session, limit: int = 50) -> int:
             profile.shop_tax_id = None
             profile.shop_registration_number = None
             profile.shop_active_until = None
+            profile.notify_followed_sellers = False
+            profile.followed_seller_digest_sent_at = None
         db.execute(delete(Favorite).where(Favorite.user_id == user.id))
         db.execute(delete(SavedSearch).where(SavedSearch.user_id == user.id))
+        db.execute(
+            delete(SellerFollow).where(
+                or_(
+                    SellerFollow.follower_id == user.id,
+                    SellerFollow.seller_id == user.id,
+                )
+            )
+        )
         db.execute(delete(UserNotification).where(UserNotification.recipient_id == user.id))
         db.execute(
             delete(PhoneVerificationChallenge).where(

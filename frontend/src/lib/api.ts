@@ -135,6 +135,7 @@ export type NotificationType =
   | "listing_reserved"
   | "listing_sold"
   | "saved_search_matches"
+  | "followed_seller_listing"
   | "review_received"
   | "promotion_status"
   | "shop_subscription_status"
@@ -207,6 +208,8 @@ export type ListingCard = {
     active_listing_count?: number | null;
     completed_sale_count?: number;
     trust?: TrustSummary;
+    follower_count?: number;
+    is_following?: boolean;
   };
   category: { id: string; slug: string; name_sr: string };
   brand: Brand | null;
@@ -398,6 +401,7 @@ export type UserProfile = {
   notify_messages: boolean;
   notify_saved_searches: boolean;
   notify_listing_expiry: boolean;
+  notify_followed_sellers: boolean;
   created_at: string;
 };
 
@@ -471,5 +475,21 @@ export type ShopSummary = ShopProfile & {
 };
 
 export type ShopDetail = ShopSummary & {
+  follower_count: number;
+  is_following: boolean;
   listings: ListingCard[];
+};
+
+export type FollowingSeller = {
+  follow_id: string;
+  followed_at: string;
+  seller: {
+    id: string;
+    username: string;
+    display_name: string | null;
+    city: string | null;
+    shop_name: string | null;
+    shop_slug: string | null;
+    shop_logo_url: string | null;
+  };
 };

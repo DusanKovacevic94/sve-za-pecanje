@@ -24,6 +24,7 @@ class ProfileUpdate(BaseModel):
     notify_messages: bool | None = None
     notify_saved_searches: bool | None = None
     notify_listing_expiry: bool | None = None
+    notify_followed_sellers: bool | None = None
 
 
 class PhoneVerificationConfirm(BaseModel):

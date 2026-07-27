@@ -6,6 +6,7 @@ from app.core.email import enqueue_email
 from app.core.security import generate_token, hash_token
 from app.core.config import settings
 from app.models.user import User
+from app.models.listing import Listing
 
 
 class EmailService:
@@ -93,6 +94,28 @@ class EmailService:
             (
                 f'Pretplata za prodavnicu "{shop_name}" ističe {ends_at.strftime("%d.%m.%Y")}. '
                 f"Produženje možete zatražiti na {settings.app_url}/nalog/prodavnica.\n\n"
+                f"Odjava od email notifikacija: {unsubscribe_url}"
+            ),
+        )
+
+    def send_followed_seller_digest(
+        self,
+        recipient: User,
+        listings: list[Listing],
+    ) -> None:
+        unsubscribe_url = self._unsubscribe_url(recipient)
+        rows = "\n".join(
+            f'- {listing.title}: {settings.app_url}/oglasi/{listing.slug}'
+            for listing in listings[:20]
+        )
+        enqueue_email(
+            self.db,
+            recipient.email,
+            "Novi oglasi prodavaca koje pratite",
+            (
+                "Prodavci koje pratite objavili su nove oglase:\n\n"
+                f"{rows}\n\n"
+                f"Podešavanja notifikacija: {settings.app_url}/nalog/profil\n"
                 f"Odjava od email notifikacija: {unsubscribe_url}"
             ),
         )

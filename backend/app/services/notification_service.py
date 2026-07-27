@@ -26,6 +26,7 @@ NOTIFICATION_TYPES = {
     "listing_reserved",
     "listing_sold",
     "saved_search_matches",
+    "followed_seller_listing",
     "review_received",
     "promotion_status",
     "shop_subscription_status",
@@ -43,6 +44,10 @@ DEFAULT_COPY = {
     "saved_search_matches": (
         "Novi oglasi za sačuvanu pretragu",
         "Pronašli smo nove oglase koji odgovaraju vašoj pretrazi.",
+    ),
+    "followed_seller_listing": (
+        "Novi oglas prodavca kog pratite",
+        "Prodavac kog pratite objavio je novi oglas.",
     ),
     "review_received": ("Dobili ste novu ocenu", "Pogledajte novu ocenu na svom profilu."),
     "promotion_status": ("Status promocije je promenjen", "Pogledajte detalje oglasa."),
@@ -275,6 +280,7 @@ class NotificationService:
         user.profile.notify_messages = False
         user.profile.notify_saved_searches = False
         user.profile.notify_listing_expiry = False
+        user.profile.notify_followed_sellers = False
         user.email_unsubscribe_token_hash = None
         self.db.commit()
         self.db.refresh(user)
@@ -291,6 +297,10 @@ class NotificationService:
     @staticmethod
     def can_send_listing_expiry_email(user: User) -> bool:
         return bool(not user.profile or user.profile.notify_listing_expiry)
+
+    @staticmethod
+    def can_send_followed_seller_email(user: User) -> bool:
+        return bool(not user.profile or user.profile.notify_followed_sellers)
 
     @staticmethod
     def utcnow() -> datetime:
@@ -361,6 +371,14 @@ class NotificationService:
         if item.entity_type == "listing":
             listing = self.db.get(Listing, item.entity_id)
             if not listing or listing.status in {"draft", "deleted"}:
+                return None
+            if (
+                item.type == "followed_seller_listing"
+                and listing.status in {"active", "reserved"}
+            ):
+                seller = self.db.get(User, listing.seller_id)
+                if seller and seller.status == "active":
+                    return f"/oglasi/{listing.slug}"
                 return None
             if listing.seller_id == recipient_id:
                 return "/nalog/oglasi"

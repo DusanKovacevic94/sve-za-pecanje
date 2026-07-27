@@ -17,6 +17,7 @@ from app.models.message import Conversation, Message
 from app.models.moderation_case import ModerationCase
 from app.models.notification import UserNotification
 from app.models.report import Report
+from app.models.seller_follow import SellerFollow
 from app.models.user import User
 
 
@@ -142,6 +143,16 @@ class ConversationSafetyService:
                     & (UserNotification.actor_id == counterpart_id),
                     (UserNotification.recipient_id == counterpart_id)
                     & (UserNotification.actor_id == user.id),
+                )
+            )
+        )
+        self.db.execute(
+            delete(SellerFollow).where(
+                or_(
+                    (SellerFollow.follower_id == user.id)
+                    & (SellerFollow.seller_id == counterpart_id),
+                    (SellerFollow.follower_id == counterpart_id)
+                    & (SellerFollow.seller_id == user.id),
                 )
             )
         )

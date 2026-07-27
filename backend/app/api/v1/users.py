@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, get_optional_user
 from app.core.responses import api_error, data_response
 from app.core.config import settings
 from app.core.rate_limit import check_rate_limit
@@ -16,6 +16,7 @@ from app.models.review import Review
 from app.models.user import User
 from app.schemas.user import PhoneVerificationConfirm, ProfileUpdate
 from app.services.listing_service import serialize_listing_card
+from app.services.follow_service import FollowService
 from app.services.phone_verification_service import (
     PhoneVerificationService,
     mask_phone_number,
@@ -53,6 +54,9 @@ def serialize_profile(user: User) -> dict:
         "notify_messages": profile.notify_messages if profile else True,
         "notify_saved_searches": profile.notify_saved_searches if profile else True,
         "notify_listing_expiry": profile.notify_listing_expiry if profile else True,
+        "notify_followed_sellers": (
+            profile.notify_followed_sellers if profile else True
+        ),
         "created_at": user.created_at,
     }
 
@@ -114,7 +118,11 @@ def list_reviews(db: Session, *filters) -> list[dict]:
 
 
 @router.get("/profile/{username}")
-def public_profile(username: str, db: Session = Depends(get_db)):
+def public_profile(
+    username: str,
+    viewer: User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
     user = db.scalar(select(User).options(selectinload(User.profile)).where(User.username == username))
     if not user or user.status in {"suspended", "pending_deletion", "deleted"}:
         raise api_error("NOT_FOUND", "Prodavac nije pronađen.", 404)
@@ -150,6 +158,10 @@ def public_profile(username: str, db: Session = Depends(get_db)):
             "completed_sale_count": trust["completed_sale_count"],
             "reviews": reviews,
             "active_listings_count": len(listings),
+            **FollowService(db).relationship_stats(
+                user.id,
+                viewer.id if viewer else None,
+            ),
             "listings": [serialize_listing_card(listing) for listing in listings],
         }
     )

@@ -9,6 +9,8 @@ from app.models.conversation_safety import (
 from app.models.message import Conversation, Message
 from app.models.moderation_case import ModerationCase
 from app.models.notification import UserNotification
+from app.models.seller_follow import SellerFollow
+from app.services.follow_service import FollowService
 from app.services.email_service import EmailService
 from app.tasks.notification_tasks import send_unread_message_notifications
 
@@ -30,6 +32,7 @@ def test_block_is_generic_bidirectional_and_cannot_be_bypassed_with_another_list
     category = factories.category()
     first_listing = factories.listing(seller, category)
     second_listing = factories.listing(seller, category)
+    FollowService(db).follow(buyer, seller.id)
 
     login_user(buyer)
     conversation_id = _start_conversation(client, first_listing.id)
@@ -37,6 +40,7 @@ def test_block_is_generic_bidirectional_and_cannot_be_bypassed_with_another_list
     blocked = client.post(f"/api/v1/conversations/{conversation_id}/block")
     assert blocked.status_code == 200
     assert db.scalar(select(func.count(UserBlock.id))) == 1
+    assert db.scalar(select(func.count(SellerFollow.id))) == 0
 
     for actor in (seller, buyer):
         login_user(actor)

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_user, get_optional_user
 from app.core.responses import data_response
 from app.db.session import get_db
 from app.models.user import User
@@ -12,6 +12,7 @@ from app.services.shop_service import (
     serialize_shop_subscription_request,
     serialize_shop_summary,
 )
+from app.services.follow_service import FollowService
 
 router = APIRouter(prefix="/shops", tags=["shops"])
 
@@ -58,8 +59,19 @@ def create_shop_subscription_request(
 
 
 @router.get("/{slug}")
-def public_shop(slug: str, db: Session = Depends(get_db)):
+def public_shop(
+    slug: str,
+    viewer: User | None = Depends(get_optional_user),
+    db: Session = Depends(get_db),
+):
     service = ShopService(db)
     profile = service.get_public_shop(slug)
     listings = service.shop_listings(profile)
-    return data_response(serialize_shop_detail(profile, listings))
+    data = serialize_shop_detail(profile, listings)
+    data.update(
+        FollowService(db).relationship_stats(
+            profile.user_id,
+            viewer.id if viewer else None,
+        )
+    )
+    return data_response(data)

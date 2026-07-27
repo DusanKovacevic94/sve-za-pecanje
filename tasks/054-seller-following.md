@@ -1,6 +1,6 @@
 # 054 — Follow sellers and shops
 
-Status: todo
+Status: done
 Priority: P2
 
 ## Problem
@@ -12,25 +12,25 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 
 ## Work
 
-- [ ] Add a unique follower-to-seller relationship shared by ordinary seller profiles and
+- [x] Add a unique follower-to-seller relationship shared by ordinary seller profiles and
   shops
-- [ ] Prevent self-following, duplicate follows, and relationships involving suspended
+- [x] Prevent self-following, duplicate follows, and relationships involving suspended
   accounts
-- [ ] Add idempotent follow/unfollow operations, the current user's following list, and a
+- [x] Add idempotent follow/unfollow operations, the current user's following list, and a
   cursor-paginated feed of active listings from followed sellers
-- [ ] Add follow controls to seller profiles, shop pages, and listing seller panels
-- [ ] Show only aggregate follower counts publicly; do not expose follower identities
-- [ ] Create follower notifications only after a listing becomes active, never while it is
+- [x] Add follow controls to seller profiles, shop pages, and listing seller panels
+- [x] Show only aggregate follower counts publicly; do not expose follower identities
+- [x] Create follower notifications only after a listing becomes active, never while it is
   a draft or awaiting moderation
-- [ ] Consolidate multiple active listings from one seller into at most one notification per
+- [x] Consolidate multiple active listings from one seller into at most one notification per
   follower per day
-- [ ] Add an optional daily email for followed-seller activity using existing email
+- [x] Add an optional daily email for followed-seller activity using existing email
   preferences and batching
-- [ ] Stop future notifications and remove feed visibility when a user unfollows or when
+- [x] Stop future notifications and remove feed visibility when a user unfollows or when
   either party blocks the other
-- [ ] Exclude archived, sold, rejected, expired, and suspended listings from the following
+- [x] Exclude archived, sold, rejected, expired, and suspended listings from the following
   feed
-- [ ] Add uniqueness, authorization, suspension, notification batching, block interaction,
+- [x] Add uniqueness, authorization, suspension, notification batching, block interaction,
   pagination, query performance, and E2E tests
 
 ## Acceptance criteria
@@ -45,3 +45,12 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md).
 ## Dependencies
 
 - 053
+
+## Implementation notes
+
+- Database revision: `0019_seller_following`
+- API: `/api/v1/following`, `/api/v1/following/feed`, and
+  `/api/v1/following/sellers/{seller_id}`
+- Account UI: `/nalog/pratim`
+- Behavior and the seven-query feed budget are documented in
+  [seller-following.md](../docs/seller-following.md).

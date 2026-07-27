@@ -110,6 +110,9 @@ class ListingService:
                 },
                 event_id=f"approved:{listing.id}:{now.isoformat()}",
             )
+            from app.services.follow_service import FollowService
+
+            FollowService(self.db).notify_listing_active(listing)
         self.db.commit()
         self.db.refresh(listing)
         from app.services.risk_service import RiskService
@@ -322,6 +325,9 @@ class ListingService:
                 },
                 event_id=f"approved:{listing.id}:{now.isoformat()}",
             )
+            from app.services.follow_service import FollowService
+
+            FollowService(self.db).notify_listing_active(listing)
         self.db.commit()
         published = self.get_owned_or_admin(listing.id, actor)
         from app.services.risk_service import RiskService

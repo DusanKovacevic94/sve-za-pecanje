@@ -59,6 +59,8 @@ class ModerationService:
         listing = self._get_listing(listing_id)
         if listing.status == "draft":
             raise api_error("VALIDATION_ERROR", "Nacrt prvo mora biti objavljen.", 400)
+        if listing.status in PUBLIC_LISTING_STATUSES:
+            return listing
         listing.status = "active"
         listing.approved_at = datetime.now(UTC)
         listing.approved_by_admin_id = admin.id
@@ -86,6 +88,9 @@ class ModerationService:
             },
             event_id=f"approved:{listing.id}:{listing.approved_at.isoformat()}",
         )
+        from app.services.follow_service import FollowService
+
+        FollowService(self.db).notify_listing_active(listing)
         self.db.commit()
         self.db.refresh(listing)
         return listing

@@ -136,5 +136,5 @@ and retention, then address account governance and sustainable SEO.
 
 ## P2 — Retention and sustainable acquisition
 
-- [ ] [054 — Follow sellers and shops](054-seller-following.md)
+- [x] [054 — Follow sellers and shops](054-seller-following.md)
 - [ ] [058 — Faceted SEO policy and curated landing pages](058-faceted-seo-landing-pages.md)

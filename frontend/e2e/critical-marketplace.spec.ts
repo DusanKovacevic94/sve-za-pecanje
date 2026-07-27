@@ -197,16 +197,29 @@ test("registration-to-sale marketplace journey", async ({
   await test.step("buyer favorites, reports, and sends the first message", async () => {
     await buyerPage.goto(`/oglasi/${listingSlug}`);
     const listingActions = buyerPage.locator("main aside").first();
-    await listingActions.getByRole("button", { name: "Dodaj u omiljene" }).click();
+    await listingActions.getByRole("button", { name: "Prati prodavca" }).click();
     await expect(
-      listingActions.getByRole("button", { name: "Sačuvano u omiljenim" })
+      listingActions.getByRole("button", { name: "Pratite prodavca" })
+    ).toBeVisible();
+    await buyerPage.goto("/nalog/pratim");
+    await expect(buyerPage.getByText(listingTitle, { exact: true })).toBeVisible();
+    await expect(
+      buyerPage.getByRole("link", {
+        name: `Prodavac ${accounts.seller.username}`,
+      })
+    ).toBeVisible();
+    await buyerPage.goto(`/oglasi/${listingSlug}`);
+    const refreshedListingActions = buyerPage.locator("main aside").first();
+    await refreshedListingActions.getByRole("button", { name: "Dodaj u omiljene" }).click();
+    await expect(
+      refreshedListingActions.getByRole("button", { name: "Sačuvano u omiljenim" })
     ).toBeVisible();
 
     buyerPage.once("dialog", (dialog) => dialog.accept(reportDescription));
-    await listingActions.getByRole("button", { name: "Prijavi oglas" }).click();
+    await refreshedListingActions.getByRole("button", { name: "Prijavi oglas" }).click();
     await expect(buyerPage.getByText("Hvala, prijava je poslata.")).toBeVisible();
 
-    await listingActions.getByRole("link", { name: "Pošalji poruku" }).click();
+    await refreshedListingActions.getByRole("link", { name: "Pošalji poruku" }).click();
     await buyerPage.getByPlaceholder("Napišite poruku prodavcu...").fill(buyerMessage);
     await buyerPage.getByRole("button", { name: "Pošalji" }).click();
     await expect(buyerPage).toHaveURL(/\/nalog\/poruke\/[^/?]+$/);
@@ -297,6 +310,11 @@ test("registration-to-sale marketplace journey", async ({
       buyerPage.getByText("Razgovor trenutno nije dostupan. Prethodne poruke ostaju sačuvane.")
     ).toBeVisible();
     await expect(buyerPage.getByPlaceholder("Napišite odgovor...")).toHaveCount(0);
+    const followingAfterBlock = await buyerContext.request.get(
+      `${backendURL}/api/v1/following`
+    );
+    expect(followingAfterBlock.ok()).toBeTruthy();
+    expect((await followingAfterBlock.json()).data).toHaveLength(0);
 
     await sellerPage.reload();
     await expect(
