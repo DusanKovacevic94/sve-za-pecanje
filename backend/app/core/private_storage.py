@@ -4,6 +4,7 @@ import base64
 import hashlib
 from pathlib import Path
 
+from botocore.exceptions import ClientError
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.core.config import settings
@@ -49,13 +50,20 @@ def store_private_export(key: str, payload: bytes) -> str:
             if settings.object_storage_root_folder
             else key
         )
-        _s3_client().put_object(
+        client = _s3_client()
+        put_kwargs = dict(
             Bucket=settings.object_storage_bucket,
             Key=storage_key,
             Body=payload,
             ContentType="application/octet-stream",
-            ServerSideEncryption="AES256",
         )
+        try:
+            client.put_object(**put_kwargs, ServerSideEncryption="AES256")
+        except ClientError as error:
+            code = error.response.get("Error", {}).get("Code")
+            if code not in {"InvalidArgument", "NotImplemented", "XNotImplemented"}:
+                raise
+            client.put_object(**put_kwargs)
         return storage_key
     path = Path(settings.local_storage_path) / key
     path.parent.mkdir(parents=True, exist_ok=True)

@@ -103,7 +103,6 @@ def upgrade() -> None:
             ["reporter_id"], ["users.id"], ondelete="RESTRICT"
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("moderation_case_id"),
     )
     op.create_index(
         op.f("ix_conversation_reports_conversation_id"),
@@ -134,6 +133,7 @@ def upgrade() -> None:
         op.f("ix_conversation_reports_moderation_case_id"),
         "conversation_reports",
         ["moderation_case_id"],
+        unique=True,
     )
 
 

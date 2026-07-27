@@ -5,8 +5,10 @@ import zipfile
 from datetime import UTC, datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
+from botocore.exceptions import ClientError
 from sqlalchemy import select
 
+from app.core import private_storage
 from app.core.config import Settings, settings
 from app.models.account_privacy import AccountClosure, DataExportRequest
 from app.models.audit import AuditLog
@@ -171,6 +173,31 @@ def test_export_is_private_single_use_and_cooldown_is_enforced(
     db.refresh(export)
     assert export.status == "downloaded"
     assert export.storage_key is None
+
+
+def test_private_export_storage_retries_without_unsupported_sse(monkeypatch):
+    class StorageClient:
+        def __init__(self):
+            self.put_calls = []
+
+        def put_object(self, **kwargs):
+            self.put_calls.append(kwargs)
+            if "ServerSideEncryption" in kwargs:
+                raise ClientError(
+                    {"Error": {"Code": "InvalidArgument", "Message": "unsupported"}},
+                    "PutObject",
+                )
+
+    client = StorageClient()
+    monkeypatch.setattr(settings, "storage_backend", "s3")
+    monkeypatch.setattr(private_storage, "_s3_client", lambda: client)
+
+    storage_key = private_storage.store_private_export("exports/test.bin", b"encrypted")
+
+    assert storage_key.endswith("exports/test.bin")
+    assert len(client.put_calls) == 2
+    assert client.put_calls[0]["ServerSideEncryption"] == "AES256"
+    assert "ServerSideEncryption" not in client.put_calls[1]
 
 
 def test_export_expiry_cleanup_and_worker_retry(

@@ -31,8 +31,10 @@ Passwords, token hashes, secrets, internal moderation rules, risk data, and othe
 private profile fields are excluded.
 
 The ZIP is encrypted with a key derived from `SECRET_KEY` before storage. S3-compatible
-storage additionally requests AES-256 server-side encryption and never sets a public ACL.
-Local development stores the encrypted object with owner-only permissions.
+storage additionally requests AES-256 server-side encryption where the provider supports
+it, falls back to the application-encrypted payload when that optional header is rejected,
+and never sets a public ACL. Local development stores the encrypted object with owner-only
+permissions.
 
 The worker emails a random one-time application link. Only its SHA-256 hash is stored. The
 link expires after 24 hours; a successful download invalidates the token and removes the
