@@ -86,3 +86,21 @@ class BrandUpdateRequest(BaseModel):
 
 class SearchBlacklistCreateRequest(BaseModel):
     term: str = Field(min_length=2, max_length=160)
+
+
+class SeoLandingUpsertRequest(BaseModel):
+    category_id: str
+    brand_id: str | None = None
+    title: str = Field(min_length=10, max_length=180)
+    meta_description: str = Field(min_length=30, max_length=320)
+    intro_copy: str = Field(min_length=30, max_length=5000)
+    indexing_enabled: bool = True
+    minimum_active_listings: int = Field(ge=1, le=1000)
+    threshold_override: bool = False
+    override_reason: str | None = Field(default=None, max_length=1000)
+
+    @model_validator(mode="after")
+    def require_override_reason(self) -> "SeoLandingUpsertRequest":
+        if self.threshold_override and not (self.override_reason or "").strip():
+            raise ValueError("Unesite razlog za SEO override.")
+        return self

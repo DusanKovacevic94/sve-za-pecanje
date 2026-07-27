@@ -23,6 +23,7 @@ from app.schemas.admin import (
     ResolveFeatureRequest,
     ResolveReportRequest,
     SearchBlacklistCreateRequest,
+    SeoLandingUpsertRequest,
     SuspendUserRequest,
     ModerationCaseAssignRequest,
     ModerationCaseBulkRequest,
@@ -39,8 +40,49 @@ from app.services.shop_service import (
     serialize_shop_subscription_request,
 )
 from app.services.search_discovery_service import SearchDiscoveryService
+from app.services.seo_landing_service import SeoLandingService
 
 router = APIRouter(prefix="/admin", tags=["admin"])
+
+
+@router.get("/seo-landings")
+def seo_landings(
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return data_response(SeoLandingService(db).list_admin())
+
+
+@router.post("/seo-landings/preview")
+def preview_seo_landing(
+    payload: SeoLandingUpsertRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return data_response(SeoLandingService(db).preview(payload))
+
+
+@router.post("/seo-landings")
+def create_seo_landing(
+    payload: SeoLandingUpsertRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    service = SeoLandingService(db)
+    item = service.create(payload, admin)
+    return data_response(service.serialize_admin_record(item))
+
+
+@router.patch("/seo-landings/{landing_id}")
+def update_seo_landing(
+    landing_id: str,
+    payload: SeoLandingUpsertRequest,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    service = SeoLandingService(db)
+    item = service.update(landing_id, payload, admin)
+    return data_response(service.serialize_admin_record(item))
 
 
 @router.get("/search-blacklist")

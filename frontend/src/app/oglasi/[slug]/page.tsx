@@ -122,7 +122,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
         "@type": "ListItem",
         position: 3,
         name: listing.category.name_sr,
-        item: absoluteUrl(`/oglasi?category=${listing.category.slug}`)
+        item: absoluteUrl(`/kategorije/${listing.category.slug}`)
       },
       { "@type": "ListItem", position: 4, name: listing.title, item: absoluteUrl(`/oglasi/${listing.slug}`) }
     ]
@@ -146,7 +146,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
         <span>/</span>
         <Link href="/oglasi" className="hover:text-river-700">Oglasi</Link>
         <span>/</span>
-        <Link href={`/oglasi?category=${listing.category.slug}`} className="hover:text-river-700">{listing.category.name_sr}</Link>
+        <Link href={`/kategorije/${listing.category.slug}`} className="hover:text-river-700">{listing.category.name_sr}</Link>
       </nav>
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <section>
@@ -289,7 +289,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
         <section className="mt-10">
           <div className="flex items-center justify-between gap-4">
             <h2 className="text-2xl font-black">Slični oglasi</h2>
-            <Button href={`/oglasi?category=${listing.category.slug}`} variant="secondary">Još iz kategorije</Button>
+            <Button href={`/kategorije/${listing.category.slug}`} variant="secondary">Još iz kategorije</Button>
           </div>
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {similar.data.map((item) => (

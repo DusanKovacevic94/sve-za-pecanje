@@ -13,7 +13,7 @@ export default async function CategoriesPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {categories.data.map((category) => (
           <article key={category.id} className="surface p-5">
-            <Link href={`/oglasi?category=${category.slug}`} className="block transition hover:-translate-y-0.5">
+            <Link href={`/kategorije/${category.slug}`} className="block transition hover:-translate-y-0.5">
             <div className="grid h-11 w-11 place-items-center rounded-lg bg-river-50 text-river-700">
               <CategoryIcon slug={category.slug} name={category.name_sr} />
             </div>
@@ -27,7 +27,7 @@ export default async function CategoriesPage() {
                 {category.children.map((child) => (
                   <Link
                     key={child.id}
-                    href={`/oglasi?category=${child.slug}`}
+                    href={`/kategorije/${child.slug}`}
                     className="focus-ring rounded-md bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-river-50 hover:text-river-700"
                   >
                     {child.name_sr} ({child.active_count})

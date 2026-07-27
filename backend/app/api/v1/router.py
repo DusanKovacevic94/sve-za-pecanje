@@ -17,6 +17,7 @@ from app.api.v1 import (
     reviews,
     saved_searches,
     search,
+    seo,
     shops,
     users,
 )
@@ -34,6 +35,7 @@ api_router.include_router(promotions.router)
 api_router.include_router(shops.router)
 api_router.include_router(saved_searches.router)
 api_router.include_router(search.router)
+api_router.include_router(seo.router)
 api_router.include_router(messages.router)
 api_router.include_router(notifications.router)
 api_router.include_router(reviews.router)

@@ -1,4 +1,8 @@
-import { apiFetch, Category, ListingCard } from "@/lib/api";
+import {
+  apiFetch,
+  type ListingCard,
+  type SeoSitemapLanding,
+} from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -9,10 +13,6 @@ function escapeXml(value: string) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
-}
-
-function flattenCategories(categories: Category[]): Category[] {
-  return categories.flatMap((category) => [category, ...flattenCategories(category.children ?? [])]);
 }
 
 async function getAllListings() {
@@ -33,12 +33,11 @@ async function getAllListings() {
 
 export async function GET() {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://svezapecanje.rs";
-  const [categories, listings] = await Promise.all([
-    apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
+  const [landings, listings] = await Promise.all([
+    apiFetch<SeoSitemapLanding[]>("/seo/landings", { next: { revalidate: 300 } }).catch(() => ({ data: [] })),
     getAllListings()
   ]);
   const now = new Date().toISOString();
-  const categoryRows = flattenCategories(categories.data);
   const urls: { loc: string; lastModified: string }[] = [
     { loc: "", lastModified: now },
     { loc: "/oglasi", lastModified: now },
@@ -48,7 +47,7 @@ export async function GET() {
     { loc: "/uslovi-koriscenja", lastModified: now },
     { loc: "/privatnost", lastModified: now },
     { loc: "/saveti-za-bezbednost", lastModified: now },
-    ...categoryRows.map((item) => ({ loc: `/oglasi?category=${item.slug}`, lastModified: item.updated_at ?? now })),
+    ...landings.data.map((item) => ({ loc: item.path, lastModified: item.updated_at ?? now })),
     ...listings.map((item) => ({ loc: `/oglasi/${item.slug}`, lastModified: item.updated_at ?? now }))
   ];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>

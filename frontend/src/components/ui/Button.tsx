@@ -4,6 +4,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   href?: string;
+  rel?: string;
   variant?: "primary" | "secondary" | "ghost" | "danger";
   isLoading?: boolean;
   children: ReactNode;
@@ -16,7 +17,7 @@ const variants = {
   danger: "bg-red-600 text-white hover:bg-red-700"
 };
 
-export function Button({ href, variant = "primary", className = "", isLoading = false, children, disabled, ...props }: ButtonProps) {
+export function Button({ href, rel, variant = "primary", className = "", isLoading = false, children, disabled, ...props }: ButtonProps) {
   const classes = `focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-60 ${variants[variant]} ${className}`;
   if (href) {
     return (
@@ -25,6 +26,7 @@ export function Button({ href, variant = "primary", className = "", isLoading = 
         className={classes}
         aria-label={props["aria-label"]}
         title={props.title}
+        rel={rel}
       >
         {children}
       </Link>

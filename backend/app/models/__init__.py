@@ -26,6 +26,7 @@ from app.models.search_discovery import (
     SearchDiscoveryState,
     SearchQueryBlacklist,
 )
+from app.models.seo_landing import SeoLandingPage
 from app.models.notification import UserNotification
 from app.models.phone_verification import PhoneVerificationChallenge
 from app.models.shop_subscription import ShopSubscriptionRequest
@@ -62,6 +63,7 @@ __all__ = [
     "PopularSearchQuery",
     "SearchDiscoveryState",
     "SearchQueryBlacklist",
+    "SeoLandingPage",
     "UserNotification",
     "UserBlock",
     "PhoneVerificationChallenge",

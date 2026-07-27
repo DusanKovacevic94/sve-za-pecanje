@@ -112,7 +112,7 @@ export default async function HomePage() {
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {categories.slice(0, 8).map((category) => (
-            <Link key={category.id} href={`/oglasi?category=${category.slug}`} className="surface p-4 transition hover:-translate-y-0.5 hover:shadow-lift">
+            <Link key={category.id} href={`/kategorije/${category.slug}`} className="surface p-4 transition hover:-translate-y-0.5 hover:shadow-lift">
               <div className="grid h-11 w-11 place-items-center rounded-lg bg-river-50 text-river-700">
                 <CategoryIcon slug={category.slug} name={category.name_sr} />
               </div>

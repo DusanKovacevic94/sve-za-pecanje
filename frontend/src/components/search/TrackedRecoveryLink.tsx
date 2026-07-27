@@ -26,6 +26,7 @@ export function TrackedRecoveryLink({
   return (
     <Link
       href={href}
+      rel="nofollow"
       className={className}
       onClick={() =>
         sendMarketplaceAnalytics("zero_result_recovery", {

@@ -480,6 +480,31 @@ export type ShopDetail = ShopSummary & {
   listings: ListingCard[];
 };
 
+export type SeoLanding = {
+  id: string | null;
+  category: { id: string; slug: string; name_sr: string };
+  brand: { id: string; slug: string; name: string } | null;
+  title: string;
+  meta_description: string;
+  intro_copy: string;
+  canonical_path: string;
+  active_listing_count: number;
+  minimum_active_listings: number;
+  indexing_enabled: boolean;
+  is_indexable: boolean;
+  is_curated: boolean;
+  threshold_override?: boolean;
+  override_reason?: string | null;
+  updated_by_admin_id?: string | null;
+  updated_at: string;
+};
+
+export type SeoSitemapLanding = {
+  path: string;
+  updated_at: string;
+  active_listing_count: number;
+};
+
 export type FollowingSeller = {
   follow_id: string;
   followed_at: string;

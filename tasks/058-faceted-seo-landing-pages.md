@@ -1,6 +1,6 @@
 # 058 — Faceted SEO policy and curated landing pages
 
-Status: todo
+Status: done
 Priority: P2
 
 ## Problem
@@ -15,32 +15,32 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md) and
 
 ## Work
 
-- [ ] Add clean indexable routes:
+- [x] Add clean indexable routes:
   - `/kategorije/{categorySlug}`
   - `/kategorije/{categorySlug}/brend/{brandSlug}`
-- [ ] Render clean routes through the same listing query and filter engine as `/oglasi` so
+- [x] Render clean routes through the same listing query and filter engine as `/oglasi` so
   result behavior cannot diverge
-- [ ] Add curated landing-page metadata with category, optional brand, title, meta
+- [x] Add curated landing-page metadata with category, optional brand, title, meta
   description, intro copy, indexing toggle, and minimum active-listing threshold
-- [ ] Default indexing eligibility to at least three active listings for a category page and
+- [x] Default indexing eligibility to at least three active listings for a category page and
   five for a category-brand page; allow an explicit audited administrator override
-- [ ] Add admin create/edit/preview controls for curated category-brand landing pages
-- [ ] Mark arbitrary search, sort, pagination, multi-category, location, price, and dynamic
+- [x] Add admin create/edit/preview controls for curated category-brand landing pages
+- [x] Mark arbitrary search, sort, pagination, multi-category, location, price, and dynamic
   attribute combinations as `noindex,follow`
-- [ ] Canonicalize a query page to the matching clean category route or curated
+- [x] Canonicalize a query page to the matching clean category route or curated
   category-brand route; otherwise canonicalize it to the nearest stable browse route
-- [ ] Keep parameter URLs functional for users, saved searches, active chips, and shared
+- [x] Keep parameter URLs functional for users, saved searches, active chips, and shared
   links
-- [ ] Remove parameter URLs, empty categories, and ineligible thin landings from the sitemap
-- [ ] Add `nofollow` to combinatorial filter links where appropriate
-- [ ] Block known facet parameters in `robots.txt` only after automated checks confirm that
+- [x] Remove parameter URLs, empty categories, and ineligible thin landings from the sitemap
+- [x] Add `nofollow` to combinatorial filter links where appropriate
+- [x] Block known facet parameters in `robots.txt` only after automated checks confirm that
   every intended indexable category/brand page has a clean route
-- [ ] Add breadcrumbs and matching structured data to clean landing pages
-- [ ] Preserve existing listing-detail canonical URLs and redirect no currently valid
+- [x] Add breadcrumbs and matching structured data to clean landing pages
+- [x] Preserve existing listing-detail canonical URLs and redirect no currently valid
   listing URL
-- [ ] Document Search Console checks for parameter indexing, duplicate pages, sitemap
+- [x] Document Search Console checks for parameter indexing, duplicate pages, sitemap
   coverage, and crawl anomalies
-- [ ] Add an automated crawl matrix covering status, canonical, robots meta, robots.txt,
+- [x] Add an automated crawl matrix covering status, canonical, robots meta, robots.txt,
   sitemap inclusion, structured data, empty inventory, and administrator override behavior
 
 ## Acceptance criteria
@@ -57,3 +57,12 @@ See [the soft-launch roadmap](../docs/soft-launch-roadmap.md) and
 ## Dependencies
 
 - 052
+
+## Implementation notes
+
+- Database revision: `0020_faceted_seo_landings`
+- Public evaluation API: `/api/v1/seo/*`
+- Admin editor: `/admin/seo`
+- Crawl policy and Search Console runbook:
+  [faceted-seo-policy.md](../docs/faceted-seo-policy.md)
+- Browser crawl matrix: `frontend/e2e/seo-crawl-matrix.spec.ts`

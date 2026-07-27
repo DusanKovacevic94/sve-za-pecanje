@@ -7,8 +7,10 @@ database and refuses to run unless APP_ENV=test.
 from __future__ import annotations
 
 import argparse
+import json
 import re
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from urllib.parse import parse_qs, urlparse
 
 from sqlalchemy import select
@@ -18,6 +20,9 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.models.email_outbox import EmailOutbox
+from app.models.brand import Brand
+from app.models.category import Category
+from app.models.listing import Listing
 from app.models.profile import UserProfile
 from app.models.user import User
 from app.tasks.analytics_tasks import refresh_marketplace_metrics, refresh_search_discovery
@@ -63,6 +68,74 @@ def seed(db: Session) -> None:
     print(ADMIN_EMAIL)
 
 
+def seed_seo(db: Session) -> None:
+    category = db.scalar(
+        select(Category).where(Category.slug == "spin-stapovi")
+    )
+    brand = db.scalar(select(Brand).where(Brand.slug == "shimano"))
+    if not category or not brand:
+        raise SystemExit("Seeded spin-stapovi category and Shimano brand are required.")
+    seller = db.scalar(
+        select(User).where(User.email == "e2e-seo-seller@example.com")
+    )
+    if not seller:
+        seller = User(
+            email="e2e-seo-seller@example.com",
+            username="e2e_seo_seller",
+            password_hash=hash_password("E2eSeoSeller123!"),
+            role="user",
+            status="active",
+            email_verified_at=datetime.now(UTC),
+        )
+        seller.profile = UserProfile(display_name="E2E SEO prodavac")
+        db.add(seller)
+        db.flush()
+    listings = []
+    for index in range(5):
+        slug = f"e2e-seo-spin-stap-{index}"
+        listing = db.scalar(select(Listing).where(Listing.slug == slug))
+        if not listing:
+            listing = Listing(
+                public_id=f"seo{index:05d}",
+                seller_id=seller.id,
+                category_id=category.id,
+                brand_id=brand.id,
+                title=f"E2E SEO Shimano spin štap {index + 1}",
+                slug=slug,
+                description=(
+                    "Detaljan E2E SEO opis aktivnog Shimano spin štapa "
+                    "sa stanjem, cenom i načinom dostave."
+                ),
+                condition="used_good",
+                price_amount=Decimal(10000 + index * 1000),
+                currency="RSD",
+                delivery_methods=["courier"],
+                city="Beograd",
+                status="active",
+                attributes={},
+                allow_messages=True,
+                phone_visible=False,
+                approved_at=datetime.now(UTC),
+                expires_at=datetime.now(UTC) + timedelta(days=30),
+            )
+            db.add(listing)
+        listings.append(listing)
+    db.commit()
+    print(
+        json.dumps(
+            {
+                "category_id": category.id,
+                "category_slug": category.slug,
+                "category_name": category.name_sr,
+                "brand_id": brand.id,
+                "brand_slug": brand.slug,
+                "brand_name": brand.name,
+                "listing_slug": listings[0].slug,
+            }
+        )
+    )
+
+
 def email_token(db: Session, recipient: str) -> None:
     message = db.scalar(
         select(EmailOutbox)
@@ -101,6 +174,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("seed")
+    subparsers.add_parser("seed-seo")
 
     email_parser = subparsers.add_parser("email-token")
     email_parser.add_argument("recipient")
@@ -113,6 +187,8 @@ def main() -> None:
     with SessionLocal() as db:
         if args.command == "seed":
             seed(db)
+        elif args.command == "seed-seo":
+            seed_seo(db)
         elif args.command == "email-token":
             email_token(db, args.recipient)
         else:

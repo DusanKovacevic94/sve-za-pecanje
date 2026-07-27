@@ -39,6 +39,15 @@ type E2EHelpers = {
       | "notification_retention"
       | "data_exports"
   ) => void;
+  seedSeoScenario: () => {
+    category_id: string;
+    category_slug: string;
+    category_name: string;
+    brand_id: string;
+    brand_slug: string;
+    brand_name: string;
+    listing_slug: string;
+  };
 };
 
 const backendDirectory = path.resolve(__dirname, "../../backend");
@@ -131,6 +140,9 @@ export const test = base.extend<E2EHelpers>({
     await use((taskName) => {
       backendHelper("run-task", taskName);
     });
+  },
+  seedSeoScenario: async ({}, use) => {
+    await use(() => JSON.parse(backendHelper("seed-seo")));
   }
 });
 

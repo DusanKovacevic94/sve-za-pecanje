@@ -409,12 +409,17 @@ class ListingService:
     def list_public(self, params: dict[str, Any]) -> tuple[list[Listing], int]:
         page = max(int(params.get("page", 1)), 1)
         page_size = min(max(int(params.get("page_size", 24)), 1), 48)
-        query = self._base_query().where(Listing.status.in_(PUBLIC_LISTING_STATUSES))
-        query, rank = apply_listing_filters(self.db, query, params)
+        query, rank = self._public_filtered_query(params)
         total = self.db.scalar(select(func.count()).select_from(query.subquery())) or 0
         query = self._apply_sort(query, params.get("sort"), rank)
         rows = self.db.scalars(query.offset((page - 1) * page_size).limit(page_size)).all()
         return list(rows), total
+
+    def count_public(self, params: dict[str, Any]) -> int:
+        query, _ = self._public_filtered_query(params)
+        return int(
+            self.db.scalar(select(func.count()).select_from(query.subquery())) or 0
+        )
 
     def get_by_slug(self, slug: str) -> Listing:
         listing = self.db.scalar(
@@ -712,6 +717,15 @@ class ListingService:
             selectinload(Listing.brand),
             selectinload(Listing.images),
         )
+
+    def _public_filtered_query(
+        self,
+        params: dict[str, Any],
+    ) -> tuple[Select[tuple[Listing]], Any | None]:
+        query = self._base_query().where(
+            Listing.status.in_(PUBLIC_LISTING_STATUSES)
+        )
+        return apply_listing_filters(self.db, query, params)
 
     def _apply_sort(
         self, query: Select[tuple[Listing]], sort: str | None, rank=None
