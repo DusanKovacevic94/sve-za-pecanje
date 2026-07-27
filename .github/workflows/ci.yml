@@ -7,20 +7,6 @@ on:
 jobs:
   backend:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: fishing_marketplace
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres -d fishing_marketplace"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
     defaults:
       run:
         working-directory: backend
@@ -35,16 +21,44 @@ jobs:
       - run: uv sync --extra dev
       - run: uv run ruff check
       - run: uv run python -m pytest --cov=app --cov-report=term-missing --cov-fail-under=60
-      - run: |
+      - name: SQLite migration smoke check (non-authoritative)
+        run: |
           DB=/tmp/szp-ci-alembic.db
+          rm -f "$DB"
           DATABASE_URL=sqlite:///$DB uv run python -m alembic upgrade head
           DATABASE_URL=sqlite:///$DB uv run python -m alembic check
-      - name: Validate migrations on PostgreSQL
+
+  postgres-release-gate:
+    name: PostgreSQL migration release gate
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
         env:
-          DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/fishing_marketplace
-        run: |
-          uv run python -m alembic upgrade head
-          uv run python -m alembic check
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MIGRATION_GATE_BOOTSTRAP_URL: postgresql://postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --extra dev
+        working-directory: backend
+      - name: Run restricted-role upgrade, drift, downgrade, and privilege checks
+        run: make migration-gate-postgres
 
   frontend:
     runs-on: ubuntu-latest
@@ -87,7 +101,7 @@ jobs:
 
   production-images:
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    needs: [backend, postgres-release-gate, frontend]
     env:
       APP_ENV_FILE: .env.production.example
     steps:

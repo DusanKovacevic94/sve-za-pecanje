@@ -3,7 +3,18 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, JSON, Numeric, String, Text, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    JSON,
+    Numeric,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +34,8 @@ if TYPE_CHECKING:
 class Listing(Base, TimestampMixin):
     __tablename__ = "listings"
     __table_args__ = (
+        Index("ix_listings_public_id", "public_id", unique=True),
+        Index("ix_listings_slug", "slug", unique=True),
         UniqueConstraint(
             "seller_id",
             "draft_client_id",
@@ -31,14 +44,14 @@ class Listing(Base, TimestampMixin):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
-    public_id: Mapped[str] = mapped_column(String(18), unique=True, index=True)
+    public_id: Mapped[str] = mapped_column(String(18))
     seller_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     category_id: Mapped[str] = mapped_column(ForeignKey("categories.id"), index=True)
     brand_id: Mapped[str | None] = mapped_column(ForeignKey("brands.id"), index=True)
     brand_name_custom: Mapped[str | None] = mapped_column(String(120))
     model: Mapped[str | None] = mapped_column(String(120))
     title: Mapped[str] = mapped_column(String(120), index=True)
-    slug: Mapped[str] = mapped_column(String(180), unique=True, index=True)
+    slug: Mapped[str] = mapped_column(String(180))
     description: Mapped[str] = mapped_column(Text)
     condition: Mapped[str] = mapped_column(String(40), index=True)
     price_type: Mapped[str] = mapped_column(String(30), default="fixed", index=True)

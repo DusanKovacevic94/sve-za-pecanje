@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, JSON, String, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Index,
+    JSON,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -46,6 +55,13 @@ class ConversationPreference(Base, TimestampMixin):
 
 class ConversationReport(Base, TimestampMixin):
     __tablename__ = "conversation_reports"
+    __table_args__ = (
+        Index(
+            "ix_conversation_reports_moderation_case_id",
+            "moderation_case_id",
+            unique=True,
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
     conversation_id: Mapped[str] = mapped_column(
@@ -66,6 +82,4 @@ class ConversationReport(Base, TimestampMixin):
     moderation_case_id: Mapped[str | None] = mapped_column(
         ForeignKey("moderation_cases.id", ondelete="SET NULL"),
         nullable=True,
-        unique=True,
-        index=True,
     )

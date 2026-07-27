@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 class UserProfile(Base, TimestampMixin):
     __tablename__ = "user_profiles"
     __table_args__ = (
+        Index("ix_user_profiles_user_id", "user_id", unique=True),
+        Index("ix_user_profiles_shop_slug", "shop_slug", unique=True),
         Index(
             "ix_user_profiles_follow_digest_due",
             "notify_followed_sellers",
@@ -24,7 +26,7 @@ class UserProfile(Base, TimestampMixin):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
-    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), unique=True, index=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"))
     display_name: Mapped[str | None] = mapped_column(String(120))
     avatar_url: Mapped[str | None] = mapped_column(String(500))
     city: Mapped[str | None] = mapped_column(String(120), index=True)
@@ -40,7 +42,7 @@ class UserProfile(Base, TimestampMixin):
     fishing_styles: Mapped[list[str]] = mapped_column(JSON, default=list)
     member_badges: Mapped[list[str]] = mapped_column(JSON, default=list)
     shop_name: Mapped[str | None] = mapped_column(String(160), index=True)
-    shop_slug: Mapped[str | None] = mapped_column(String(180), unique=True, index=True)
+    shop_slug: Mapped[str | None] = mapped_column(String(180))
     shop_logo_url: Mapped[str | None] = mapped_column(String(500))
     shop_description: Mapped[str | None] = mapped_column(Text)
     shop_tax_id: Mapped[str | None] = mapped_column(String(40))

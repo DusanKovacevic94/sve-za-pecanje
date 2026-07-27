@@ -9,6 +9,17 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from app.core.config import settings
 
+_SSE_UNSUPPORTED_ERROR_CODES = frozenset(
+    {"InvalidArgument", "NotImplemented", "XNotImplemented"}
+)
+_SSE_ARGUMENT_MARKERS = (
+    "serversideencryption",
+    "server-side encryption",
+    "server side encryption",
+    "x-amz-server-side-encryption",
+)
+_UNSUPPORTED_MARKERS = ("not implemented", "not supported", "unsupported")
+
 
 def _cipher() -> Fernet:
     key = base64.urlsafe_b64encode(
@@ -43,6 +54,20 @@ def _s3_client():
     )
 
 
+def _is_unsupported_sse_error(error: ClientError) -> bool:
+    details = error.response.get("Error", {})
+    code = str(details.get("Code", ""))
+    description = " ".join(str(value) for value in details.values()).lower()
+    return (
+        code in _SSE_UNSUPPORTED_ERROR_CODES
+        and any(marker in description for marker in _SSE_ARGUMENT_MARKERS)
+        and (
+            code in {"NotImplemented", "XNotImplemented"}
+            or any(marker in description for marker in _UNSUPPORTED_MARKERS)
+        )
+    )
+
+
 def store_private_export(key: str, payload: bytes) -> str:
     if settings.use_s3_storage:
         storage_key = (
@@ -60,8 +85,7 @@ def store_private_export(key: str, payload: bytes) -> str:
         try:
             client.put_object(**put_kwargs, ServerSideEncryption="AES256")
         except ClientError as error:
-            code = error.response.get("Error", {}).get("Code")
-            if code not in {"InvalidArgument", "NotImplemented", "XNotImplemented"}:
+            if not _is_unsupported_sse_error(error):
                 raise
             client.put_object(**put_kwargs)
         return storage_key

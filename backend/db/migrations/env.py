@@ -5,6 +5,10 @@ from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.db.base import Base
+from app.db.migration_conventions import (
+    MANAGED_POSTGRES_COLUMNS,
+    MANAGED_POSTGRES_INDEXES,
+)
 from app import models  # noqa: F401
 
 config = context.config
@@ -17,15 +21,9 @@ target_metadata = Base.metadata
 
 
 def include_object(object, name, type_, reflected, compare_to):
-    if reflected and type_ == "column" and name == "search_vector":
+    if reflected and type_ == "column" and name in MANAGED_POSTGRES_COLUMNS:
         return False
-    if reflected and type_ == "index" and name in {
-        "ix_brands_name_trgm",
-        "ix_categories_name_sr_trgm",
-        "ix_listings_attributes_gin",
-        "ix_listings_search_vector",
-        "ix_listings_title_trgm",
-    }:
+    if reflected and type_ == "index" and name in MANAGED_POSTGRES_INDEXES:
         return False
     return True
 

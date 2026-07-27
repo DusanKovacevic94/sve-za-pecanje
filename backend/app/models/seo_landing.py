@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 class SeoLandingPage(Base, TimestampMixin):
     __tablename__ = "seo_landing_pages"
     __table_args__ = (
+        Index("ix_seo_landing_pages_scope_key", "scope_key", unique=True),
         Index(
             "ix_seo_landing_category_brand",
             "category_id",
@@ -23,7 +24,7 @@ class SeoLandingPage(Base, TimestampMixin):
     )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
-    scope_key: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    scope_key: Mapped[str] = mapped_column(String(80))
     category_id: Mapped[str] = mapped_column(
         ForeignKey("categories.id", ondelete="CASCADE"),
         nullable=False,

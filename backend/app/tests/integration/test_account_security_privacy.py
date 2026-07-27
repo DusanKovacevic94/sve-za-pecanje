@@ -184,7 +184,12 @@ def test_private_export_storage_retries_without_unsupported_sse(monkeypatch):
             self.put_calls.append(kwargs)
             if "ServerSideEncryption" in kwargs:
                 raise ClientError(
-                    {"Error": {"Code": "InvalidArgument", "Message": "unsupported"}},
+                    {
+                        "Error": {
+                            "Code": "InvalidArgument",
+                            "Message": "ServerSideEncryption is unsupported",
+                        }
+                    },
                     "PutObject",
                 )
 

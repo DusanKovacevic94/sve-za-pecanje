@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Date, ForeignKey, Integer, JSON, Numeric, String, UniqueConstraint
+from sqlalchemy import Date, ForeignKey, Index, Integer, JSON, Numeric, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -9,9 +9,12 @@ from app.db.base import Base, TimestampMixin, uuid_pk
 
 class AnalyticsEvent(Base, TimestampMixin):
     __tablename__ = "analytics_events"
+    __table_args__ = (
+        Index("ix_analytics_events_client_event_id", "client_event_id", unique=True),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
-    client_event_id: Mapped[str | None] = mapped_column(String(80), unique=True, index=True)
+    client_event_id: Mapped[str | None] = mapped_column(String(80))
     user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
     anonymous_id: Mapped[str | None] = mapped_column(String(80), index=True)
     event_name: Mapped[str] = mapped_column(String(120), index=True)

@@ -81,11 +81,14 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 9. Run migrations and seed shared data:
 
-Install the search extension once with the PostgreSQL admin role before migration `0014`:
+Install both PostgreSQL search extensions once with the database-admin role before
+application migrations. Application migrations must continue to use the restricted
+`fishing_app` role from `DATABASE_URL`:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres \
   sh -lc 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" \
+  -c "CREATE EXTENSION IF NOT EXISTS unaccent" \
   -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"'
 ```
 
@@ -212,7 +215,7 @@ launch, then run the manual backup command and restore one dump into
 ## Database Credentials
 
 Do not run the app with the `postgres` superuser or placeholder credentials. Keep
-the container admin role separate from the application role:
+the database-admin role separate from the application migration/runtime role:
 
 ```dotenv
 POSTGRES_DB=fishing_marketplace
@@ -221,19 +224,40 @@ POSTGRES_PASSWORD=<strong-postgres-admin-password>
 DATABASE_URL=postgresql+psycopg://fishing_app:<strong-app-password>@postgres:5432/fishing_marketplace
 ```
 
-For an existing database volume, changing `POSTGRES_PASSWORD` in `.env` is not enough.
-Rotate credentials inside PostgreSQL:
+For a new database volume, create the restricted role inside PostgreSQL. If the role
+already exists, use the equivalent `ALTER ROLE ... WITH` and `ALTER ROLE ... PASSWORD`
+statements instead of `CREATE ROLE`. Changing a password only in `.env` never rotates the
+database credential.
+
+Keep the database and `public` schema owned by the database-admin role so `fishing_app`
+cannot create extensions:
 
 ```sql
-CREATE ROLE fishing_app LOGIN PASSWORD '<strong-app-password>';
+CREATE ROLE fishing_app
+  LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT
+  PASSWORD '<strong-app-password>';
+REVOKE ALL ON DATABASE fishing_marketplace FROM PUBLIC;
 GRANT CONNECT ON DATABASE fishing_marketplace TO fishing_app;
+REVOKE CREATE ON DATABASE fishing_marketplace FROM fishing_app;
+REVOKE CREATE ON SCHEMA public FROM PUBLIC;
 GRANT USAGE, CREATE ON SCHEMA public TO fishing_app;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO fishing_app;
 GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO fishing_app;
-ALTER DATABASE fishing_marketplace OWNER TO fishing_app;
-ALTER SCHEMA public OWNER TO fishing_app;
 ALTER ROLE postgres PASSWORD '<strong-postgres-admin-password>';
 ```
+
+If an older deployment made `fishing_app` the database or schema owner, correct ownership
+as the `postgres` database-admin role before applying the grants:
+
+```sql
+ALTER DATABASE fishing_marketplace OWNER TO postgres;
+ALTER SCHEMA public OWNER TO postgres;
+```
+
+Run `CREATE EXTENSION IF NOT EXISTS unaccent` and `CREATE EXTENSION IF NOT EXISTS pg_trgm`
+as the database-admin role, never as `fishing_app`. See
+[migration and storage release validation](migration-release-gate.md) for the CI-equivalent
+local gate, role model, and migration/index conventions.
 
 If the app password contains `%` and is URL-encoded in `DATABASE_URL`, Alembic must
 escape `%` before assigning the URL to its config object. This project handles that

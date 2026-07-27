@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -15,6 +15,13 @@ if TYPE_CHECKING:
 
 class ShopSubscriptionRequest(Base, TimestampMixin):
     __tablename__ = "shop_subscription_requests"
+    __table_args__ = (
+        Index(
+            "ix_shop_subscription_requests_payment_reference",
+            "payment_reference",
+            unique=True,
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
     user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
@@ -22,7 +29,7 @@ class ShopSubscriptionRequest(Base, TimestampMixin):
     price_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     currency: Mapped[str] = mapped_column(String(3), default="RSD")
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
-    payment_reference: Mapped[str] = mapped_column(String(50), unique=True, index=True)
+    payment_reference: Mapped[str] = mapped_column(String(50))
     admin_note: Mapped[str | None] = mapped_column(Text)
     activated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

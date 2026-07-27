@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, ForeignKey, JSON, String, Text, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, Index, JSON, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -6,10 +6,11 @@ from app.db.base import Base, TimestampMixin, uuid_pk
 
 class Category(Base, TimestampMixin):
     __tablename__ = "categories"
+    __table_args__ = (Index("ix_categories_slug", "slug", unique=True),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
     parent_id: Mapped[str | None] = mapped_column(ForeignKey("categories.id"), index=True)
-    slug: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    slug: Mapped[str] = mapped_column(String(120))
     name_sr: Mapped[str] = mapped_column(String(120))
     name_en: Mapped[str] = mapped_column(String(120))
     description_sr: Mapped[str | None] = mapped_column(Text)
@@ -45,7 +46,7 @@ class AttributeDefinition(Base, TimestampMixin):
 
 class City(Base):
     __tablename__ = "cities"
+    __table_args__ = (Index("ix_cities_name", "name", unique=True),)
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
-    name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
-
+    name: Mapped[str] = mapped_column(String(120))

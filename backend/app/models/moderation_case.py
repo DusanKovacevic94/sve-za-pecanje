@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -39,9 +39,12 @@ class AbuseSignal(Base, TimestampMixin):
 
 class ListingFingerprint(Base, TimestampMixin):
     __tablename__ = "listing_fingerprints"
+    __table_args__ = (
+        Index("ix_listing_fingerprints_listing_id", "listing_id", unique=True),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
-    listing_id: Mapped[str] = mapped_column(ForeignKey("listings.id"), unique=True, index=True)
+    listing_id: Mapped[str] = mapped_column(ForeignKey("listings.id"))
     seller_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     content_hash: Mapped[str] = mapped_column(String(64), index=True)
     image_hashes: Mapped[list[str]] = mapped_column(JSON, default=list)

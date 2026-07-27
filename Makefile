@@ -1,4 +1,4 @@
-.PHONY: dev migrate seed test create-admin validate-prod
+.PHONY: dev migrate migration-gate-postgres seed test test-storage-minio create-admin validate-prod
 
 dev:
 	docker compose up --build
@@ -6,11 +6,22 @@ dev:
 migrate:
 	docker compose run --rm backend alembic upgrade head
 
+migration-gate-postgres:
+	./ops/postgres_migration_gate.sh
+
 seed:
 	docker compose run --rm backend python -m scripts.seed
 
 test:
 	docker compose run --rm backend pytest
+
+test-storage-minio:
+	docker compose up -d minio
+	@cd backend && \
+		MINIO_TEST_ENDPOINT=http://127.0.0.1:9000 \
+		MINIO_TEST_ACCESS_KEY=minioadmin \
+		MINIO_TEST_SECRET_KEY=minioadmin \
+		uv run pytest -q app/tests/integration/test_private_storage_minio.py
 
 validate-prod:
 	python3 ops/validate_production_compose.py

@@ -4,7 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Numeric, String, Text
+from sqlalchemy import DateTime, ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -16,6 +16,13 @@ if TYPE_CHECKING:
 
 class PromotionOrder(Base, TimestampMixin):
     __tablename__ = "promotion_orders"
+    __table_args__ = (
+        Index(
+            "ix_promotion_orders_payment_reference",
+            "payment_reference",
+            unique=True,
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
     listing_id: Mapped[str] = mapped_column(ForeignKey("listings.id"), index=True)
@@ -25,7 +32,7 @@ class PromotionOrder(Base, TimestampMixin):
     price_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2))
     currency: Mapped[str] = mapped_column(String(3), default="RSD")
     status: Mapped[str] = mapped_column(String(30), default="pending", index=True)
-    payment_reference: Mapped[str] = mapped_column(String(80), unique=True, index=True)
+    payment_reference: Mapped[str] = mapped_column(String(80))
     admin_note: Mapped[str | None] = mapped_column(Text)
     paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

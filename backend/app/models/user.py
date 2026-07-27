@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, String
+from sqlalchemy import DateTime, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, uuid_pk
@@ -15,11 +15,20 @@ if TYPE_CHECKING:
 
 class User(Base, TimestampMixin):
     __tablename__ = "users"
+    __table_args__ = (
+        Index("ix_users_email", "email", unique=True),
+        Index("ix_users_username", "username", unique=True),
+        Index(
+            "ix_users_email_unsubscribe_token_hash",
+            "email_unsubscribe_token_hash",
+            unique=True,
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_pk)
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
-    username: Mapped[str] = mapped_column(String(60), unique=True, index=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(60), nullable=False)
     role: Mapped[str] = mapped_column(String(30), default="user", index=True)
     status: Mapped[str] = mapped_column(String(30), default="pending_verification", index=True)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -28,7 +37,7 @@ class User(Base, TimestampMixin):
     email_verification_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     password_reset_token_hash: Mapped[str | None] = mapped_column(String(64), index=True)
     password_reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
-    email_unsubscribe_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
+    email_unsubscribe_token_hash: Mapped[str | None] = mapped_column(String(64))
 
     profile: Mapped["UserProfile"] = relationship(
         back_populates="user", uselist=False, cascade="all, delete-orphan"
