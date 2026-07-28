@@ -57,13 +57,22 @@ def _s3_client():
 def _is_unsupported_sse_error(error: ClientError) -> bool:
     details = error.response.get("Error", {})
     code = str(details.get("Code", ""))
+    message = details.get("Message")
     description = " ".join(str(value) for value in details.values()).lower()
+    opaque_invalid_argument = code == "InvalidArgument" and (
+        message is None or not str(message).strip()
+    )
     return (
         code in _SSE_UNSUPPORTED_ERROR_CODES
-        and any(marker in description for marker in _SSE_ARGUMENT_MARKERS)
         and (
-            code in {"NotImplemented", "XNotImplemented"}
-            or any(marker in description for marker in _UNSUPPORTED_MARKERS)
+            opaque_invalid_argument
+            or (
+                any(marker in description for marker in _SSE_ARGUMENT_MARKERS)
+                and (
+                    code in {"NotImplemented", "XNotImplemented"}
+                    or any(marker in description for marker in _UNSUPPORTED_MARKERS)
+                )
+            )
         )
     )
 

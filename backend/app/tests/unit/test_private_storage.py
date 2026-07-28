@@ -18,7 +18,7 @@ class RejectingStorageClient:
             raise self.error
 
 
-def _client_error(code: str, message: str, **details: str) -> ClientError:
+def _client_error(code: str, message: str | None, **details: str) -> ClientError:
     return ClientError(
         {"Error": {"Code": code, "Message": message, **details}},
         "PutObject",
@@ -28,6 +28,7 @@ def _client_error(code: str, message: str, **details: str) -> ClientError:
 @pytest.mark.parametrize(
     "error",
     [
+        _client_error("InvalidArgument", None),
         _client_error(
             "InvalidArgument",
             "The x-amz-server-side-encryption header is unsupported",
