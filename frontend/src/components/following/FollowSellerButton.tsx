@@ -1,9 +1,9 @@
 "use client";
 
-import { UserCheck, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { FollowedUserIcon, FollowUserIcon } from "@/components/icons";
 import { ApiError, apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -70,7 +70,7 @@ export function FollowSellerButton({
         aria-pressed={following}
         className="w-full"
       >
-        {following ? <UserCheck size={18} /> : <UserPlus size={18} />}
+        {following ? <FollowedUserIcon size={18} /> : <FollowUserIcon size={18} />}
         {following ? "Pratite prodavca" : "Prati prodavca"}
       </Button>
       <p className="mt-1 text-center text-xs text-slate-500">

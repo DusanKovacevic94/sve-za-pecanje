@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Star } from "lucide-react";
 
+import { RatingIcon } from "@/components/icons";
 import { apiFetch, type PendingReview, type ReviewItem } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Select, Textarea } from "@/components/ui/Field";
@@ -61,7 +61,7 @@ export function ReviewForm({ item }: { item: PendingReview }) {
       </div>
       {message ? <p className="mt-3 rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
       <Button type="submit" disabled={pending} className="mt-4">
-        <Star size={18} /> Ostavi ocenu
+        <RatingIcon size={18} /> Ostavi ocenu
       </Button>
     </form>
   );

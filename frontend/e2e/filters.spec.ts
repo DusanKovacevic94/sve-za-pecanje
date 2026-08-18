@@ -35,7 +35,7 @@ test("category and brand controls preserve multiple values without duplicate cho
   expect(url.searchParams.getAll("attributes[rod_type]")).toEqual(["spinning", "feeder"]);
   expect(url.searchParams.getAll("brand_id")).toHaveLength(2);
 
-  await page.getByRole("link", { name: "Shimano ×" }).click();
+  await page.getByRole("link", { name: "Shimano", exact: true }).click();
   await expect
     .poll(() => new URL(page.url()).searchParams.getAll("brand_id").length)
     .toBe(1);

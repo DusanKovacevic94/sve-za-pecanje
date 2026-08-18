@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldX, Trash2 } from "lucide-react";
 
+import { DeleteIcon, ShieldBlockedIcon } from "@/components/icons";
 import {
   apiFetch,
   type SearchBlacklistItem
@@ -57,7 +57,7 @@ export function SearchBlacklistManager({
     <div className="space-y-6">
       <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
         <div className="flex items-start gap-3">
-          <ShieldX className="mt-0.5 text-red-700" size={22} aria-hidden />
+          <ShieldBlockedIcon className="mt-0.5 text-red-700" size={24} />
           <div>
             <h2 className="text-xl font-black">Blokirani termini pretrage</h2>
             <p className="mt-1 text-sm text-slate-600">
@@ -94,7 +94,7 @@ export function SearchBlacklistManager({
                   disabled={busy}
                   onClick={() => removeTerm(item.id)}
                 >
-                  <Trash2 size={16} /> Ukloni
+                  <DeleteIcon size={16} /> Ukloni
                 </Button>
               </li>
             ))}

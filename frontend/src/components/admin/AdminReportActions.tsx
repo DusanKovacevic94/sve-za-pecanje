@@ -1,9 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Ban, Check, FileX, ShieldOff, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import {
+  BlockUserIcon,
+  CheckIcon,
+  CloseIcon,
+  FileRemoveIcon,
+  ReactivateUserIcon,
+} from "@/components/icons";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Select } from "@/components/ui/Field";
@@ -56,7 +62,7 @@ export function AdminReportActions({
             })
           }
         >
-          <Check size={18} /> Reši
+          <CheckIcon size={18} /> Reši
         </Button>
         <Button
           type="button"
@@ -70,7 +76,7 @@ export function AdminReportActions({
             })
           }
         >
-          <X size={18} /> Odbaci
+          <CloseIcon size={18} /> Odbaci
         </Button>
         {reportedUserId ? (
           <Button
@@ -91,7 +97,7 @@ export function AdminReportActions({
               })
             }
           >
-            {reportedUserStatus === "suspended" ? <ShieldOff size={18} /> : <Ban size={18} />}
+            {reportedUserStatus === "suspended" ? <ReactivateUserIcon size={18} /> : <BlockUserIcon size={18} />}
             {reportedUserStatus === "suspended" ? "Reaktiviraj" : "Suspenduj"}
           </Button>
         ) : null}
@@ -126,7 +132,7 @@ export function AdminReportActions({
               })
             }
           >
-            <FileX size={18} /> Skini oglas
+            <FileRemoveIcon size={18} /> Skini oglas
           </Button>
         </div>
       ) : null}

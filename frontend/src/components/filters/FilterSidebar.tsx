@@ -4,6 +4,9 @@ import type { ChangeEvent } from "react";
 
 import type { Brand, Category, City } from "@/lib/api";
 import {
+  ChevronDownIcon,
+} from "@/components/icons";
+import {
   conditionOptions,
   deliveryMethodOptions,
   priceTypeOptions
@@ -163,7 +166,7 @@ export function FilterSidebar({
             <span className="truncate">
               {choiceSummary(selectedCategorySlugs, categoryLabels, "Sve kategorije")}
             </span>
-            <span aria-hidden className="ml-2 text-slate-400 transition group-open:rotate-180">⌄</span>
+            <ChevronDownIcon className="ml-2 text-slate-400 transition group-open:rotate-180" size={16} />
           </summary>
           <div className="max-h-80 space-y-3 overflow-y-auto border-t border-slate-100 p-3">
             {categories.map((item) => (
@@ -261,7 +264,7 @@ export function FilterSidebar({
             <span className="truncate">
               {choiceSummary(selectedBrandIds, brandLabels, "Svi brendovi")}
             </span>
-            <span aria-hidden className="ml-2 text-slate-400 transition group-open:rotate-180">⌄</span>
+            <ChevronDownIcon className="ml-2 text-slate-400 transition group-open:rotate-180" size={16} />
           </summary>
           <div className="max-h-64 space-y-2 overflow-y-auto border-t border-slate-100 p-3">
             {brands.map((brand) => (

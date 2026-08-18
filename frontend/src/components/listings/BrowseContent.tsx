@@ -1,6 +1,6 @@
-import { SlidersHorizontal } from "lucide-react";
 import Link from "next/link";
 
+import { CloseIcon, FiltersIcon } from "@/components/icons";
 import { MarketplaceSearchTracker } from "@/components/analytics/MarketplaceSearchTracker";
 import { FilterSidebar } from "@/components/filters/FilterSidebar";
 import { ListingCard } from "@/components/listings/ListingCard";
@@ -272,7 +272,7 @@ export async function BrowseContent({
         </aside>
         <details className="lg:hidden">
           <summary className="focus-ring flex cursor-pointer items-center gap-2 rounded-md bg-white p-3 font-semibold shadow-soft">
-            <SlidersHorizontal size={18} /> Filteri{chips.length ? ` (${chips.length})` : ""}
+            <FiltersIcon size={18} /> Filteri{chips.length ? ` (${chips.length})` : ""}
           </summary>
           <div className="mt-3">
             <FilterSidebar
@@ -289,7 +289,7 @@ export async function BrowseContent({
             <div className="mb-4 flex flex-wrap items-center gap-2">
               {chips.map((chip) => (
                 <Link key={chip.id} href={chip.href} rel="nofollow" className="focus-ring rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-soft hover:text-river-700">
-                  {chip.label} ×
+                  {chip.label} <CloseIcon className="inline" size={14} />
                 </Link>
               ))}
               <Link href="/oglasi" className="focus-ring rounded-md px-3 py-2 text-sm font-semibold text-river-700 hover:bg-river-50">

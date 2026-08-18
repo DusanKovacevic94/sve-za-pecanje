@@ -1,8 +1,8 @@
 "use client";
 
-import { CheckCircle2, PhoneCall } from "lucide-react";
 import { useState } from "react";
 
+import { PhoneIcon, SuccessIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { apiFetch, type UserProfile } from "@/lib/api";
@@ -85,7 +85,7 @@ export function PhoneVerificationPanel({
       aria-labelledby="phone-verification-title"
     >
       <div className="flex items-start gap-3">
-        <PhoneCall className="mt-0.5 text-river-700" size={20} aria-hidden />
+        <PhoneIcon className="mt-0.5 text-river-700" size={20} />
         <div className="min-w-0 flex-1">
           <h2 id="phone-verification-title" className="font-black text-ink">
             Potvrda broja telefona
@@ -95,7 +95,7 @@ export function PhoneVerificationPanel({
           </p>
           {profile.phone_verified_at && !phoneDirty ? (
             <p className="mt-3 inline-flex items-center gap-2 text-sm font-black text-river-800">
-              <CheckCircle2 size={18} aria-hidden />
+              <SuccessIcon size={18} />
               Telefon je potvrđen
             </p>
           ) : (

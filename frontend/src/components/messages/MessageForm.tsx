@@ -1,9 +1,9 @@
 "use client";
 
-import { Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { SendIcon } from "@/components/icons";
 import { ApiError, apiFetch, type Conversation } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
@@ -85,7 +85,7 @@ export function MessageForm(props: MessageFormProps) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-semibold text-slate-500">{body.length}/3000</p>
         <Button type="submit" disabled={pending || !body.trim()} isLoading={pending} className="sm:w-auto">
-          <Send size={18} /> Pošalji
+          <SendIcon size={18} /> Pošalji
         </Button>
       </div>
       {challengeRequired ? (

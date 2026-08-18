@@ -1,9 +1,15 @@
 "use client";
 
-import { Ban, Bell, BellOff, Flag, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import {
+  BellIcon,
+  BellMutedIcon,
+  BlockUserIcon,
+  ReportIcon,
+  UndoIcon,
+} from "@/components/icons";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Field";
@@ -88,16 +94,16 @@ export function ConversationSafetyControls({
   return (
     <div className="flex flex-wrap gap-2">
       <Button type="button" variant="secondary" onClick={toggleMute} disabled={pending !== null}>
-        {muted ? <Bell size={17} /> : <BellOff size={17} />}
+        {muted ? <BellIcon size={18} /> : <BellMutedIcon size={18} />}
         {muted ? "Uključi obaveštenja" : "Utišaj razgovor"}
       </Button>
       {blockedByViewer ? (
         <Button type="button" variant="secondary" onClick={unblock} disabled={pending !== null}>
-          <Undo2 size={17} /> Ukloni moju blokadu
+          <UndoIcon size={18} /> Ukloni moju blokadu
         </Button>
       ) : conversationAvailable ? (
         <Button type="button" variant="danger" onClick={block} disabled={pending !== null}>
-          <Ban size={17} /> Blokiraj korisnika
+          <BlockUserIcon size={18} /> Blokiraj korisnika
         </Button>
       ) : null}
       <SafetyReportButton conversationId={conversationId} />
@@ -154,7 +160,7 @@ export function SafetyReportButton({
         className={messageId ? "min-h-8 px-2 py-1 text-xs" : undefined}
         onClick={() => setOpen((value) => !value)}
       >
-        <Flag size={messageId ? 14 : 17} /> {messageId ? "Prijavi poruku" : "Prijavi razgovor"}
+        <ReportIcon size={messageId ? 14 : 18} /> {messageId ? "Prijavi poruku" : "Prijavi razgovor"}
       </Button>
       {open ? (
         <form

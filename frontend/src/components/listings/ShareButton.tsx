@@ -1,8 +1,8 @@
 "use client";
 
-import { Share2 } from "lucide-react";
 import { useState } from "react";
 
+import { ShareIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
@@ -30,7 +30,7 @@ export function ShareButton({ title }: { title: string }) {
 
   return (
     <Button type="button" onClick={onShare} variant="ghost" disabled={busy}>
-      <Share2 size={18} /> Podeli
+      <ShareIcon size={18} /> Podeli
     </Button>
   );
 }

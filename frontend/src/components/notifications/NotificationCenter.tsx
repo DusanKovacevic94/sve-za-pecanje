@@ -1,9 +1,13 @@
 "use client";
 
-import { Bell, CheckCheck, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
+import {
+  BellIcon,
+  DoubleCheckIcon,
+  ExternalLinkIcon,
+} from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import {
   apiFetch,
@@ -143,7 +147,7 @@ export function NotificationCenter() {
           onClick={markAllRead}
           disabled={!unreadCount}
         >
-          <CheckCheck size={18} aria-hidden />
+          <DoubleCheckIcon size={18} />
           Označi sve kao pročitano
         </Button>
       </div>
@@ -174,7 +178,7 @@ export function NotificationCenter() {
 
       {!loading && items.length === 0 ? (
         <div className="mt-8 rounded-lg border border-slate-200 bg-white p-8 text-center shadow-soft">
-          <Bell className="mx-auto text-river-600" size={32} aria-hidden />
+          <BellIcon className="mx-auto text-river-600" size={32} />
           <h2 className="mt-3 text-xl font-black text-ink">
             Još nema obaveštenja
           </h2>
@@ -228,7 +232,7 @@ export function NotificationCenter() {
                       href={item.href}
                       onClick={() => markRead(item.id)}
                     >
-                      Otvori <ExternalLink size={14} aria-hidden />
+                      Otvori <ExternalLinkIcon size={14} />
                     </Link>
                   ) : null}
                   {!item.read_at ? (

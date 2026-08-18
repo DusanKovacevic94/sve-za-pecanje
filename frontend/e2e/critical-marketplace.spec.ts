@@ -185,7 +185,7 @@ test("registration-to-sale marketplace journey", async ({
     expect(filteredURL.searchParams.getAll("brand_id")).toHaveLength(2);
     expect(filteredURL.searchParams.get("attributes[length_cm][min]")).toBe("220");
 
-    await buyerPage.getByRole("link", { name: "Spin štapovi ×" }).click();
+    await buyerPage.getByRole("link", { name: "Spin štapovi", exact: true }).click();
     await expect
       .poll(() => new URL(buyerPage.url()).searchParams.getAll("category"))
       .toEqual(["feeder-stapovi"]);

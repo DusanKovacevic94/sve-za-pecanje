@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Bell, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { BellIcon, DeleteIcon, SearchIcon } from "@/components/icons";
 import { apiFetch, type Category } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
@@ -174,7 +174,7 @@ export function SavedSearchManager({
               <Input id="saved-search-name" value={name} onChange={(event) => setName(event.target.value)} />
             </div>
             <Button type="button" className="self-end" onClick={createSearch}>
-              <Bell size={18} /> Sačuvaj
+              <BellIcon size={18} /> Sačuvaj
             </Button>
           </div>
           <label className="mt-3 flex gap-2 text-sm font-semibold text-slate-700">
@@ -203,7 +203,7 @@ export function SavedSearchManager({
               </div>
               <div className="flex flex-wrap gap-2">
                 <Button href={searchUrl(search)} variant="secondary">
-                  <Search size={18} /> Pokreni
+                  <SearchIcon size={18} /> Pokreni
                 </Button>
                 <Button
                   type="button"
@@ -212,7 +212,7 @@ export function SavedSearchManager({
                   aria-label="Obriši pretragu"
                   title="Obriši pretragu"
                 >
-                  <Trash2 size={18} />
+                  <DeleteIcon size={18} />
                 </Button>
               </div>
             </div>

@@ -1,9 +1,17 @@
 "use client";
 
-import { Archive, CheckCircle2, Flag, Heart, LockKeyhole, Pencil, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import {
+  ArchiveIcon,
+  EditIcon,
+  FavoriteIcon,
+  LockIcon,
+  ReportIcon,
+  SuccessIcon,
+  UndoIcon,
+} from "@/components/icons";
 import { ApiError, apiFetch, type BuyerCandidate, type ListingDetail } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
@@ -39,7 +47,7 @@ export function FavoriteButton({ listingId, initialSaved = false }: FavoriteProp
 
   return (
     <Button onClick={onToggle} disabled={pending} variant="secondary" aria-pressed={saved}>
-      <Heart size={18} fill={saved ? "currentColor" : "none"} />
+      <FavoriteIcon size={18} fill={saved ? "currentColor" : "none"} />
       {saved ? "Sačuvano u omiljenim" : "Dodaj u omiljene"}
     </Button>
   );
@@ -80,7 +88,7 @@ export function FavoriteIconButton({ listingId, initialSaved = false }: Favorite
       disabled={pending}
       onClick={onToggle}
     >
-      <Heart size={19} fill={saved ? "currentColor" : "none"} />
+      <FavoriteIcon size={18} fill={saved ? "currentColor" : "none"} />
     </button>
   );
 }
@@ -113,7 +121,7 @@ export function ReportButton({ listingId }: { listingId: string }) {
   }
   return (
     <Button onClick={onReport} variant="ghost">
-      <Flag size={18} /> Prijavi oglas
+      <ReportIcon size={18} /> Prijavi oglas
     </Button>
   );
 }
@@ -162,7 +170,7 @@ export function OwnerListingActions({ listingId, status }: { listingId: string; 
     <div className="space-y-2">
       <div className="grid gap-2 sm:grid-cols-2">
         <Button href={`/izmeni-oglas/${listingId}`} variant="secondary" className="min-h-10 px-3">
-          <Pencil size={16} /> Izmeni
+          <EditIcon size={16} /> Izmeni
         </Button>
         {status === "active" ? (
           <Button
@@ -172,7 +180,7 @@ export function OwnerListingActions({ listingId, status }: { listingId: string; 
             disabled={busyAction === "reserve"}
             onClick={() => runAction("reserve")}
           >
-            <LockKeyhole size={16} /> Rezerviši
+            <LockIcon size={16} /> Rezerviši
           </Button>
         ) : null}
         {status === "reserved" ? (
@@ -183,7 +191,7 @@ export function OwnerListingActions({ listingId, status }: { listingId: string; 
             disabled={busyAction === "unreserve"}
             onClick={() => runAction("unreserve")}
           >
-            <Undo2 size={16} /> Ukloni rezervaciju
+            <UndoIcon size={16} /> Ukloni rezervaciju
           </Button>
         ) : null}
         {status === "active" || status === "reserved" ? (
@@ -194,7 +202,7 @@ export function OwnerListingActions({ listingId, status }: { listingId: string; 
             disabled={busyAction === "mark-sold"}
             onClick={() => runAction("mark-sold")}
           >
-            <CheckCircle2 size={16} /> Prodato
+            <SuccessIcon size={16} /> Prodato
           </Button>
         ) : null}
         <Button
@@ -204,7 +212,7 @@ export function OwnerListingActions({ listingId, status }: { listingId: string; 
           disabled={busyAction === "archive"}
           onClick={() => runAction("archive")}
         >
-          <Archive size={16} /> Arhiviraj
+          <ArchiveIcon size={16} /> Arhiviraj
         </Button>
       </div>
       {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}

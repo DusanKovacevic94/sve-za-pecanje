@@ -4,9 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertTriangle, Archive, CheckCircle2, CloudOff, LoaderCircle, Save } from "lucide-react";
 import { z } from "zod";
 
+import {
+  AlertIcon,
+  ArchiveIcon,
+  CloudOfflineIcon,
+  SaveIcon,
+  SpinnerIcon,
+  SuccessIcon,
+} from "@/components/icons";
 import type { Brand, BuyerCandidate, Category, ListingDetail } from "@/lib/api";
 import { ApiError, apiFetch } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
@@ -519,10 +526,10 @@ export function CreateListingForm({
           aria-live="polite"
         >
           <span className="inline-flex items-center gap-2 font-semibold">
-            {saveState === "saving" ? <LoaderCircle className="animate-spin" size={17} /> : null}
-            {saveState === "saved" ? <Save size={17} /> : null}
-            {saveState === "offline" ? <CloudOff size={17} /> : null}
-            {saveState === "error" || saveState === "conflict" ? <AlertTriangle size={17} /> : null}
+            {saveState === "saving" ? <SpinnerIcon className="motion-safe:animate-spin" size={18} /> : null}
+            {saveState === "saved" ? <SaveIcon size={18} /> : null}
+            {saveState === "offline" ? <CloudOfflineIcon size={18} /> : null}
+            {saveState === "error" || saveState === "conflict" ? <AlertIcon size={18} /> : null}
             {saveState === "saving"
               ? "Čuvanje…"
               : saveState === "saved"
@@ -782,10 +789,10 @@ export function CreateListingForm({
           <h2 className="text-xl font-black">Akcije oglasa</h2>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <Button type="button" variant="secondary" onClick={() => runOwnerAction("mark-sold")}>
-              <CheckCircle2 size={18} /> Označi kao prodato
+              <SuccessIcon size={18} /> Označi kao prodato
             </Button>
             <Button type="button" variant="danger" onClick={() => runOwnerAction("archive")}>
-              <Archive size={18} /> Arhiviraj oglas
+              <ArchiveIcon size={18} /> Arhiviraj oglas
             </Button>
           </div>
           {actionMessage ? (

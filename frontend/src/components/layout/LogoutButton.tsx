@@ -1,9 +1,9 @@
 "use client";
 
-import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { LogoutIcon } from "@/components/icons";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 
@@ -24,7 +24,7 @@ export function LogoutButton() {
 
   return (
     <Button onClick={onLogout} disabled={pending} variant="ghost" className="px-3" aria-label="Odjava">
-      <LogOut size={18} /> <span className="hidden lg:inline">Odjava</span>
+      <LogoutIcon size={18} /> <span className="hidden lg:inline">Odjava</span>
     </Button>
   );
 }

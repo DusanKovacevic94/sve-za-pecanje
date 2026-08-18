@@ -1,10 +1,15 @@
 "use client";
 
-import { AlertTriangle, Camera, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import {
+  AlertIcon,
+  CameraIcon,
+  DeleteIcon,
+  EditIcon,
+} from "@/components/icons";
 import type { ListingCard } from "@/lib/api";
 import { apiFetch } from "@/lib/api";
 import { formatDate } from "@/lib/format";
@@ -46,7 +51,7 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
             />
           ) : (
             <div className="flex h-full items-center justify-center text-river-600">
-              <Camera size={28} aria-hidden />
+              <CameraIcon size={32} />
             </div>
           )}
         </div>
@@ -58,7 +63,7 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
           </p>
           {listing.draft_expires_soon && listing.draft_expires_at ? (
             <p className="mt-2 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-xs font-semibold text-amber-900">
-              <AlertTriangle className="mt-0.5 shrink-0" size={15} aria-hidden />
+              <AlertIcon className="mt-0.5 shrink-0" size={14} />
               Nacrt će biti obrisan {formatDate(listing.draft_expires_at)} ako ga ne izmenite.
             </p>
           ) : null}
@@ -66,10 +71,10 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
       </div>
       <div className="flex flex-wrap gap-2 border-t border-slate-100 p-4">
         <Button href={`/postavi-oglas?draft=${listing.id}`} className="flex-1">
-          <Pencil size={16} /> Nastavi uređivanje
+          <EditIcon size={16} /> Nastavi uređivanje
         </Button>
         <Button type="button" variant="danger" disabled={deleting} onClick={deleteDraft}>
-          <Trash2 size={16} /> Obriši
+          <DeleteIcon size={16} /> Obriši
         </Button>
       </div>
       {message ? <p className="px-4 pb-4 text-sm font-semibold text-red-700">{message}</p> : null}

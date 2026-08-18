@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { SendIcon } from "@/components/icons";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Textarea } from "@/components/ui/Field";
@@ -70,7 +70,7 @@ export function ContactForm() {
         </p>
       ) : null}
       <Button type="submit" disabled={formState.isSubmitting}>
-        <Send size={18} /> Pošalji
+        <SendIcon size={18} /> Pošalji
       </Button>
     </form>
   );

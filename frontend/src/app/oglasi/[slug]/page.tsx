@@ -1,8 +1,15 @@
 import Link from "next/link";
-import { Eye, Heart, MessageSquare, Pencil, ShieldCheck, Store } from "lucide-react";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import {
+  EditIcon,
+  FavoriteIcon,
+  MessageIcon,
+  StoreIcon,
+  TrustShieldIcon,
+  ViewIcon,
+} from "@/components/icons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { FavoriteButton, ReportButton } from "@/components/listings/ListingActions";
@@ -230,7 +237,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 </Link>
                 {listing.seller.shop_active && listing.seller.shop_slug ? (
                   <Link href={`/prodavnice/${listing.seller.shop_slug}`} className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-river-700 hover:text-river-600">
-                    <Store size={14} aria-hidden />
+                    <StoreIcon size={14} />
                     {listing.seller.shop_name}
                   </Link>
                 ) : null}
@@ -242,12 +249,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
             ) : null}
             <div className="mt-5 grid grid-cols-2 gap-2 text-sm">
               <div className="rounded-md bg-slate-50 p-3">
-                <Eye className="text-river-700" size={17} />
+                <ViewIcon className="text-river-700" size={18} />
                 <p className="mt-1 font-black">{listing.view_count}</p>
                 <p className="text-xs text-slate-500">pregleda</p>
               </div>
               <div className="rounded-md bg-slate-50 p-3">
-                <Heart className="text-river-700" size={17} />
+                <FavoriteIcon className="text-river-700" size={18} />
                 <p className="mt-1 font-black">{listing.seller.active_listing_count ?? 0}</p>
                 <p className="text-xs text-slate-500">aktivnih oglasa</p>
               </div>
@@ -263,14 +270,14 @@ export default async function ListingDetailPage({ params }: PageProps) {
               {listing.status === "sold" ? (
                 <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
               ) : listing.can_message ? (
-                <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageSquare size={18} /> Pošalji poruku</Button>
+                <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageIcon size={18} /> Pošalji poruku</Button>
               ) : !isOwner ? (
                 <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">
                   Kontakt trenutno nije dostupan.
                 </p>
               ) : null}
               {isOwner ? (
-                <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><Pencil size={18} /> Izmeni oglas</Button>
+                <Button href={`/izmeni-oglas/${listing.id}`} variant="secondary"><EditIcon size={18} /> Izmeni oglas</Button>
               ) : (
                 <>
                   <FavoriteButton listingId={listing.id} initialSaved={listing.is_favorited} />
@@ -280,7 +287,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             </div>
           </div>
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
-            <ShieldCheck size={20} />
+            <TrustShieldIcon size={20} />
             <p className="mt-2 font-semibold">Proverite opremu uživo i ne šaljite novac unapred nepoznatim prodavcima.</p>
           </div>
         </aside>

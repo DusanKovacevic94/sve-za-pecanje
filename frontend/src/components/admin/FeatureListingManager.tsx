@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { CalendarClockIcon } from "@/components/icons";
 import { apiFetch, type ListingCard } from "@/lib/api";
 import { formatDate, formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
@@ -66,7 +66,7 @@ function FeatureListingRow({ listing }: { listing: ListingCard }) {
         />
       </div>
       <Button type="button" className="self-end" onClick={featureListing}>
-        <CalendarClock size={18} /> Istakni
+        <CalendarClockIcon size={18} /> Istakni
       </Button>
     </div>
   );

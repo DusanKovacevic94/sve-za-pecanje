@@ -1,6 +1,11 @@
-import { Fish, Heart, PlusCircle, UserCircle } from "lucide-react";
 import Link from "next/link";
 
+import {
+  AccountIcon,
+  AddCircleIcon,
+  BrandMarkIcon,
+  FavoriteIcon,
+} from "@/components/icons";
 import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/Button";
 import { HeaderNavLink } from "@/components/layout/HeaderNavLink";
@@ -15,7 +20,7 @@ export async function Header() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="focus-ring flex items-center gap-2 rounded-lg text-lg font-black text-river-800">
           <span className="grid h-10 w-10 place-items-center rounded-lg bg-river-700 text-white shadow-soft">
-            <Fish size={22} aria-hidden />
+            <BrandMarkIcon size={22} />
           </span>
           <span className="leading-tight">
             Sve Za Pecanje
@@ -34,7 +39,7 @@ export async function Header() {
               <NotificationBell />
               <UnreadMessagesLink />
               <Button href="/nalog" variant="secondary" className="px-3">
-                <UserCircle size={18} /> Moj nalog
+                <AccountIcon size={18} /> Moj nalog
               </Button>
               <LogoutButton />
             </>
@@ -44,7 +49,7 @@ export async function Header() {
             </Button>
           )}
           <Button href="/postavi-oglas" className="px-3">
-            <PlusCircle size={18} /> <span className="hidden sm:inline">Postavi oglas</span>
+            <AddCircleIcon size={18} /> <span className="hidden sm:inline">Postavi oglas</span>
           </Button>
         </div>
       </div>
@@ -54,7 +59,7 @@ export async function Header() {
         <HeaderNavLink href="/kategorije" mobile>Kategorije</HeaderNavLink>
         <HeaderNavLink href="/saveti-za-bezbednost" mobile>Bezbednost</HeaderNavLink>
         <Link className="focus-ring rounded-md bg-river-50 px-3 py-2 text-sm font-semibold text-ink hover:bg-river-100" href="/nalog/omiljeni">
-          <Heart size={15} className="inline" /> Omiljeni
+          <FavoriteIcon size={14} className="inline" /> Omiljeni
         </Link>
         {user ? (
           <>

@@ -1,7 +1,7 @@
-import { Camera, MapPin, Store } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { CameraIcon, LocationIcon, StoreIcon } from "@/components/icons";
 import type { ListingCard as ListingCardType } from "@/lib/api";
 import {
   conditionLabels,
@@ -32,7 +32,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm font-semibold text-river-700">
-              <Camera size={30} aria-hidden />
+              <CameraIcon size={32} />
               Fotografija opreme
             </div>
           )}
@@ -58,7 +58,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
         </div>
         <div className="flex flex-wrap gap-2 text-xs font-semibold text-slate-600">
           <span className="inline-flex items-center gap-1">
-            <MapPin size={14} /> {listing.city}
+            <LocationIcon size={14} /> {listing.city}
           </span>
           <span>{conditionLabels[listing.condition] ?? listing.condition}</span>
           <span>{listing.category.name_sr}</span>
@@ -78,7 +78,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           {listing.seller.shop_active && listing.seller.shop_slug ? (
             <Link href={`/prodavnice/${listing.seller.shop_slug}`} className="inline-flex items-center gap-1 font-semibold text-river-700 hover:text-river-600">
-              <Store size={13} aria-hidden />
+              <StoreIcon size={14} />
               {listing.seller.shop_name ?? listing.seller.display_name ?? listing.seller.username}
             </Link>
           ) : (

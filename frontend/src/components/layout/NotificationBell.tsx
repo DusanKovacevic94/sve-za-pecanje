@@ -1,8 +1,8 @@
 "use client";
 
-import { Bell } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
+import { BellIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { apiFetch } from "@/lib/api";
 import { subscribeToNotificationUpdates } from "@/lib/notification-events";
@@ -64,7 +64,7 @@ export function NotificationBell({ compact = false }: { compact?: boolean }) {
           : "Obaveštenja"
       }
     >
-      <Bell size={compact ? 15 : 18} aria-hidden />
+      <BellIcon size={compact ? 14 : 18} />
       {compact ? "Obaveštenja" : <span className="sr-only">Obaveštenja</span>}
       {badge}
     </Button>

@@ -1,9 +1,9 @@
 "use client";
 
-import { Check, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { CheckIcon, CloseIcon } from "@/components/icons";
 import { apiFetch, type FeatureRequest } from "@/lib/api";
 import { formatDate, formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
@@ -54,10 +54,10 @@ function FeatureRequestRow({ request }: { request: FeatureRequest }) {
       </div>
       <div className="flex flex-wrap gap-2 self-center">
         <Button type="button" onClick={() => resolve("approve")}>
-          <Check size={16} /> Potvrdi
+          <CheckIcon size={16} /> Potvrdi
         </Button>
         <Button type="button" variant="danger" onClick={() => resolve("reject")}>
-          <X size={16} /> Odbij
+          <CloseIcon size={16} /> Odbij
         </Button>
       </div>
     </div>

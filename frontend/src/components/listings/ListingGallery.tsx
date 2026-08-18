@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Camera } from "lucide-react";
 
+import { CameraIcon } from "@/components/icons";
 import type { ListingDetail } from "@/lib/api";
 
 export function ListingGallery({ listing }: { listing: ListingDetail }) {
@@ -35,7 +35,7 @@ export function ListingGallery({ listing }: { listing: ListingDetail }) {
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 text-river-700">
-              <Camera size={34} />
+              <CameraIcon size={32} />
               Fotografija opreme
             </div>
           )}

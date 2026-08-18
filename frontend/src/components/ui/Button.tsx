@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+
+import { SpinnerIcon } from "@/components/icons";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   href?: string;
@@ -34,7 +35,7 @@ export function Button({ href, rel, variant = "primary", className = "", isLoadi
   }
   return (
     <button className={classes} disabled={disabled || isLoading} {...props}>
-      {isLoading ? <Loader2 className="animate-spin" size={16} aria-hidden /> : null}
+      {isLoading ? <SpinnerIcon className="motion-safe:animate-spin" size={16} /> : null}
       {children}
     </button>
   );

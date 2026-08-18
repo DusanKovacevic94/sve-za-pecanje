@@ -1,4 +1,8 @@
-import { BarChart3, BadgeCheck, Store } from "lucide-react";
+import {
+  AnalyticsIcon,
+  StoreIcon,
+  VerifiedBadgeIcon,
+} from "@/components/icons";
 
 import { Button } from "@/components/ui/Button";
 import type { ShopPlan } from "@/lib/api";
@@ -14,7 +18,7 @@ export default async function ForShopsPage() {
     <div className="mx-auto max-w-6xl px-4 py-10">
       <section className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
         <div>
-          <BadgeCheck className="text-river-700" size={34} aria-hidden />
+          <VerifiedBadgeIcon className="text-river-700" size={32} />
           <h1 className="mt-4 text-4xl font-black">Prodavnica na Sve Za Pecanje</h1>
           <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-700">
             Za pecaroške radnje, servise i male uvoznike koji žele svoju stranicu, bedž poverenja i više prostora za aktivne oglase.
@@ -39,9 +43,9 @@ export default async function ForShopsPage() {
       </section>
       <section className="mt-10 grid gap-4 md:grid-cols-3">
         {[
-          { Icon: Store, title: "Brendirana stranica", copy: "Logo, opis i svi aktivni oglasi prodavnice na jednoj adresi." },
-          { Icon: BadgeCheck, title: "Bedž prodavnice", copy: "Oglasi aktivne prodavnice dobijaju vidljiv signal poverenja." },
-          { Icon: BarChart3, title: "Statistika oglasa", copy: "Pregledi, omiljeni i poruke ostaju dostupni po oglasu u nalogu." }
+          { Icon: StoreIcon, title: "Brendirana stranica", copy: "Logo, opis i svi aktivni oglasi prodavnice na jednoj adresi." },
+          { Icon: VerifiedBadgeIcon, title: "Bedž prodavnice", copy: "Oglasi aktivne prodavnice dobijaju vidljiv signal poverenja." },
+          { Icon: AnalyticsIcon, title: "Statistika oglasa", copy: "Pregledi, omiljeni i poruke ostaju dostupni po oglasu u nalogu." }
         ].map(({ Icon, title, copy }) => (
           <article key={title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
             <Icon className="text-river-700" size={24} aria-hidden />

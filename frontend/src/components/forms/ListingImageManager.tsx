@@ -1,10 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  DeleteIcon,
+  RatingIcon,
+} from "@/components/icons";
 import { apiFetch, type ListingDetail } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
@@ -142,7 +147,7 @@ export function ListingImageManager({
                 title="Postavi kao naslovnu"
                 aria-label="Postavi kao naslovnu"
               >
-                <Star size={18} />
+                <RatingIcon size={18} />
               </Button>
               <Button
                 type="button"
@@ -151,7 +156,7 @@ export function ListingImageManager({
                 title="Pomeri gore"
                 aria-label="Pomeri gore"
               >
-                <ArrowUp size={18} />
+                <ArrowUpIcon size={18} />
               </Button>
               <Button
                 type="button"
@@ -160,7 +165,7 @@ export function ListingImageManager({
                 title="Pomeri dole"
                 aria-label="Pomeri dole"
               >
-                <ArrowDown size={18} />
+                <ArrowDownIcon size={18} />
               </Button>
               <Button
                 type="button"
@@ -169,7 +174,7 @@ export function ListingImageManager({
                 title="Obriši sliku"
                 aria-label="Obriši sliku"
               >
-                <Trash2 size={18} />
+                <DeleteIcon size={18} />
               </Button>
             </div>
           </article>

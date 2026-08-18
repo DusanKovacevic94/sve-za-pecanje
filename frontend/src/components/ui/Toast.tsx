@@ -1,7 +1,8 @@
 "use client";
 
-import { CheckCircle2, Info, X } from "lucide-react";
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
+
+import { CloseIcon, InfoIcon, SuccessIcon } from "@/components/icons";
 
 type ToastTone = "success" | "info" | "error";
 type ToastItem = {
@@ -31,9 +32,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm font-semibold text-ink shadow-lift"
           >
             {item.tone === "success" ? (
-              <CheckCircle2 className="mt-0.5 shrink-0 text-river-600" size={18} />
+              <SuccessIcon className="mt-0.5 shrink-0 text-river-600" size={18} />
             ) : (
-              <Info className={`mt-0.5 shrink-0 ${item.tone === "error" ? "text-red-600" : "text-river-600"}`} size={18} />
+              <InfoIcon className={`mt-0.5 shrink-0 ${item.tone === "error" ? "text-red-600" : "text-river-600"}`} size={18} />
             )}
             <p className="flex-1">{item.message}</p>
             <button
@@ -42,7 +43,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               aria-label="Zatvori obaveštenje"
               onClick={() => setItems((current) => current.filter((toast) => toast.id !== item.id))}
             >
-              <X size={15} />
+              <CloseIcon size={15} />
             </button>
           </div>
         ))}

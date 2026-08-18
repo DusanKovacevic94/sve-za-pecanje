@@ -1,32 +1,32 @@
 "use client";
 
 import {
-  Bell,
-  Heart,
-  LayoutDashboard,
-  MessageSquare,
-  Search,
-  ShieldCheck,
-  Settings,
-  Star,
-  Store,
-  UsersRound,
-} from "lucide-react";
+  BellIcon,
+  DashboardIcon,
+  FavoriteIcon,
+  MessageIcon,
+  RatingIcon,
+  SearchIcon,
+  SettingsIcon,
+  StoreIcon,
+  TrustShieldIcon,
+  UsersIcon,
+} from "@/components/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const accountLinks = [
-  { href: "/nalog", label: "Pregled", Icon: LayoutDashboard },
-  { href: "/nalog/oglasi", label: "Moji oglasi", Icon: Store },
-  { href: "/nalog/prodavnica", label: "Prodavnica", Icon: Store },
-  { href: "/nalog/poruke", label: "Poruke", Icon: MessageSquare },
-  { href: "/nalog/obavestenja", label: "Obaveštenja", Icon: Bell },
-  { href: "/nalog/omiljeni", label: "Omiljeni", Icon: Heart },
-  { href: "/nalog/pratim", label: "Pratim", Icon: UsersRound },
-  { href: "/nalog/sacuvane-pretrage", label: "Sačuvane pretrage", Icon: Search },
-  { href: "/nalog/ocene", label: "Ocene", Icon: Star },
-  { href: "/nalog/profil", label: "Profil", Icon: Settings },
-  { href: "/nalog/bezbednost", label: "Bezbednost", Icon: ShieldCheck },
+  { href: "/nalog", label: "Pregled", Icon: DashboardIcon },
+  { href: "/nalog/oglasi", label: "Moji oglasi", Icon: StoreIcon },
+  { href: "/nalog/prodavnica", label: "Prodavnica", Icon: StoreIcon },
+  { href: "/nalog/poruke", label: "Poruke", Icon: MessageIcon },
+  { href: "/nalog/obavestenja", label: "Obaveštenja", Icon: BellIcon },
+  { href: "/nalog/omiljeni", label: "Omiljeni", Icon: FavoriteIcon },
+  { href: "/nalog/pratim", label: "Pratim", Icon: UsersIcon },
+  { href: "/nalog/sacuvane-pretrage", label: "Sačuvane pretrage", Icon: SearchIcon },
+  { href: "/nalog/ocene", label: "Ocene", Icon: RatingIcon },
+  { href: "/nalog/profil", label: "Profil", Icon: SettingsIcon },
+  { href: "/nalog/bezbednost", label: "Bezbednost", Icon: TrustShieldIcon },
 ];
 
 export function AccountSidebar({ username }: { username: string }) {

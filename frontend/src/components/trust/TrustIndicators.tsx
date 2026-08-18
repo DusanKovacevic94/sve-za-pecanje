@@ -1,10 +1,11 @@
 import {
-  CalendarDays,
-  MailCheck,
-  PhoneCall,
-  ShoppingBag,
-  Star,
-} from "lucide-react";
+  CalendarIcon,
+  PhoneIcon,
+  RatingIcon,
+  ShopBagIcon,
+  VerifiedMailIcon,
+  type IconComponent,
+} from "@/components/icons";
 
 import type { TrustSummary } from "@/lib/api";
 import { formatMonthYear } from "@/lib/format";
@@ -18,31 +19,31 @@ export function TrustIndicators({
 }) {
   const indicators = [
     trust.email_verified
-      ? { key: "email", Icon: MailCheck, text: "Email potvrđen" }
+      ? { key: "email", Icon: VerifiedMailIcon, text: "Email potvrđen" }
       : null,
     trust.phone_verified
-      ? { key: "phone", Icon: PhoneCall, text: "Telefon potvrđen" }
+      ? { key: "phone", Icon: PhoneIcon, text: "Telefon potvrđen" }
       : null,
     {
       key: "member",
-      Icon: CalendarDays,
+      Icon: CalendarIcon,
       text: `Član od ${formatMonthYear(trust.member_since)}`,
     },
     {
       key: "reviews",
-      Icon: Star,
+      Icon: RatingIcon,
       text: trust.review_count
         ? `${trust.rating_average?.toFixed(1) ?? "—"} · ${trust.review_count} ocena`
         : "Još nema ocena",
     },
     {
       key: "sales",
-      Icon: ShoppingBag,
+      Icon: ShopBagIcon,
       text: `${trust.completed_sale_count} završenih prodaja`,
     },
   ].filter(Boolean) as {
     key: string;
-    Icon: typeof MailCheck;
+    Icon: IconComponent;
     text: string;
   }[];
 

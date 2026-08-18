@@ -1,15 +1,16 @@
-import type { LucideIcon } from "lucide-react";
-import { SearchX } from "lucide-react";
-
+import {
+  SearchUnavailableIcon,
+  type IconComponent,
+} from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 
 export function EmptyState({
-  icon: Icon = SearchX,
+  icon: Icon = SearchUnavailableIcon,
   title,
   copy,
   action
 }: {
-  icon?: LucideIcon;
+  icon?: IconComponent;
   title: string;
   copy: string;
   action?: { href: string; label: string };

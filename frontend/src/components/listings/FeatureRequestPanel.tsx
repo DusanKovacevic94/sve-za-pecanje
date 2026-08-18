@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Megaphone } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { PromotionIcon } from "@/components/icons";
 import { apiFetch, type FeatureRequest, type ListingCard, type PromotionPackage } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
@@ -82,7 +82,7 @@ export function FeatureRequestPanel({
           )}
         </div>
         <Button type="button" disabled={Boolean(activeRequest) || pending} isLoading={pending} onClick={requestPromotion}>
-          <Megaphone size={16} /> Promoviši
+          <PromotionIcon size={16} /> Promoviši
         </Button>
       </div>
       {message ? <p className="mt-2 font-semibold text-river-800">{message}</p> : null}

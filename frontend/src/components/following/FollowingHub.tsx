@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Store, UserRound } from "lucide-react";
 import { useState } from "react";
 
+import { StoreIcon, UserIcon } from "@/components/icons";
 import { apiFetch, type FollowingSeller, type ListingCard as ListingCardType } from "@/lib/api";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { Button } from "@/components/ui/Button";
@@ -72,7 +72,7 @@ export function FollowingHub({
                   className="focus-ring min-w-52 rounded-lg border border-slate-200 bg-white p-4 shadow-soft hover:border-river-300"
                 >
                   <div className="flex items-center gap-2 text-river-700">
-                    {seller.shop_slug ? <Store size={18} /> : <UserRound size={18} />}
+                    {seller.shop_slug ? <StoreIcon size={18} /> : <UserIcon size={18} />}
                     <span className="text-xs font-bold uppercase">
                       {seller.shop_slug ? "Prodavnica" : "Prodavac"}
                     </span>

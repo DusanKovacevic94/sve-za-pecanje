@@ -1,9 +1,15 @@
 "use client";
 
-import { Download, LogOut, ShieldCheck, Trash2, Undo2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import {
+  DeleteIcon,
+  DownloadIcon,
+  LogoutIcon,
+  TrustShieldIcon,
+  UndoIcon,
+} from "@/components/icons";
 import { apiFetch, type AccountClosureStatus, type AccountSession, type DataExport } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { Badge } from "@/components/ui/Badge";
@@ -140,7 +146,7 @@ export function AccountSecurityPanel({
             onClick={revokeOthers}
             disabled={busy !== null || sessions.length <= 1}
           >
-            <LogOut size={17} /> Odjavi sve druge
+            <LogoutIcon size={18} /> Odjavi sve druge
           </Button>
         </div>
         <div className="mt-4 space-y-3">
@@ -187,7 +193,7 @@ export function AccountSecurityPanel({
           disabled={busy !== null}
           isLoading={busy === "export"}
         >
-          <Download size={17} /> Zatraži izvoz
+          <DownloadIcon size={18} /> Zatraži izvoz
         </Button>
         {exports.length ? (
           <ul className="mt-4 space-y-2 text-sm">
@@ -203,7 +209,7 @@ export function AccountSecurityPanel({
 
       <section className="rounded-lg border border-red-200 bg-white p-5 shadow-soft">
         <div className="flex items-center gap-2 text-red-800">
-          <ShieldCheck size={20} />
+          <TrustShieldIcon size={20} />
           <h2 className="text-xl font-black">Zatvaranje naloga</h2>
         </div>
         {!closure.enabled ? (
@@ -232,7 +238,7 @@ export function AccountSecurityPanel({
               onClick={cancelClosure}
               disabled={busy !== null || cancelConfirmation.trim().toUpperCase() !== "ZADRŽI"}
             >
-              <Undo2 size={17} /> Zadrži nalog
+              <UndoIcon size={18} /> Zadrži nalog
             </Button>
           </div>
         ) : (
@@ -256,7 +262,7 @@ export function AccountSecurityPanel({
               onClick={requestClosure}
               disabled={busy !== null || closureConfirmation.trim().toUpperCase() !== "OBRIŠI"}
             >
-              <Trash2 size={17} /> Zatraži zatvaranje
+              <DeleteIcon size={18} /> Zatraži zatvaranje
             </Button>
           </div>
         )}

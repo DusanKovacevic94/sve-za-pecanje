@@ -1,15 +1,23 @@
-import { Heart, MessageSquare, Search, Settings, SquarePlus, Store, type LucideIcon } from "lucide-react";
+import {
+  AddListingIcon,
+  FavoriteIcon,
+  MessageIcon,
+  SearchIcon,
+  SettingsIcon,
+  StoreIcon,
+  type IconComponent,
+} from "@/components/icons";
 
 export const metadata = { title: "Moj nalog | Sve Za Pecanje" };
 
 export default function AccountPage() {
-  const items: { Icon: LucideIcon; title: string; href: string; copy: string }[] = [
-    { Icon: SquarePlus, title: "Moji oglasi", href: "/nalog/oglasi", copy: "Aktivni, na čekanju i prodati oglasi." },
-    { Icon: MessageSquare, title: "Poruke", href: "/nalog/poruke", copy: "Razgovori sa kupcima i prodavcima." },
-    { Icon: Heart, title: "Omiljeni", href: "/nalog/omiljeni", copy: "Oglasi koje pratite." },
-    { Icon: Store, title: "Prodavnica", href: "/nalog/prodavnica", copy: "Podaci, pretplata i javna stranica prodavnice." },
-    { Icon: Search, title: "Sačuvane pretrage", href: "/nalog/sacuvane-pretrage", copy: "Filteri koje želite da pratite." },
-    { Icon: Settings, title: "Profil", href: "/nalog/profil", copy: "Lokacija, telefon i stilovi ribolova." }
+  const items: { Icon: IconComponent; title: string; href: string; copy: string }[] = [
+    { Icon: AddListingIcon, title: "Moji oglasi", href: "/nalog/oglasi", copy: "Aktivni, na čekanju i prodati oglasi." },
+    { Icon: MessageIcon, title: "Poruke", href: "/nalog/poruke", copy: "Razgovori sa kupcima i prodavcima." },
+    { Icon: FavoriteIcon, title: "Omiljeni", href: "/nalog/omiljeni", copy: "Oglasi koje pratite." },
+    { Icon: StoreIcon, title: "Prodavnica", href: "/nalog/prodavnica", copy: "Podaci, pretplata i javna stranica prodavnice." },
+    { Icon: SearchIcon, title: "Sačuvane pretrage", href: "/nalog/sacuvane-pretrage", copy: "Filteri koje želite da pratite." },
+    { Icon: SettingsIcon, title: "Profil", href: "/nalog/profil", copy: "Lokacija, telefon i stilovi ribolova." }
   ];
   return (
     <div>

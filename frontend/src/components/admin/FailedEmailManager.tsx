@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { RetryIcon } from "@/components/icons";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 
@@ -46,7 +46,7 @@ export function FailedEmailManager({ emails }: { emails: FailedEmail[] }) {
               {email.last_error ? <p className="mt-2 text-sm text-red-700">{email.last_error}</p> : null}
             </div>
             <Button type="button" variant="secondary" onClick={() => retry(email.id)}>
-              <RotateCcw size={18} /> Pokušaj ponovo
+              <RetryIcon size={18} /> Pokušaj ponovo
             </Button>
           </article>
         ))}

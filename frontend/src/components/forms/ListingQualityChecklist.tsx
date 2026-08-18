@@ -1,7 +1,6 @@
 "use client";
 
-import { CheckCircle2, Circle, Lightbulb } from "lucide-react";
-
+import { IdeaIcon, PendingCircleIcon, SuccessIcon } from "@/components/icons";
 import type { Category, ListingDetail } from "@/lib/api";
 
 type ChecklistValues = Record<string, unknown>;
@@ -78,7 +77,7 @@ export function ListingQualityChecklist({
   return (
     <aside className="rounded-lg border border-river-100 bg-river-50 p-5">
       <div className="flex items-start gap-3">
-        <Lightbulb className="mt-0.5 text-river-700" size={22} aria-hidden />
+        <IdeaIcon className="mt-0.5 text-river-700" size={24} />
         <div>
           <h2 className="text-lg font-black">Kvalitet oglasa: {completed}/{checks.length}</h2>
           <p className="mt-1 text-sm text-river-900">
@@ -90,9 +89,9 @@ export function ListingQualityChecklist({
         {checks.map((check) => (
           <li key={check.label} className="flex items-start gap-2 text-sm">
             {check.done ? (
-              <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-700" size={18} aria-hidden />
+              <SuccessIcon className="mt-0.5 shrink-0 text-emerald-700" size={18} />
             ) : (
-              <Circle className="mt-0.5 shrink-0 text-slate-400" size={18} aria-hidden />
+              <PendingCircleIcon className="mt-0.5 shrink-0 text-slate-400" size={18} />
             )}
             <span>
               <span className="font-bold">{check.label}</span>

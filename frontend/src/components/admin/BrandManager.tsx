@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { AddIcon, DeleteIcon, EditIcon } from "@/components/icons";
 import { apiFetch, type AdminBrand } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select } from "@/components/ui/Field";
@@ -64,7 +64,7 @@ export function BrandManager({ brands }: { brands: AdminBrand[] }) {
             <Input id="brand-name" value={name} onChange={(event) => setName(event.target.value)} />
           </div>
           <Button type="button" className="self-end" onClick={createBrand}>
-            <Plus size={18} /> Dodaj
+            <AddIcon size={18} /> Dodaj
           </Button>
         </div>
         {message ? <p className="mt-3 rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
@@ -115,7 +115,7 @@ function BrandRow({
       </Select>
       <div className="flex gap-2">
         <Button type="button" variant="secondary" onClick={onRename} aria-label="Preimenuj brend" title="Preimenuj brend">
-          <Pencil size={18} />
+          <EditIcon size={18} />
         </Button>
         <Button
           type="button"
@@ -124,7 +124,7 @@ function BrandRow({
           aria-label="Obriši brend"
           title="Obriši brend"
         >
-          <Trash2 size={18} />
+          <DeleteIcon size={18} />
         </Button>
       </div>
     </div>

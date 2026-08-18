@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { Bell, CheckCircle2, Search, ShieldCheck, SlidersHorizontal, Star, type LucideIcon } from "lucide-react";
 
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
+import {
+  BellIcon,
+  FiltersIcon,
+  RatingIcon,
+  SearchIcon,
+  SuccessIcon,
+  TrustShieldIcon,
+  type IconComponent,
+} from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { SearchCombobox } from "@/components/search/SearchCombobox";
@@ -55,11 +63,11 @@ export default async function HomePage() {
   const featuredListings = (homepageListings.length ? homepageListings : listings.filter((listing) => listing.is_featured)).slice(0, 4);
   const latestListings = listings.filter((listing) => !listing.is_featured).slice(0, 8);
   const visibleLatest = latestListings.length ? latestListings : listings.slice(0, 8);
-  const benefits: { Icon: LucideIcon; title: string; copy: string }[] = [
-    { Icon: SlidersHorizontal, title: "Filteri za ribolovnu opremu", copy: "Dužina, težina bacanja, veličina mašinice i drugi detalji." },
-    { Icon: ShieldCheck, title: "Oglasi od ribolovaca", copy: "Profil prodavca, prijave i ručna moderacija." },
-    { Icon: Bell, title: "Sačuvane pretrage", copy: "Prati opremu koja te zanima bez ponavljanja filtera." },
-    { Icon: Star, title: "Ocene prodavaca", copy: "Povratne informacije nakon prodaje grade poverenje." }
+  const benefits: { Icon: IconComponent; title: string; copy: string }[] = [
+    { Icon: FiltersIcon, title: "Filteri za ribolovnu opremu", copy: "Dužina, težina bacanja, veličina mašinice i drugi detalji." },
+    { Icon: TrustShieldIcon, title: "Oglasi od ribolovaca", copy: "Profil prodavca, prijave i ručna moderacija." },
+    { Icon: BellIcon, title: "Sačuvane pretrage", copy: "Prati opremu koja te zanima bez ponavljanja filtera." },
+    { Icon: RatingIcon, title: "Ocene prodavaca", copy: "Povratne informacije nakon prodaje grade poverenje." }
   ];
   return (
     <>
@@ -80,7 +88,7 @@ export default async function HomePage() {
                 placeholder="Pretraži Shimano, Daiwa, feeder..."
               />
               <Button type="submit" className="bg-ink hover:bg-ink-800">
-                <Search size={18} /> Pretraži oglase
+                <SearchIcon size={18} /> Pretraži oglase
               </Button>
             </form>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -163,7 +171,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-10">
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-5">
           <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 shrink-0 text-amber-800" size={22} />
+            <SuccessIcon className="mt-0.5 shrink-0 text-amber-800" size={22} />
             <div>
               <h2 className="font-black text-amber-950">Kupuj bezbedno</h2>
               <p className="mt-2 text-sm leading-6 text-amber-950">

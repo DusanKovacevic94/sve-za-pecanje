@@ -1,5 +1,11 @@
 import Link from "next/link";
-import { Fish, Mail, MapPin, ShieldCheck } from "lucide-react";
+
+import {
+  BrandMarkIcon,
+  LocationIcon,
+  MailIcon,
+  TrustShieldIcon,
+} from "@/components/icons";
 
 export function Footer() {
   const year = new Date().getFullYear();
@@ -9,7 +15,7 @@ export function Footer() {
         <div>
           <div className="flex items-center gap-2 font-black">
             <span className="grid h-10 w-10 place-items-center rounded-lg bg-river-600">
-              <Fish size={21} />
+              <BrandMarkIcon size={22} />
             </span>
             <span>Sve Za Pecanje</span>
           </div>
@@ -34,9 +40,9 @@ export function Footer() {
         <div>
           <h2 className="text-sm font-black uppercase tracking-[0.16em] text-river-100">Kontakt</h2>
           <div className="mt-3 grid gap-3 text-sm text-slate-300">
-            <span className="inline-flex items-center gap-2"><Mail size={16} /> kontakt@svezapecanje.rs</span>
-            <span className="inline-flex items-center gap-2"><MapPin size={16} /> Srbija</span>
-            <span className="inline-flex items-center gap-2"><ShieldCheck size={16} /> Moderisani oglasi</span>
+            <span className="inline-flex items-center gap-2"><MailIcon size={16} /> kontakt@svezapecanje.rs</span>
+            <span className="inline-flex items-center gap-2"><LocationIcon size={16} /> Srbija</span>
+            <span className="inline-flex items-center gap-2"><TrustShieldIcon size={16} /> Moderisani oglasi</span>
           </div>
         </div>
       </div>
