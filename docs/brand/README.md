@@ -15,3 +15,7 @@ Use the shared `BrandLogo` component for application UI. Keep the original
 aspect ratio, do not recolor the primary or inverse exports, and leave clear
 space around the mark. Action and category glyphs remain in the separate
 24×24 UI icon system.
+
+The broader palette, typography, shape, motion, and SVG motif rules are in
+`docs/brand/visual-identity.md`. During local development, `/dev/brand` provides
+a rendered catalogue and `/dev/icons` provides the complete UI glyph catalogue.

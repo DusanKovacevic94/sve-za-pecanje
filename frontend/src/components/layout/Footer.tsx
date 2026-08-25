@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandWaterline } from "@/components/brand/BrandWaterline";
 import {
   LocationIcon,
   MailIcon,
@@ -10,8 +11,9 @@ import {
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-16 bg-ink text-white">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.2fr_0.9fr_0.9fr_1fr]">
+    <footer className="relative mt-16 overflow-hidden bg-river-900 text-white">
+      <BrandWaterline className="pointer-events-none absolute -right-20 -top-8 w-[42rem] text-reed-500 opacity-20" />
+      <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-[1.2fr_0.9fr_0.9fr_1fr]">
         <div>
           <Link href="/" aria-label="Sve Za Pecanje — početna" className="focus-ring inline-block rounded-lg">
             <BrandLogo variant="inverse" alt="" className="h-10 w-auto" />
@@ -43,7 +45,7 @@ export function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-white/10">
+      <div className="relative border-t border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} Sve Za Pecanje. Sva prava zadržana.</p>
           <div className="flex gap-4">

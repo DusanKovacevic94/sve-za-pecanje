@@ -1,9 +1,9 @@
 export function Badge({ children, tone = "neutral" }: { children: React.ReactNode; tone?: "neutral" | "accent" | "sold" | "warn" }) {
   const tones = {
-    neutral: "bg-slate-100 text-slate-700",
-    accent: "bg-reed-100 text-ink",
-    sold: "bg-slate-800 text-white",
-    warn: "bg-amber-100 text-amber-800"
+    neutral: "border-sand-200 bg-sand-50 text-ink-700",
+    accent: "border-reed-200 bg-reed-50 text-reed-900",
+    sold: "border-ink bg-ink text-white",
+    warn: "border-amber-200 bg-amber-50 text-amber-900"
   };
-  return <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>{children}</span>;
+  return <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${tones[tone]}`}>{children}</span>;
 }

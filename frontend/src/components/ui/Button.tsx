@@ -12,14 +12,14 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  primary: "bg-river-700 text-white hover:bg-river-800",
-  secondary: "bg-white text-ink border border-river-100 hover:border-river-400",
-  ghost: "text-ink hover:bg-river-50",
-  danger: "bg-red-600 text-white hover:bg-red-700"
+  primary: "bg-river-700 text-white shadow-button hover:-translate-y-px hover:bg-river-800",
+  secondary: "border border-sand-300 bg-white text-ink hover:-translate-y-px hover:border-river-300 hover:bg-sand-50",
+  ghost: "text-ink hover:bg-river-50 hover:text-river-800",
+  danger: "bg-red-700 text-white hover:-translate-y-px hover:bg-red-800"
 };
 
 export function Button({ href, rel, variant = "primary", className = "", isLoading = false, children, disabled, ...props }: ButtonProps) {
-  const classes = `focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition disabled:pointer-events-none disabled:opacity-60 ${variants[variant]} ${className}`;
+  const classes = `focus-ring inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition duration-150 active:translate-y-0 disabled:pointer-events-none disabled:opacity-60 ${variants[variant]} ${className}`;
   if (href) {
     return (
       <Link

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
+import { BrandWaterline } from "@/components/brand/BrandWaterline";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import {
   BellIcon,
@@ -72,8 +73,10 @@ export default async function HomePage() {
   ];
   return (
     <>
-      <section className="overflow-hidden bg-[linear-gradient(135deg,#0f352f_0%,#147d6b_58%,#dca542_150%)] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-10 md:py-14">
+      <section className="relative isolate overflow-hidden bg-river-800 text-white">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_86%_10%,rgba(238,152,53,0.16),transparent_24rem)]" aria-hidden="true" />
+        <BrandWaterline className="pointer-events-none absolute -bottom-5 -right-24 -z-10 w-[52rem] text-reed-500 opacity-30" />
+        <div className="mx-auto max-w-7xl px-4 py-12 md:py-16">
           <div className="max-w-3xl">
             <h1>
               <span className="sr-only">Sve Za Pecanje</span>
@@ -84,14 +87,14 @@ export default async function HomePage() {
                 priority
               />
             </h1>
-            <p className="mt-5 max-w-2xl text-xl font-semibold text-river-50">
+            <p className="mt-5 max-w-2xl text-xl font-semibold leading-8 text-river-50">
               Pronađi štapove, mašinice, varalice i opremu od ribolovaca iz Srbije.
             </p>
-            <form action="/oglasi" className="mt-8 flex max-w-2xl flex-col gap-3 rounded-lg bg-white p-2 shadow-lift sm:flex-row">
+            <form action="/oglasi" className="mt-8 flex max-w-2xl flex-col gap-3 rounded-2xl border border-white/20 bg-white p-2 shadow-lift sm:flex-row">
               <label className="sr-only" htmlFor="homepage-search">Pretraga</label>
               <SearchCombobox
                 id="homepage-search"
-                className="focus-ring min-h-12 w-full rounded-md px-4 text-ink"
+                className="focus-ring min-h-12 w-full rounded-xl px-4 text-ink"
                 placeholder="Pretraži Shimano, Daiwa, feeder..."
               />
               <Button type="submit" className="bg-ink hover:bg-ink-800">
@@ -103,7 +106,7 @@ export default async function HomePage() {
                 <Link
                   key={suggestion.id}
                   href={suggestion.href}
-                  className="focus-ring rounded-md bg-white/12 px-3 py-2 text-sm font-semibold text-river-50 transition hover:bg-white/20"
+                  className="focus-ring rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-sm font-semibold text-river-50 transition hover:border-reed-300 hover:bg-white/10"
                 >
                   {suggestion.display}
                 </Link>
@@ -120,15 +123,16 @@ export default async function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-10">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-black">Kategorije</h2>
+            <div className="mb-3 h-1 w-9 rounded-full bg-reed-500" aria-hidden="true" />
+            <h2 className="text-2xl font-black text-ink">Kategorije</h2>
             <p className="mt-1 text-sm text-slate-600">Brzo uđi u delove tržišta koje ribolovci najčešće pretražuju.</p>
           </div>
           <Button href="/kategorije" variant="secondary">Sve kategorije</Button>
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {categories.slice(0, 8).map((category) => (
-            <Link key={category.id} href={`/kategorije/${category.slug}`} className="surface p-4 transition hover:-translate-y-0.5 hover:shadow-lift">
-              <div className="grid h-11 w-11 place-items-center rounded-lg bg-river-50 text-river-700">
+            <Link key={category.id} href={`/kategorije/${category.slug}`} className="surface group p-5 transition duration-200 hover:-translate-y-0.5 hover:border-river-200 hover:shadow-lift">
+              <div className="grid h-11 w-11 place-items-center rounded-xl border border-river-100 bg-river-50 text-river-700 transition group-hover:border-reed-200 group-hover:bg-reed-50">
                 <CategoryIcon slug={category.slug} name={category.name_sr} />
               </div>
               <h3 className="mt-4 font-black">{category.name_sr}</h3>
@@ -138,11 +142,13 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="bg-white/75">
+      <section className="border-y border-sand-200 bg-sand-50">
         <div className="mx-auto grid max-w-7xl gap-5 px-4 py-8 md:grid-cols-4">
           {benefits.map(({ Icon, title, copy }) => (
-            <div key={title} className="rounded-lg border border-sand-200 bg-white p-5">
-              <Icon className="text-river-700" size={24} />
+            <div key={title} className="rounded-xl border border-sand-200 bg-white p-5">
+              <div className="grid h-10 w-10 place-items-center rounded-xl bg-river-50 text-river-700">
+                <Icon size={22} />
+              </div>
               <h3 className="mt-4 font-black">{title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">{copy}</p>
             </div>
@@ -154,7 +160,7 @@ export default async function HomePage() {
         {featuredListings.length ? (
           <div className="mb-10">
             <div className="flex items-center justify-between gap-4">
-              <h2 className="text-2xl font-black">Istaknuti oglasi</h2>
+              <h2 className="text-2xl font-black text-ink">Istaknuti oglasi</h2>
               <Button href="/oglasi" variant="secondary">Svi oglasi</Button>
             </div>
             <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -165,7 +171,7 @@ export default async function HomePage() {
           </div>
         ) : null}
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-black">Najnoviji oglasi</h2>
+          <h2 className="text-2xl font-black text-ink">Najnoviji oglasi</h2>
           <Button href="/oglasi" variant="secondary">Svi oglasi</Button>
         </div>
         <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -176,15 +182,15 @@ export default async function HomePage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-10">
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-5">
+        <div className="rounded-xl border border-reed-200 bg-reed-50 p-5">
           <div className="flex items-start gap-3">
-            <SuccessIcon className="mt-0.5 shrink-0 text-amber-800" size={22} />
+            <SuccessIcon className="mt-0.5 shrink-0 text-reed-800" size={22} />
             <div>
-              <h2 className="font-black text-amber-950">Kupuj bezbedno</h2>
-              <p className="mt-2 text-sm leading-6 text-amber-950">
+              <h2 className="font-black text-reed-900">Kupuj bezbedno</h2>
+              <p className="mt-2 text-sm leading-6 text-reed-900">
                 Proverite opremu uživo kada god je moguće, ne šaljite novac unapred nepoznatim prodavcima i prijavite sumnjive oglase administratorima.
               </p>
-              <Link href="/saveti-za-bezbednost" className="mt-3 inline-flex text-sm font-black text-amber-950 underline decoration-amber-400 underline-offset-4">
+              <Link href="/saveti-za-bezbednost" className="mt-3 inline-flex text-sm font-black text-reed-900 underline decoration-reed-400 underline-offset-4">
                 Pogledaj savete za bezbednost
               </Link>
             </div>

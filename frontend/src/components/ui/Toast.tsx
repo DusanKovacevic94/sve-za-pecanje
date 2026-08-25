@@ -29,7 +29,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((item) => (
           <div
             key={item.id}
-            className="flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-3 text-sm font-semibold text-ink shadow-lift"
+            className="flex items-start gap-3 rounded-xl border border-sand-200 bg-white p-3 text-sm font-semibold text-ink shadow-lift"
           >
             {item.tone === "success" ? (
               <SuccessIcon className="mt-0.5 shrink-0 text-river-600" size={18} />

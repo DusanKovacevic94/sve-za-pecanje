@@ -16,12 +16,12 @@ import { FavoriteIconButton } from "@/components/listings/ListingActions";
 export function ListingCard({ listing }: { listing: ListingCardType }) {
   return (
     <article
-      className={`group overflow-hidden rounded-lg border bg-white shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-lift ${
-        listing.is_featured ? "border-reed-300 ring-1 ring-reed-100" : "border-slate-200"
+      className={`group overflow-hidden rounded-xl border bg-white shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-lift ${
+        listing.is_featured ? "border-reed-300 ring-1 ring-reed-100" : "border-sand-200 hover:border-river-200"
       }`}
     >
       <Link href={`/oglasi/${listing.slug}`} className="block">
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-river-50 via-white to-reed-100">
+        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-river-50 via-white to-reed-50">
           {listing.cover_image_url ? (
             <Image
               src={listing.cover_image_url}

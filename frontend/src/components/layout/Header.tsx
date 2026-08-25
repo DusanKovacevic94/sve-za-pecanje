@@ -16,7 +16,8 @@ import { UnreadMessagesLink } from "@/components/layout/UnreadMessagesLink";
 export async function Header() {
   const user = await getCurrentUser();
   return (
-    <header className="sticky top-0 z-40 border-b border-river-100 bg-white/90 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-sand-200 bg-sand-50/95 shadow-[0_4px_18px_rgba(23,63,55,0.05)] backdrop-blur">
+      <div className="h-0.5 bg-reed-500" aria-hidden="true" />
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <Link
           href="/"
@@ -56,7 +57,7 @@ export async function Header() {
         <HeaderNavLink href="/prodavnice" mobile>Prodavnice</HeaderNavLink>
         <HeaderNavLink href="/kategorije" mobile>Kategorije</HeaderNavLink>
         <HeaderNavLink href="/saveti-za-bezbednost" mobile>Bezbednost</HeaderNavLink>
-        <Link className="focus-ring rounded-md bg-river-50 px-3 py-2 text-sm font-semibold text-ink hover:bg-river-100" href="/nalog/omiljeni">
+        <Link className="focus-ring rounded-xl bg-river-50 px-3 py-2 text-sm font-semibold text-ink hover:bg-river-100" href="/nalog/omiljeni">
           <FavoriteIcon size={14} className="inline" /> Omiljeni
         </Link>
         {user ? (
