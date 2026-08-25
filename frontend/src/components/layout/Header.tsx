@@ -1,9 +1,9 @@
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import {
   AccountIcon,
   AddCircleIcon,
-  BrandMarkIcon,
   FavoriteIcon,
 } from "@/components/icons";
 import { getCurrentUser } from "@/lib/auth";
@@ -18,14 +18,12 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-river-100 bg-white/90 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-        <Link href="/" className="focus-ring flex items-center gap-2 rounded-lg text-lg font-black text-river-800">
-          <span className="grid h-10 w-10 place-items-center rounded-lg bg-river-700 text-white shadow-soft">
-            <BrandMarkIcon size={22} />
-          </span>
-          <span className="leading-tight">
-            Sve Za Pecanje
-            <span className="block text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">svezapecanje.rs</span>
-          </span>
+        <Link
+          href="/"
+          aria-label="Sve Za Pecanje — početna"
+          className="focus-ring shrink-0 rounded-lg"
+        >
+          <BrandLogo alt="" className="h-9 w-auto sm:h-10 md:h-9 xl:h-10" priority />
         </Link>
         <nav className="hidden items-center gap-1 md:flex">
           <HeaderNavLink href="/oglasi">Oglasi</HeaderNavLink>

@@ -36,13 +36,13 @@ export const metadata: Metadata = {
     images: ["/opengraph-image.png"]
   },
   icons: {
-    icon: [{ url: "/icon.svg" }, { url: "/icon.png", type: "image/png" }],
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }, { url: "/icon.png", type: "image/png" }],
     apple: "/apple-icon.svg"
   }
 };
 
 export const viewport: Viewport = {
-  themeColor: "#15836f"
+  themeColor: "#173f37"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="490" height="96" viewBox="0 0 490 96" role="img" aria-labelledby="title desc">
+  <title id="title">Sve za pecanje</title>
+  <desc id="desc">Minimal fishing-hook symbol with a water ripple and the svezapecanje.rs wordmark.</desc>
+  <g id="symbol" transform="translate(8 7)">
+    <circle cx="48" cy="11" r="5.5" fill="none" stroke="#173F37" stroke-width="6"/>
+    <path d="M48 19v31.5c0 16-10.5 26.5-25.5 26.5C9 77 2 68.7 2 57.5" fill="none" stroke="#173F37" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M2 57.5 15 62.3" fill="none" stroke="#173F37" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M4 36c6.5-5.8 13-5.8 19.5 0s13 5.8 19.5 0" fill="none" stroke="#EE9835" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <text x="95" y="62" font-family="Inter Display, Inter, Arial, sans-serif" font-size="43" font-weight="500" letter-spacing="-1.45" fill="#173F37"><tspan>sve za</tspan><tspan dx="12" font-weight="700">pecanje</tspan><tspan dx="3" font-size="28" font-weight="700" letter-spacing="-0.7" fill="#EE9835">.rs</tspan></text>
+</svg>

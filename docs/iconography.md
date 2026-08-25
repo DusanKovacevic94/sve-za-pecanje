@@ -4,6 +4,10 @@ Sve Za Pecanje uses an original rounded-outline SVG family. Application icons
 are React components in `frontend/src/components/icons`; they do not depend on
 an external icon library.
 
+Full wordmarks and the standalone brand symbol are separate from UI glyphs.
+Their production exports live in `frontend/public/brand` and their usage rules
+are documented in `docs/brand/README.md`.
+
 ## Drawing rules
 
 - Canvas: `0 0 24 24`, with a two-unit optical safe area.

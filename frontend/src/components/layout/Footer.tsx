@@ -1,7 +1,7 @@
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import {
-  BrandMarkIcon,
   LocationIcon,
   MailIcon,
   TrustShieldIcon,
@@ -13,12 +13,9 @@ export function Footer() {
     <footer className="mt-16 bg-ink text-white">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:grid-cols-[1.2fr_0.9fr_0.9fr_1fr]">
         <div>
-          <div className="flex items-center gap-2 font-black">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-river-600">
-              <BrandMarkIcon size={22} />
-            </span>
-            <span>Sve Za Pecanje</span>
-          </div>
+          <Link href="/" aria-label="Sve Za Pecanje — početna" className="focus-ring inline-block rounded-lg">
+            <BrandLogo variant="inverse" alt="" className="h-10 w-auto" />
+          </Link>
           <p className="mt-3 text-sm leading-6 text-slate-300">Specijalizovani oglasi za ribolovce u Srbiji.</p>
         </div>
         <div>

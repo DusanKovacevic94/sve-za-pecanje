@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { CategoryIcon } from "@/components/categories/CategoryIcon";
 import {
   BellIcon,
@@ -74,8 +75,14 @@ export default async function HomePage() {
       <section className="overflow-hidden bg-[linear-gradient(135deg,#0f352f_0%,#147d6b_58%,#dca542_150%)] text-white">
         <div className="mx-auto max-w-7xl px-4 py-10 md:py-14">
           <div className="max-w-3xl">
-            <h1 className="max-w-3xl text-4xl font-black tracking-normal md:text-5xl">
-              Sve Za Pecanje
+            <h1>
+              <span className="sr-only">Sve Za Pecanje</span>
+              <BrandLogo
+                variant="inverse"
+                alt=""
+                className="h-auto w-full max-w-[360px] md:max-w-[460px]"
+                priority
+              />
             </h1>
             <p className="mt-5 max-w-2xl text-xl font-semibold text-river-50">
               Pronađi štapove, mašinice, varalice i opremu od ribolovaca iz Srbije.

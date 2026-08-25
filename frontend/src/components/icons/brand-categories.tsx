@@ -3,12 +3,10 @@ import { IconBase, type IconProps } from "./IconBase";
 export function BrandMarkIcon(props: IconProps) {
   return (
     <IconBase name="brand-mark" {...props}>
-      <path d="M3 12c2.5-3.4 5.4-5.1 8.8-5.1 3.1 0 5.7 1.2 7.7 3.5" />
-      <path d="M3 12c2.5 3.4 5.4 5.1 8.8 5.1 3.1 0 5.7-1.2 7.7-3.5" />
-      <path d="m19.5 10.4 2.5-2.2v7.6l-2.5-2.2" />
-      <circle cx="7.2" cy="10.9" r=".65" fill="currentColor" stroke="none" />
-      <path d="M12.2 8.1c-1.2 1.2-1.8 2.5-1.8 3.9s.6 2.7 1.8 3.9" />
-      <path d="M5.1 14.2c-.5 2.6.5 4.5 2.8 5.6 1.4.7 2.7.1 2.7-1.1 0-.8-.6-1.3-1.4-1.1" />
+      <circle cx="15.7" cy="4.1" r="1.45" />
+      <path d="M15.7 6.2v8.3c0 4.2-2.8 7-6.7 7-3.5 0-5.4-2.2-5.4-5.2" />
+      <path d="m3.6 16.3 3.5 1.3" />
+      <path d="M4.1 10.6c1.7-1.5 3.4-1.5 5.1 0s3.4 1.5 5.1 0" />
     </IconBase>
   );
 }
