@@ -8,6 +8,7 @@ import { z } from "zod";
 import { apiFetch, type ShopPlan, type ShopProfile, type ShopSubscriptionRequest } from "@/lib/api";
 import { formatDate, formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
 
 const shopSchema = z.object({
@@ -30,7 +31,7 @@ export function ShopSettingsForm({
   plans: ShopPlan[];
   requests: ShopSubscriptionRequest[];
 }) {
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<AlertMessage | null>(null);
   const [selectedPlan, setSelectedPlan] = useState(plans[0]?.plan ?? "monthly");
   const { register, handleSubmit, formState } = useForm<ShopFormInput, unknown, ShopFormOutput>({
     resolver: zodResolver(shopSchema),
@@ -51,9 +52,9 @@ export function ShopSettingsForm({
         method: "PATCH",
         body: JSON.stringify(data)
       });
-      setMessage("Prodavnica je sačuvana.");
+      setMessage({ tone: "success", text: "Prodavnica je sačuvana." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Došlo je do greške." });
     }
   }
 
@@ -64,9 +65,9 @@ export function ShopSettingsForm({
         method: "POST",
         body: JSON.stringify({ plan: selectedPlan })
       });
-      setMessage("Zahtev je poslat. Admin će poslati predračun na email.");
+      setMessage({ tone: "success", text: "Zahtev je poslat. Admin će poslati predračun na email." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Došlo je do greške." });
     }
   }
 
@@ -128,9 +129,9 @@ export function ShopSettingsForm({
           </Button>
         </div>
         {pending ? (
-          <p className="mt-3 rounded-md bg-reed-50 p-3 text-sm font-semibold text-reed-900">
+          <Alert tone="warning" className="mt-3">
             Zahtev čeka obradu. Poziv na broj: {pending.payment_reference}
-          </p>
+          </Alert>
         ) : null}
       </section>
 
@@ -151,11 +152,7 @@ export function ShopSettingsForm({
         </section>
       ) : null}
 
-      {message ? (
-        <p className={`rounded-md p-3 text-sm font-semibold ${message.includes("greške") || message.includes("Unesite") ? "bg-red-50 text-red-700" : "bg-river-50 text-river-700"}`}>
-          {message}
-        </p>
-      ) : null}
+      {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
     </div>
   );
 }

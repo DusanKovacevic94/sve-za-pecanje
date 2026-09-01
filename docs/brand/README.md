@@ -1,5 +1,15 @@
 # Sve Za Pecanje brand assets
 
+The canonical visual sources live in the sibling
+`sve-za-pecanje-brand-manager/assets/` repository. Files in this application are
+synchronized deployment copies and must not be edited directly. From the Brand
+Manager repository, run `make assets-check` to detect drift or `make assets-sync`
+to update this application.
+
+The same operations are available from this repository as
+`make brand-assets-check` and `make brand-assets-sync`. Set `BRAND_MANAGER_DIR`
+if the repositories are not siblings.
+
 The deployable SVG files live in `frontend/public/brand`:
 
 - `logo.svg` — primary wordmark for light backgrounds;

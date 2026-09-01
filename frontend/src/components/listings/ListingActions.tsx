@@ -8,20 +8,23 @@ import {
   EditIcon,
   FavoriteIcon,
   LockIcon,
+  MessageIcon,
   ReportIcon,
   SuccessIcon,
   UndoIcon,
 } from "@/components/icons";
 import { ApiError, apiFetch, type BuyerCandidate, type ListingDetail } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { useToast } from "@/components/ui/Toast";
 
 type FavoriteProps = {
   listingId: string;
   initialSaved?: boolean;
+  loginPath?: string;
 };
 
-export function FavoriteButton({ listingId, initialSaved = false }: FavoriteProps) {
+export function FavoriteButton({ listingId, initialSaved = false, loginPath = "/prijava" }: FavoriteProps) {
   const router = useRouter();
   const [saved, setSaved] = useState(initialSaved);
   const [pending, setPending] = useState(false);
@@ -36,7 +39,7 @@ export function FavoriteButton({ listingId, initialSaved = false }: FavoriteProp
       pushToast(next ? "Oglas je dodat u omiljene." : "Oglas je uklonjen iz omiljenih.", "success");
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        router.push("/prijava");
+        router.push(loginPath);
         return;
       }
       pushToast("Omiljeni nisu ažurirani.", "error");
@@ -53,7 +56,7 @@ export function FavoriteButton({ listingId, initialSaved = false }: FavoriteProp
   );
 }
 
-export function FavoriteIconButton({ listingId, initialSaved = false }: FavoriteProps) {
+export function FavoriteIconButton({ listingId, initialSaved = false, loginPath = "/prijava" }: FavoriteProps) {
   const router = useRouter();
   const [saved, setSaved] = useState(initialSaved);
   const [pending, setPending] = useState(false);
@@ -69,7 +72,8 @@ export function FavoriteIconButton({ listingId, initialSaved = false }: Favorite
       router.refresh();
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
-        router.push("/prijava");
+        router.push(loginPath);
+        return;
       }
       pushToast("Omiljeni nisu ažurirani.", "error");
     } finally {
@@ -80,8 +84,8 @@ export function FavoriteIconButton({ listingId, initialSaved = false }: Favorite
   return (
     <button
       type="button"
-      className={`focus-ring rounded-md p-2 transition hover:bg-river-50 disabled:opacity-60 ${
-        saved ? "scale-105 text-river-700" : "text-slate-500"
+      className={`focus-ring rounded-md p-2 hover:bg-river-50 motion-safe:transition motion-safe:duration-150 disabled:opacity-60 ${
+        saved ? "text-river-700 motion-safe:scale-105" : "text-slate-500"
       }`}
       aria-label={saved ? "Ukloni iz omiljenih" : "Dodaj u omiljene"}
       aria-pressed={saved}
@@ -90,6 +94,90 @@ export function FavoriteIconButton({ listingId, initialSaved = false }: Favorite
     >
       <FavoriteIcon size={18} fill={saved ? "currentColor" : "none"} />
     </button>
+  );
+}
+
+export function MobileListingActions({
+  listingId,
+  listingPath,
+  price,
+  status,
+  canMessage,
+  isOwner,
+  isAuthenticated,
+  initialSaved = false
+}: {
+  listingId: string;
+  listingPath: string;
+  price: string;
+  status: string;
+  canMessage: boolean;
+  isOwner: boolean;
+  isAuthenticated: boolean;
+  initialSaved?: boolean;
+}) {
+  const messagePath = `/nalog/poruke?listing=${listingId}`;
+  const loginPath = `/prijava?next=${encodeURIComponent(listingPath)}`;
+  const messageHref = isAuthenticated
+    ? messagePath
+    : `/prijava?next=${encodeURIComponent(messagePath)}`;
+  const statusLabel = status === "sold"
+    ? "Prodato"
+    : status === "reserved"
+      ? "Rezervisano"
+      : status === "active"
+        ? "Aktivan oglas"
+        : "Oglas na pregledu";
+
+  return (
+    <aside
+      aria-label="Brze akcije oglasa"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-sand-200 bg-white/95 px-4 pt-3 shadow-[0_-8px_24px_rgba(23,63,55,0.12)] backdrop-blur lg:hidden"
+      style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+    >
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="truncate text-lg font-black text-river-800" data-mobile-listing-price>{price}</p>
+          <p className={`shrink-0 text-xs font-black ${
+            status === "sold"
+              ? "text-slate-600"
+              : status === "reserved"
+                ? "text-reed-800"
+                : "text-river-700"
+          }`}>
+            {statusLabel}
+          </p>
+        </div>
+        <div className="flex items-stretch gap-2">
+          {isOwner ? (
+            <Button href={`/izmeni-oglas/${listingId}`} variant="secondary" className="min-w-0 flex-1">
+              <EditIcon size={18} /> Izmeni oglas
+            </Button>
+          ) : status === "sold" ? (
+            <p className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-slate-100 px-3 text-sm font-bold text-slate-700">
+              Oglas je prodat
+            </p>
+          ) : canMessage ? (
+            <Button href={messageHref} className="min-w-0 flex-1">
+              <MessageIcon size={18} /> Pošalji poruku
+            </Button>
+          ) : (
+            <p className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-slate-100 px-3 text-center text-sm font-bold text-slate-700">
+              Kontakt nije dostupan
+            </p>
+          )}
+          {!isOwner ? (
+            <div className="grid min-h-11 min-w-11 place-items-center rounded-xl border border-sand-300 bg-white">
+              <FavoriteIconButton
+                listingId={listingId}
+                initialSaved={initialSaved}
+                loginPath={loginPath}
+              />
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </aside>
   );
 }
 
@@ -215,7 +303,7 @@ export function OwnerListingActions({ listingId, status }: { listingId: string; 
           <ArchiveIcon size={16} /> Arhiviraj
         </Button>
       </div>
-      {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error">{message}</Alert> : null}
     </div>
   );
 }

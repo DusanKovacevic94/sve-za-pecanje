@@ -1,0 +1,6 @@
+frontend/public/brand/*.svg text eol=lf
+frontend/src/app/*.svg text eol=lf
+frontend/src/assets/*.svg text eol=lf
+frontend/src/components/brand/BrandWaterline.tsx text eol=lf
+frontend/src/components/icons/*.tsx text eol=lf
+

@@ -48,7 +48,7 @@ export function AccountSidebar({ username }: { username: string }) {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={[
-                  "focus-ring inline-flex min-h-11 shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition lg:flex lg:w-full",
+                  "focus-ring inline-flex min-h-11 shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold motion-safe:transition-colors lg:flex lg:w-full",
                   active
                     ? "bg-river-700 text-white"
                     : "text-slate-700 hover:bg-river-50 hover:text-river-800",

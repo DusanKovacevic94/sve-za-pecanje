@@ -106,7 +106,7 @@ export default async function HomePage() {
                 <Link
                   key={suggestion.id}
                   href={suggestion.href}
-                  className="focus-ring rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-sm font-semibold text-river-50 transition hover:border-reed-300 hover:bg-white/10"
+                  className="focus-ring rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-sm font-semibold text-river-50 hover:border-reed-300 hover:bg-white/10 motion-safe:transition-colors"
                 >
                   {suggestion.display}
                 </Link>
@@ -131,8 +131,8 @@ export default async function HomePage() {
         </div>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {categories.slice(0, 8).map((category) => (
-            <Link key={category.id} href={`/kategorije/${category.slug}`} className="surface group p-5 transition duration-200 hover:-translate-y-0.5 hover:border-river-200 hover:shadow-lift">
-              <div className="grid h-11 w-11 place-items-center rounded-xl border border-river-100 bg-river-50 text-river-700 transition group-hover:border-reed-200 group-hover:bg-reed-50">
+            <Link key={category.id} href={`/kategorije/${category.slug}`} data-motion-card className="surface group p-5 hover:border-river-200 hover:shadow-lift motion-safe:transition motion-safe:duration-200 motion-safe:hover:-translate-y-0.5">
+              <div className="grid h-11 w-11 place-items-center rounded-xl border border-river-100 bg-river-50 text-river-700 group-hover:border-reed-200 group-hover:bg-reed-50 motion-safe:transition-colors">
                 <CategoryIcon slug={category.slug} name={category.name_sr} />
               </div>
               <h3 className="mt-4 font-black">{category.name_sr}</h3>

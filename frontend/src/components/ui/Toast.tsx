@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 
-import { CloseIcon, InfoIcon, SuccessIcon } from "@/components/icons";
+import { AlertIcon, CloseIcon, InfoIcon, SuccessIcon } from "@/components/icons";
 
 type ToastTone = "success" | "info" | "error";
 type ToastItem = {
@@ -25,18 +25,26 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 grid w-[min(92vw,360px)] gap-2" aria-live="polite" aria-atomic="true">
+      <div className="fixed bottom-4 right-4 z-50 grid w-[min(92vw,360px)] gap-2">
         {items.map((item) => (
           <div
             key={item.id}
+            role={item.tone === "error" ? "alert" : "status"}
             className="flex items-start gap-3 rounded-xl border border-sand-200 bg-white p-3 text-sm font-semibold text-ink shadow-lift"
           >
             {item.tone === "success" ? (
               <SuccessIcon className="mt-0.5 shrink-0 text-river-600" size={18} />
+            ) : item.tone === "error" ? (
+              <AlertIcon className="mt-0.5 shrink-0 text-red-600" size={18} />
             ) : (
-              <InfoIcon className={`mt-0.5 shrink-0 ${item.tone === "error" ? "text-red-600" : "text-river-600"}`} size={18} />
+              <InfoIcon className="mt-0.5 shrink-0 text-river-600" size={18} />
             )}
-            <p className="flex-1">{item.message}</p>
+            <p className="flex-1">
+              <span className="sr-only">
+                {item.tone === "success" ? "Uspešno" : item.tone === "error" ? "Greška" : "Informacija"}:{" "}
+              </span>
+              {item.message}
+            </p>
             <button
               type="button"
               className="focus-ring rounded-md p-1 text-slate-500 hover:bg-slate-100"

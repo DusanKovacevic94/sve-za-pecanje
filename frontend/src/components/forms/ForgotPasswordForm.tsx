@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ApiError, apiFetch } from "@/lib/api";
 import { forgotPasswordSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
@@ -47,8 +48,9 @@ export function ForgotPasswordForm() {
   if (sent) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <p className="font-semibold">Ako nalog postoji, poslali smo email sa linkom za reset lozinke.</p>
-        <p className="mt-2 text-sm text-slate-600">Proverite prijemno sanduče i spam folder.</p>
+        <Alert tone="success" title="Link za reset je poslat">
+          Ako nalog postoji, email je na putu. Proverite prijemno sanduče i spam folder.
+        </Alert>
       </div>
     );
   }
@@ -66,7 +68,7 @@ export function ForgotPasswordForm() {
       {challengeRequired ? (
         <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
       ) : null}
-      {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error">{message}</Alert> : null}
     </form>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { type FieldErrors, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -24,8 +24,13 @@ import {
 } from "@/lib/format";
 import { listingSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { FieldLabel, Input, Select, Textarea } from "@/components/ui/Field";
 import { ListingImageManager } from "@/components/forms/ListingImageManager";
+import {
+  ListingFormProgress,
+  type ListingFormSection
+} from "@/components/forms/ListingFormProgress";
 import { ListingQualityChecklist } from "@/components/forms/ListingQualityChecklist";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
@@ -93,6 +98,12 @@ function buildPayload(
   const attributes: Record<string, unknown> = {};
   category?.attributes.forEach((attribute) => {
     const value = data[`attr_${attribute.key}`];
+    if (attribute.field_type === "multi_enum") {
+      const selected = (Array.isArray(value) ? value : typeof value === "string" ? [value] : [])
+        .filter((item): item is string => typeof item === "string" && item.length > 0);
+      if (selected.length) attributes[attribute.key] = selected;
+      return;
+    }
     if (value !== undefined && value !== "" && !(Array.isArray(value) && value.length === 0)) {
       if (attribute.field_type === "integer") {
         attributes[attribute.key] = Number.parseInt(String(value), 10);
@@ -100,8 +111,6 @@ function buildPayload(
         attributes[attribute.key] = Number.parseFloat(String(value));
       } else if (attribute.field_type === "boolean") {
         attributes[attribute.key] = value === true || value === "true";
-      } else if (attribute.field_type === "multi_enum") {
-        attributes[attribute.key] = Array.isArray(value) ? value : [String(value)];
       } else {
         attributes[attribute.key] = value;
       }
@@ -154,6 +163,39 @@ function listingDefaults(listing: ListingDetail): ListingFormDefaults {
 
 type SaveState = "idle" | "saving" | "saved" | "offline" | "error" | "conflict";
 
+const formSectionIds = {
+  category: "listing-section-category",
+  basics: "listing-section-basics",
+  details: "listing-section-details",
+  handoff: "listing-section-handoff",
+  images: "listing-section-images"
+} as const;
+
+function hasFormValue(value: unknown) {
+  return value !== undefined
+    && value !== null
+    && value !== ""
+    && (!Array.isArray(value) || value.length > 0);
+}
+
+function hasAttributeValue(fieldType: string, value: unknown) {
+  if (fieldType === "multi_enum") {
+    return Array.isArray(value) && value.some((item) => typeof item === "string" && item.length > 0);
+  }
+  return hasFormValue(value);
+}
+
+function errorMessage(error: unknown) {
+  if (!error || typeof error !== "object" || !("message" in error)) return null;
+  return typeof error.message === "string" ? error.message : null;
+}
+
+type ValidationIssue = {
+  field: string;
+  sectionId: string;
+  message: string;
+};
+
 export function CreateListingForm({
   categories,
   brands,
@@ -176,6 +218,8 @@ export function CreateListingForm({
   const [saveState, setSaveState] = useState<SaveState>(resumeDraft ? "saved" : "idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [currentSection, setCurrentSection] = useState<string>(formSectionIds.category);
+  const [validationIssues, setValidationIssues] = useState<ValidationIssue[]>([]);
   const isEdit = mode === "edit";
   const submitLabel = isEdit ? "Sačuvaj izmene" : "Pošalji na pregled";
   const initialValues = useMemo(
@@ -192,7 +236,9 @@ export function CreateListingForm({
     formState,
     watch,
     getValues,
-    reset
+    reset,
+    setError,
+    clearErrors
   } = useForm<ListingFormInput, unknown, ListingFormOutput>({
     resolver: zodResolver(listingFormSchema),
     defaultValues: initialValues,
@@ -205,6 +251,11 @@ export function CreateListingForm({
     () => categoryOptions.find((item) => item.id === categoryId),
     [categoryOptions, categoryId]
   );
+  const selectedCategoryPath = useMemo(() => {
+    if (!selectedCategory) return "";
+    const parent = categories.find((category) => category.id === selectedCategory.parent_id);
+    return parent ? `${parent.name_sr} › ${selectedCategory.name_sr}` : selectedCategory.name_sr;
+  }, [categories, selectedCategory]);
   const draftIdRef = useRef<string | null>(resumeDraft?.id ?? null);
   const draftVersionRef = useRef(resumeDraft?.draft_version ?? 0);
   const clientDraftIdRef = useRef("");
@@ -213,6 +264,75 @@ export function CreateListingForm({
   const pendingSaveRef = useRef(false);
   const unsavedRef = useRef(false);
   const hydratingRef = useRef(false);
+
+  const visibleAttributes = selectedCategory?.attributes.filter(
+    (attribute) => conditionMatches(watchedValues, attribute.validation.visible_when)
+  ) ?? [];
+  const requiredAttributes = visibleAttributes.filter((attribute) => {
+    const conditionallyRequired = conditionMatches(
+      watchedValues,
+      attribute.validation.required_when
+    );
+    return attribute.required || (
+      Boolean(attribute.validation.required_when) && conditionallyRequired
+    );
+  });
+  const priceComplete = !["fixed", "negotiable"].includes(String(priceType))
+    || Number(watchedValues.price_amount) > 0;
+  const basicComplete = String(watchedValues.title ?? "").trim().length >= 8
+    && String(watchedValues.description ?? "").trim().length >= 20
+    && String(watchedValues.city ?? "").trim().length >= 2
+    && hasFormValue(watchedValues.condition)
+    && priceComplete;
+  const detailsComplete = requiredAttributes.every((attribute) =>
+    hasAttributeValue(attribute.field_type, watchedValues[`attr_${attribute.key}`])
+  );
+  const formErrors = formState.errors as Record<string, unknown>;
+  const sections: ListingFormSection[] = [
+    {
+      id: formSectionIds.category,
+      label: "Kategorija",
+      complete: hasFormValue(categoryId),
+      hasError: Boolean(formErrors.category_id)
+    },
+    {
+      id: formSectionIds.basics,
+      label: "Podaci",
+      complete: basicComplete,
+      hasError: ["title", "description", "condition", "city", "price_type", "price_amount", "currency"]
+        .some((field) => Boolean(formErrors[field]))
+    },
+    {
+      id: formSectionIds.details,
+      label: "Detalji",
+      complete: detailsComplete,
+      hasError: Object.keys(formErrors).some((field) => field.startsWith("attr_"))
+    },
+    {
+      id: formSectionIds.handoff,
+      label: "Preuzimanje",
+      complete: hasFormValue(watchedValues.delivery_methods),
+      hasError: Boolean(formErrors.delivery_note)
+    },
+    {
+      id: formSectionIds.images,
+      label: "Slike",
+      complete: draftImages.length > 0,
+      hasError: false
+    }
+  ];
+  const currentSectionData = sections.find((section) => section.id === currentSection) ?? sections[0];
+  const stickySaveLabel = saveState === "saving"
+    ? "Čuvanje…"
+    : saveState === "saved"
+      ? "Sačuvano"
+      : saveState === "offline"
+        ? "Nema interneta"
+        : saveState === "conflict"
+          ? "Sukob izmena"
+          : saveState === "error"
+            ? "Nije sačuvano"
+            : "Nacrt nije još sačuvan";
 
   const markUnsaved = useCallback((value: boolean) => {
     unsavedRef.current = value;
@@ -395,6 +515,15 @@ export function CreateListingForm({
   }, [isEdit, markUnsaved, persistDraft, watch]);
 
   useEffect(() => {
+    const subscription = watch((_values, event) => {
+      if (event.type !== "change" || !event.name) return;
+      setValidationIssues((current) => current.filter((issue) => issue.field !== event.name));
+      if (event.name.startsWith("attr_")) clearErrors(event.name);
+    });
+    return () => subscription.unsubscribe();
+  }, [clearErrors, watch]);
+
+  useEffect(() => {
     if (isEdit) return;
     const onOnline = () => {
       if (unsavedRef.current) void persistDraft(true);
@@ -435,8 +564,83 @@ export function CreateListingForm({
     };
   }, [hasUnsavedChanges, isEdit]);
 
+  useEffect(() => {
+    const elements = Object.values(formSectionIds)
+      .map((id) => document.getElementById(id))
+      .filter((element): element is HTMLElement => Boolean(element));
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((left, right) => left.boundingClientRect.top - right.boundingClientRect.top);
+      if (visible[0]) setCurrentSection(visible[0].target.id);
+    }, { rootMargin: "-20% 0px -65% 0px", threshold: 0 });
+    elements.forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+
+  function navigateToSection(sectionId: string, fieldId?: string) {
+    setCurrentSection(sectionId);
+    const section = document.getElementById(sectionId);
+    section?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(() => {
+      const target = fieldId ? document.getElementById(fieldId) : section;
+      target?.focus({ preventScroll: true });
+    }, 250);
+  }
+
+  function validationSection(field: string) {
+    if (field === "category_id") return formSectionIds.category;
+    if (field.startsWith("attr_")) return formSectionIds.details;
+    if (["delivery_methods", "delivery_note", "allow_messages", "phone_visible"].includes(field)) {
+      return formSectionIds.handoff;
+    }
+    return formSectionIds.basics;
+  }
+
+  function handleInvalid(errors: FieldErrors<ListingFormInput>) {
+    const orderedFields = [
+      "category_id",
+      "title",
+      "description",
+      "condition",
+      "city",
+      "price_type",
+      "price_amount",
+      "currency",
+      "delivery_note"
+    ];
+    const errorRecord = errors as Record<string, unknown>;
+    const issues = orderedFields.flatMap((field) => {
+      const message = errorMessage(errorRecord[field]);
+      return message ? [{ field, sectionId: validationSection(field), message }] : [];
+    });
+    setValidationIssues(issues);
+    if (issues[0]) navigateToSection(issues[0].sectionId, issues[0].field);
+  }
+
+  function missingAttributeIssues(data: Record<string, unknown>) {
+    return requiredAttributes.flatMap((attribute) => {
+      const field = `attr_${attribute.key}`;
+      return hasAttributeValue(attribute.field_type, data[field]) ? [] : [{
+        field,
+        sectionId: formSectionIds.details,
+        message: `Popunite polje „${attribute.label_sr}”.`
+      }];
+    });
+  }
+
   async function onSubmit(data: ListingFormOutput) {
     setMessage(null);
+    const attributeIssues = missingAttributeIssues(data as Record<string, unknown>);
+    if (attributeIssues.length) {
+      attributeIssues.forEach((issue) => {
+        setError(issue.field, { type: "required", message: issue.message });
+      });
+      setValidationIssues(attributeIssues);
+      navigateToSection(attributeIssues[0].sectionId, attributeIssues[0].field);
+      return;
+    }
+    setValidationIssues([]);
     try {
       let response;
       if (isEdit) {
@@ -512,7 +716,16 @@ export function CreateListingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={handleSubmit(onSubmit, handleInvalid)}
+      noValidate
+      className="space-y-6 pb-28 md:pb-0"
+    >
+      <ListingFormProgress
+        sections={sections}
+        currentSection={currentSection}
+        onNavigate={navigateToSection}
+      />
       {!isEdit ? (
         <div
           className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${
@@ -563,7 +776,29 @@ export function CreateListingForm({
           {saveError ? <span className="w-full text-xs">{saveError}</span> : null}
         </div>
       ) : null}
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      {validationIssues.length ? (
+        <Alert tone="error" title="Proverite podatke pre slanja">
+          <p>Otvorite prvo polje koje treba dopuniti.</p>
+          <ul className="mt-2 space-y-1">
+            {validationIssues.map((issue) => (
+              <li key={issue.field}>
+                <button
+                  type="button"
+                  className="focus-ring rounded font-bold underline underline-offset-2"
+                  onClick={() => navigateToSection(issue.sectionId, issue.field)}
+                >
+                  {issue.message}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Alert>
+      ) : null}
+      <section
+        id={formSectionIds.category}
+        tabIndex={-1}
+        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+      >
         <h2 className="text-xl font-black">1. Kategorija</h2>
         <div className="mt-4">
           <FieldLabel htmlFor="category_id">Kategorija</FieldLabel>
@@ -571,6 +806,7 @@ export function CreateListingForm({
             id="category_id"
             {...register("category_id")}
             disabled={isEdit}
+            aria-describedby="category-selection-help"
           >
             {categories.flatMap((category) => [
               <option value={category.id} key={category.id}>
@@ -583,11 +819,23 @@ export function CreateListingForm({
               ))
             ])}
           </Select>
+          <p id="category-selection-help" className="mt-2 text-sm text-slate-600">
+            {selectedCategoryPath
+              ? `Izabrano: ${selectedCategoryPath}.`
+              : "Izaberite kategoriju koja najbolje opisuje opremu."}
+            {selectedCategory?.children.length
+              ? " Uža potkategorija pomaže kupcima da lakše pronađu oglas."
+              : null}
+          </p>
           <p className="mt-1 text-sm text-red-600">{formState.errors.category_id?.message}</p>
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section
+        id={formSectionIds.basics}
+        tabIndex={-1}
+        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+      >
         <h2 className="text-xl font-black">2. Osnovni podaci</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
@@ -653,19 +901,21 @@ export function CreateListingForm({
               </div>
             </>
           ) : (
-            <p className="self-end rounded-md bg-river-50 p-3 text-sm text-river-800">
+            <Alert tone="info" className="self-end">
               Za opciju „{priceType === "free" ? "Poklanjam" : "Na upit"}” iznos se ne unosi.
-            </p>
+            </Alert>
           )}
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section
+        id={formSectionIds.details}
+        tabIndex={-1}
+        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+      >
         <h2 className="text-xl font-black">3. Specifični detalji</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {selectedCategory?.attributes.filter(
-            (attribute) => conditionMatches(watchedValues, attribute.validation.visible_when)
-          ).map((attribute) => {
+          {visibleAttributes.map((attribute) => {
             const conditionallyRequired = conditionMatches(
               watchedValues,
               attribute.validation.required_when
@@ -673,14 +923,41 @@ export function CreateListingForm({
             const required = attribute.required || (
               Boolean(attribute.validation.required_when) && conditionallyRequired
             );
-            const requireInput = required && !isEdit;
+            const fieldName = `attr_${attribute.key}`;
+            const attributeError = errorMessage(formErrors[fieldName]);
             return (
             <div key={attribute.id}>
-              <FieldLabel htmlFor={`attr_${attribute.key}`}>
-                {attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}{required ? " *" : ""}
-              </FieldLabel>
-              {attribute.field_type === "enum" ? (
-                <Select id={`attr_${attribute.key}`} required={requireInput} {...register(`attr_${attribute.key}`)}>
+              {attribute.field_type === "multi_enum" ? (
+                <fieldset aria-describedby={attributeError ? `${fieldName}-error` : undefined}>
+                  <legend className="text-sm font-bold text-ink-800">
+                    {attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}{required ? " *" : ""}
+                  </legend>
+                  <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                    {attribute.options.options?.map((option, index) => (
+                      <label
+                        key={option.value}
+                        className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-sand-200 px-3 py-2 text-sm hover:border-river-300 hover:bg-river-50"
+                      >
+                        <input
+                          id={index === 0 ? fieldName : `${fieldName}-${index}`}
+                          type="checkbox"
+                          value={option.value}
+                          aria-invalid={attributeError ? true : undefined}
+                          {...register(fieldName)}
+                        />
+                        {option.label_sr}
+                      </label>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">Izaberite sve opcije koje odgovaraju oglasu.</p>
+                </fieldset>
+              ) : (
+                <>
+                  <FieldLabel htmlFor={fieldName}>
+                    {attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}{required ? " *" : ""}
+                  </FieldLabel>
+                  {attribute.field_type === "enum" ? (
+                <Select id={fieldName} aria-invalid={attributeError ? true : undefined} {...register(fieldName)}>
                   <option value="">Izaberite</option>
                   {attribute.options.options?.map((option) => (
                     <option value={option.value} key={option.value}>
@@ -688,47 +965,40 @@ export function CreateListingForm({
                     </option>
                   ))}
                 </Select>
-              ) : attribute.field_type === "multi_enum" ? (
-                <>
-                  <Select
-                    id={`attr_${attribute.key}`}
-                    multiple
-                    className="min-h-32"
-                    required={requireInput}
-                    {...register(`attr_${attribute.key}`)}
-                  >
-                    {attribute.options.options?.map((option) => (
-                      <option value={option.value} key={option.value}>
-                        {option.label_sr}
-                      </option>
-                    ))}
-                  </Select>
-                  <p className="mt-1 text-xs text-slate-500">Možete izabrati više stavki.</p>
-                </>
               ) : attribute.field_type === "boolean" ? (
-                <Select id={`attr_${attribute.key}`} required={requireInput} {...register(`attr_${attribute.key}`)}>
+                <Select id={fieldName} aria-invalid={attributeError ? true : undefined} {...register(fieldName)}>
                   <option value="">Nije navedeno</option>
                   <option value="true">Da</option>
                   <option value="false">Ne</option>
                 </Select>
               ) : (
                 <Input
-                  id={`attr_${attribute.key}`}
+                  id={fieldName}
                   type={attribute.field_type === "integer" || attribute.field_type === "decimal" ? "number" : "text"}
                   min={attribute.validation.min}
                   max={attribute.validation.max}
                   step={attribute.validation.step ?? (attribute.field_type === "integer" ? 1 : undefined)}
-                  required={requireInput}
-                  {...register(`attr_${attribute.key}`)}
+                  aria-invalid={attributeError ? true : undefined}
+                  aria-describedby={attributeError ? `${fieldName}-error` : undefined}
+                  {...register(fieldName)}
                 />
               )}
+                </>
+              )}
+              {attributeError ? (
+                <p id={`${fieldName}-error`} className="mt-1 text-sm text-red-700">{attributeError}</p>
+              ) : null}
             </div>
             );
           })}
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section
+        id={formSectionIds.handoff}
+        tabIndex={-1}
+        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+      >
         <h2 className="text-xl font-black">4. Preuzimanje i kontakt</h2>
         <div className="mt-4 space-y-3">
           <fieldset>
@@ -765,10 +1035,11 @@ export function CreateListingForm({
         </div>
       </section>
       <ListingImageManager
+        sectionId={formSectionIds.images}
         listingId={isEdit ? listingId : draftId ?? undefined}
-        initialImages={isEdit ? images : draftImages}
+        initialImages={draftImages}
         ensureListingId={isEdit ? undefined : () => persistDraft(true)}
-        onImagesChange={isEdit ? undefined : handleImagesChange}
+        onImagesChange={handleImagesChange}
       />
       {!isEdit ? (
         <ListingQualityChecklist
@@ -777,13 +1048,41 @@ export function CreateListingForm({
           images={draftImages}
         />
       ) : null}
-      {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error">{message}</Alert> : null}
       {challengeRequired ? (
         <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
       ) : null}
-      <Button type="submit" disabled={formState.isSubmitting} className="w-full md:w-auto">
-        {submitLabel}
-      </Button>
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-sand-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur md:static md:rounded-xl md:border md:p-4 md:shadow-soft">
+        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-black text-ink">
+              {sections.findIndex((section) => section.id === currentSectionData.id) + 1}. {currentSectionData.label}
+            </p>
+            <p className="text-xs text-slate-600">
+              {!isEdit ? `${stickySaveLabel} · ` : ""}
+              {currentSectionData.complete ? "korak je popunjen" : "korak treba dopuniti"}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {!isEdit ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className="px-3"
+                aria-label="Sačuvaj nacrt"
+                title="Sačuvaj nacrt"
+                disabled={saveState === "saving"}
+                onClick={() => void persistDraft(true)}
+              >
+                <SaveIcon size={18} /> <span className="hidden sm:inline">Sačuvaj nacrt</span>
+              </Button>
+            ) : null}
+            <Button type="submit" disabled={formState.isSubmitting} className="whitespace-nowrap px-3 sm:px-4">
+              {submitLabel}
+            </Button>
+          </div>
+        </div>
+      </div>
       {isEdit ? (
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
           <h2 className="text-xl font-black">Akcije oglasa</h2>
@@ -795,9 +1094,7 @@ export function CreateListingForm({
               <ArchiveIcon size={18} /> Arhiviraj oglas
             </Button>
           </div>
-          {actionMessage ? (
-            <p className="mt-3 rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{actionMessage}</p>
-          ) : null}
+          {actionMessage ? <Alert tone="error" className="mt-3">{actionMessage}</Alert> : null}
         </section>
       ) : null}
     </form>

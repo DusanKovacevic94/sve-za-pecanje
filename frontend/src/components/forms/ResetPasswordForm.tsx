@@ -8,6 +8,7 @@ import { z } from "zod";
 import { ApiError, apiFetch } from "@/lib/api";
 import { resetPasswordSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
@@ -51,7 +52,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   if (done) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <p className="font-semibold">Lozinka je uspešno promenjena.</p>
+        <Alert tone="success">Lozinka je uspešno promenjena.</Alert>
         <Button href="/prijava" className="mt-4">
           Prijavite se
         </Button>
@@ -77,7 +78,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
       {challengeRequired ? (
         <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
       ) : null}
-      {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error">{message}</Alert> : null}
     </form>
   );
 }

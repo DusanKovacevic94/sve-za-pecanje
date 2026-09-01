@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
-  AlertIcon,
   CameraIcon,
   DeleteIcon,
   EditIcon,
@@ -14,6 +13,7 @@ import type { ListingCard } from "@/lib/api";
 import { apiFetch } from "@/lib/api";
 import { formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 
 export function DraftListingCard({ listing }: { listing: ListingCard }) {
   const router = useRouter();
@@ -62,10 +62,9 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
             Poslednji put sačuvano: {formatDate(listing.updated_at)}
           </p>
           {listing.draft_expires_soon && listing.draft_expires_at ? (
-            <p className="mt-2 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-xs font-semibold text-amber-900">
-              <AlertIcon className="mt-0.5 shrink-0" size={14} />
+            <Alert tone="warning" className="mt-2 py-2 text-xs">
               Nacrt će biti obrisan {formatDate(listing.draft_expires_at)} ako ga ne izmenite.
-            </p>
+            </Alert>
           ) : null}
         </div>
       </div>
@@ -77,7 +76,7 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
           <DeleteIcon size={16} /> Obriši
         </Button>
       </div>
-      {message ? <p className="px-4 pb-4 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error" className="mx-4 mb-4">{message}</Alert> : null}
     </article>
   );
 }

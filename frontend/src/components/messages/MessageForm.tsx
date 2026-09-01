@@ -7,6 +7,7 @@ import { SendIcon } from "@/components/icons";
 import { ApiError, apiFetch, type Conversation } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { Textarea } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
@@ -91,7 +92,7 @@ export function MessageForm(props: MessageFormProps) {
       {challengeRequired ? (
         <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
       ) : null}
-      {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error">{message}</Alert> : null}
     </form>
   );
 }

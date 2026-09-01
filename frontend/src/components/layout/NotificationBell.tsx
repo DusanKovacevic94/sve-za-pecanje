@@ -55,8 +55,8 @@ export function NotificationBell({ compact = false }: { compact?: boolean }) {
       variant="ghost"
       className={
         compact
-          ? "bg-river-50 px-3 py-2"
-          : "hidden px-3 md:inline-flex"
+          ? "shrink-0 bg-river-50 px-3 py-2"
+          : "hidden px-3 lg:inline-flex"
       }
       aria-label={
         count

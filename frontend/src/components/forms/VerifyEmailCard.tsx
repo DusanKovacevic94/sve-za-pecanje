@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { apiFetch } from "@/lib/api";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 
 export function VerifyEmailCard({ token }: { token: string }) {
@@ -26,7 +27,7 @@ export function VerifyEmailCard({ token }: { token: string }) {
   if (verified) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <p className="font-semibold">Email adresa je potvrđena. Sada možete da postavljate oglase.</p>
+        <Alert tone="success">Email adresa je potvrđena. Sada možete da postavljate oglase.</Alert>
         <Button href="/prijava" className="mt-4">
           Prijavite se
         </Button>
@@ -40,7 +41,7 @@ export function VerifyEmailCard({ token }: { token: string }) {
       <Button onClick={onVerify} disabled={pending} className="mt-4">
         Potvrdi email
       </Button>
-      {message ? <p className="mt-3 rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error" className="mt-3">{message}</Alert> : null}
     </div>
   );
 }

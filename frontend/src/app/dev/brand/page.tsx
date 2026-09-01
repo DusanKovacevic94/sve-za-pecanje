@@ -10,6 +10,7 @@ import {
   TrustShieldIcon,
 } from "@/components/icons";
 import { Badge } from "@/components/ui/Badge";
+import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input } from "@/components/ui/Field";
 
@@ -92,6 +93,7 @@ export default function BrandCatalogPage() {
             <Button>Primary action</Button>
             <Button variant="secondary">Secondary</Button>
             <Button variant="ghost">Quiet action</Button>
+            <Button isLoading data-motion-loading>Čuvanje</Button>
           </div>
           <div className="mt-6 max-w-md space-y-2">
             <FieldLabel htmlFor="brand-example">Search field</FieldLabel>
@@ -102,6 +104,15 @@ export default function BrandCatalogPage() {
             <Badge tone="accent">Istaknuto</Badge>
             <Badge tone="warn">Rezervisano</Badge>
             <Badge tone="sold">Prodato</Badge>
+          </div>
+          <div className="mt-6 grid gap-3">
+            <Alert tone="success">Izmena je sačuvana.</Alert>
+            <Alert tone="error">Izmena nije sačuvana. Pokušajte ponovo.</Alert>
+            <Alert tone="warning">Oglas ističe za tri dana.</Alert>
+            <Alert tone="info">Nacrt se automatski čuva.</Alert>
+          </div>
+          <div className="mt-6" aria-label="Loading placeholder example">
+            <div className="skeleton h-5 w-2/3" data-motion-skeleton />
           </div>
         </div>
 

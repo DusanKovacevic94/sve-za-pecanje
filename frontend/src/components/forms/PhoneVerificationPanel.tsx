@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { PhoneIcon, SuccessIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { apiFetch, type UserProfile } from "@/lib/api";
 
@@ -25,25 +26,26 @@ export function PhoneVerificationPanel({
 }) {
   const [challenge, setChallenge] = useState<ChallengeResponse | null>(null);
   const [code, setCode] = useState("");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState<AlertMessage | null>(null);
   const [loading, setLoading] = useState(false);
 
   if (!profile.phone_verification_enabled) return null;
 
   async function requestCode() {
     setLoading(true);
-    setMessage("");
+    setMessage(null);
     try {
       const response = await apiFetch<ChallengeResponse>(
         "/users/me/phone-verification/request",
         { method: "POST" }
       );
       setChallenge(response.data);
-      setMessage(`Kod je poslat na ${response.data.phone_masked}.`);
+      setMessage({ tone: "success", text: `Kod je poslat na ${response.data.phone_masked}.` });
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Kod nije moguće poslati."
-      );
+      setMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Kod nije moguće poslati."
+      });
     } finally {
       setLoading(false);
     }
@@ -52,7 +54,7 @@ export function PhoneVerificationPanel({
   async function confirmCode() {
     if (!challenge) return;
     setLoading(true);
-    setMessage("");
+    setMessage(null);
     try {
       const response = await apiFetch<UserProfile>(
         "/users/me/phone-verification/confirm",
@@ -67,11 +69,12 @@ export function PhoneVerificationPanel({
       onVerified(response.data);
       setChallenge(null);
       setCode("");
-      setMessage("Broj telefona je potvrđen.");
+      setMessage({ tone: "success", text: "Broj telefona je potvrđen." });
     } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Kod nije moguće potvrditi."
-      );
+      setMessage({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Kod nije moguće potvrditi."
+      });
     } finally {
       setLoading(false);
     }
@@ -150,11 +153,7 @@ export function PhoneVerificationPanel({
         </div>
       ) : null}
 
-      {message ? (
-        <p className="mt-3 text-sm font-semibold" role="status" aria-live="polite">
-          {message}
-        </p>
-      ) : null}
+      {message ? <Alert tone={message.tone} className="mt-3">{message.text}</Alert> : null}
     </section>
   );
 }

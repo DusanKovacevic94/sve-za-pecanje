@@ -7,6 +7,7 @@ import { BellIcon, DeleteIcon, SearchIcon } from "@/components/icons";
 import { apiFetch, type Category } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/Toast";
@@ -121,7 +122,7 @@ export function SavedSearchManager({
   const router = useRouter();
   const [name, setName] = useState(defaultName(currentQuery, currentFilters));
   const [notify, setNotify] = useState(true);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<AlertMessage | null>(null);
   const { pushToast } = useToast();
   const hasCurrentSearch = Boolean(currentQuery || Object.keys(currentFilters).length);
   const visibleSearches = useMemo(() => searches, [searches]);
@@ -140,11 +141,11 @@ export function SavedSearchManager({
       });
       trackEvent("saved_search_created");
       router.refresh();
-      setMessage("Pretraga je sačuvana.");
+      setMessage({ tone: "success", text: "Pretraga je sačuvana." });
       pushToast("Pretraga je sačuvana.", "success");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Pretraga nije sačuvana.";
-      setMessage(errorMessage);
+      setMessage({ tone: "error", text: errorMessage });
       pushToast(errorMessage, "error");
     }
   }
@@ -158,7 +159,7 @@ export function SavedSearchManager({
       pushToast("Pretraga je obrisana.", "success");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Pretraga nije obrisana.";
-      setMessage(errorMessage);
+      setMessage({ tone: "error", text: errorMessage });
       pushToast(errorMessage, "error");
     }
   }
@@ -184,7 +185,7 @@ export function SavedSearchManager({
         </section>
       ) : null}
 
-      {message ? <p className="rounded-md bg-river-50 p-3 text-sm font-semibold text-river-700">{message}</p> : null}
+      {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
 
       <div className="grid gap-4">
         {visibleSearches.map((search) => (

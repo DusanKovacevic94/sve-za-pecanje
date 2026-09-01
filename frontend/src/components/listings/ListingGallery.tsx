@@ -29,7 +29,7 @@ export function ListingGallery({ listing }: { listing: ListingDetail }) {
               alt={listing.title}
               fill
               sizes="(min-width: 1024px) 820px, 100vw"
-              className={`object-cover transition-opacity duration-300 ${loadedId === selected.id ? "opacity-100" : "opacity-0"}`}
+              className={`object-cover motion-safe:transition-opacity motion-safe:duration-300 ${loadedId === selected.id ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setLoadedId(selected.id)}
               priority
             />

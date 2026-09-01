@@ -8,6 +8,7 @@ import { z } from "zod";
 import { SendIcon } from "@/components/icons";
 import { apiFetch } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { FieldLabel, Input, Textarea } from "@/components/ui/Field";
 
 const schema = z.object({
@@ -21,7 +22,7 @@ const schema = z.object({
 type ContactInput = z.infer<typeof schema>;
 
 export function ContactForm() {
-  const [status, setStatus] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [status, setStatus] = useState<AlertMessage | null>(null);
   const { register, handleSubmit, reset, formState } = useForm<ContactInput>({
     resolver: zodResolver(schema),
     defaultValues: { website: "" }
@@ -35,9 +36,9 @@ export function ContactForm() {
         body: JSON.stringify(data)
       });
       reset();
-      setStatus({ type: "success", text: "Poruka je poslata." });
+      setStatus({ tone: "success", text: "Poruka je poslata." });
     } catch (error) {
-      setStatus({ type: "error", text: error instanceof Error ? error.message : "Poruka nije poslata." });
+      setStatus({ tone: "error", text: error instanceof Error ? error.message : "Poruka nije poslata." });
     }
   }
 
@@ -60,15 +61,7 @@ export function ContactForm() {
         <Textarea id="message" error={formState.errors.message?.message} {...register("message")} />
       </div>
       <input type="text" tabIndex={-1} autoComplete="off" className="hidden" {...register("website")} />
-      {status ? (
-        <p
-          className={`rounded-md p-3 text-sm font-semibold ${
-            status.type === "success" ? "bg-river-50 text-river-700" : "bg-red-50 text-red-700"
-          }`}
-        >
-          {status.text}
-        </p>
-      ) : null}
+      {status ? <Alert tone={status.tone}>{status.text}</Alert> : null}
       <Button type="submit" disabled={formState.isSubmitting}>
         <SendIcon size={18} /> Pošalji
       </Button>

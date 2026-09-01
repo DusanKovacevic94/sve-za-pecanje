@@ -7,16 +7,18 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { publicApiUrl } from "@/lib/api";
+import { safeNextPath } from "@/lib/navigation";
 import { loginSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 type FormData = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+export function LoginForm({ nextPath = "/nalog" }: { nextPath?: string }) {
   const router = useRouter();
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<AlertMessage | null>(null);
   const [challengeRequired, setChallengeRequired] = useState(false);
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const [challengeKey, setChallengeKey] = useState(0);
@@ -34,7 +36,7 @@ export function LoginForm() {
     });
     const json = await response.json();
     if (response.ok) {
-      router.push("/nalog");
+      router.push(safeNextPath(nextPath));
       router.refresh();
     } else {
       if (["challenge_required", "challenge_unavailable"].includes(json?.error?.code)) {
@@ -42,13 +44,13 @@ export function LoginForm() {
         setChallengeToken(null);
         setChallengeKey((value) => value + 1);
       }
-      setMessage(json?.error?.message ?? "Došlo je do greške.");
+      setMessage({ tone: "error", text: json?.error?.message ?? "Došlo je do greške." });
     }
   }
 
   async function resendVerification() {
     if (!email) {
-      setMessage("Unesite email adresu.");
+      setMessage({ tone: "warning", text: "Unesite email adresu." });
       return;
     }
     const response = await fetch(`${publicApiUrl}/auth/resend-verification`, {
@@ -57,7 +59,10 @@ export function LoginForm() {
       body: JSON.stringify({ email })
     });
     const json = await response.json().catch(() => null);
-    setMessage(response.ok ? json.data.message : json?.error?.message ?? "Došlo je do greške.");
+    setMessage({
+      tone: response.ok ? "success" : "error",
+      text: response.ok ? json.data.message : json?.error?.message ?? "Došlo je do greške."
+    });
   }
 
   return (
@@ -88,7 +93,7 @@ export function LoginForm() {
       >
         Pošalji ponovo verifikacioni email
       </button>
-      {message ? <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
     </form>
   );
 }

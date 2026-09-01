@@ -1,4 +1,6 @@
-.PHONY: dev migrate migration-gate-postgres seed test test-storage-minio create-admin validate-prod
+.PHONY: dev migrate migration-gate-postgres seed test test-storage-minio create-admin validate-prod brand-assets-check brand-assets-sync
+
+BRAND_MANAGER_DIR ?= ../sve-za-pecanje-brand-manager
 
 dev:
 	docker compose up --build
@@ -28,3 +30,9 @@ validate-prod:
 
 create-admin:
 	docker compose run --rm backend python -m scripts.create_admin --email "$(EMAIL)" --username "$(USERNAME)" --password "$(PASSWORD)"
+
+brand-assets-check:
+	$(MAKE) -C "$(BRAND_MANAGER_DIR)" assets-check
+
+brand-assets-sync:
+	$(MAKE) -C "$(BRAND_MANAGER_DIR)" assets-sync

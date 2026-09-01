@@ -1,5 +1,9 @@
+import { redirect } from "next/navigation";
+
 import { CreateListingForm } from "@/components/forms/CreateListingForm";
 import { apiFetch, Brand, Category, type ListingDetail } from "@/lib/api";
+import { getCurrentUser } from "@/lib/auth";
+import { loginHref } from "@/lib/navigation";
 import { serverApiFetch } from "@/lib/server-api";
 
 export const metadata = { title: "Postavi oglas | Sve Za Pecanje" };
@@ -10,6 +14,14 @@ export default async function CreateListingPage({
   searchParams: Promise<{ draft?: string }>;
 }) {
   const { draft: draftId } = await searchParams;
+  const user = await getCurrentUser();
+  if (!user) {
+    const nextPath = draftId
+      ? `/postavi-oglas?draft=${encodeURIComponent(draftId)}`
+      : "/postavi-oglas";
+    redirect(loginHref(nextPath));
+  }
+
   const [categories, brands] = await Promise.all([
     apiFetch<Category[]>("/categories", { next: { revalidate: 3600 } }).catch(() => ({ data: [] })),
     apiFetch<Brand[]>("/brands", { next: { revalidate: 3600 } }).catch(() => ({ data: [] }))

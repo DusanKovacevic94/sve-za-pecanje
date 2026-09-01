@@ -7,10 +7,10 @@ export function HeaderNavLink({ href, children, mobile = false }: { href: string
   const pathname = usePathname();
   const active = pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
   const classes = mobile
-    ? `focus-ring rounded-xl px-3 py-2 text-sm font-semibold transition ${
+    ? `focus-ring shrink-0 rounded-xl px-3 py-2 text-sm font-semibold motion-safe:transition-colors ${
         active ? "bg-river-700 text-white" : "bg-river-50 text-ink hover:bg-river-100"
       }`
-    : `focus-ring rounded-xl px-3 py-2 text-sm font-semibold transition ${
+    : `focus-ring rounded-xl px-3 py-2 text-sm font-semibold motion-safe:transition-colors ${
         active ? "bg-river-50 text-river-800 shadow-[inset_0_-2px_0_#ee9835]" : "hover:bg-river-50"
       }`;
   return (

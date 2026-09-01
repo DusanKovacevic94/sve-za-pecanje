@@ -34,6 +34,12 @@ test("registration-to-sale marketplace journey", async ({
   let listingSlug = "";
   await test.step("seller creates a listing in manual moderation and manages images", async () => {
     await sellerPage.goto("/postavi-oglas");
+    await expect(
+      sellerPage.getByRole("navigation", { name: "Koraci za postavljanje oglasa" })
+    ).toBeVisible();
+    await sellerPage.getByRole("button", { name: "Pošalji na pregled" }).click();
+    await expect(sellerPage.getByText("Proverite podatke pre slanja", { exact: true })).toBeVisible();
+    await expect(sellerPage.getByLabel("Naslov")).toBeFocused();
     await sellerPage.getByLabel("Kategorija").selectOption({ label: "↳ Spin štapovi" });
     await sellerPage.getByLabel("Naslov").fill(listingTitle);
     await expect(sellerPage.getByText("Sačuvano", { exact: true })).toBeVisible();
@@ -59,8 +65,14 @@ test("registration-to-sale marketplace journey", async ({
     }
     await sellerPage.getByLabel(/Dužina/).fill("240");
     const draftFileInput = sellerPage.getByLabel("Dodaj sliku");
-    await draftFileInput.setInputFiles({ name: "front.png", mimeType: "image/png", buffer: validPng });
-    await expect(sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article")).toHaveCount(1);
+    await draftFileInput.setInputFiles([
+      { name: "front.png", mimeType: "image/png", buffer: validPng },
+      { name: "overview.png", mimeType: "image/png", buffer: validPng }
+    ]);
+    const draftImages = sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article");
+    await expect(draftImages).toHaveCount(2);
+    await expect(draftImages.first().getByText("1. Naslovna fotografija", { exact: true })).toBeVisible();
+    await expect(sellerPage.getByLabel("Fotografiši opremu")).toHaveAttribute("capture", "environment");
     await sellerPage.getByRole("button", { name: "Pošalji na pregled" }).click();
     await expect(sellerPage).toHaveURL(/\/oglasi\/[^/?]+$/);
     listingSlug = new URL(sellerPage.url()).pathname.split("/").at(-1) ?? "";
@@ -78,15 +90,15 @@ test("registration-to-sale marketplace journey", async ({
     await editLink.click();
     const fileInput = sellerPage.getByLabel("Dodaj sliku");
     await fileInput.setInputFiles({ name: "detail.png", mimeType: "image/png", buffer: validPng });
-    await expect(sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article")).toHaveCount(2);
+    await expect(sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article")).toHaveCount(3);
     await fileInput.setInputFiles({ name: "condition.png", mimeType: "image/png", buffer: validPng });
 
     const imageCards = sellerPage.locator("section").filter({ hasText: "5. Slike" }).locator("article");
-    await expect(imageCards).toHaveCount(3);
+    await expect(imageCards).toHaveCount(4);
     await imageCards.nth(1).getByRole("button", { name: "Postavi kao naslovnu" }).click();
-    await expect(imageCards.nth(1).getByText("Naslovna")).toBeVisible();
+    await expect(imageCards.nth(1).getByText("Naslovna", { exact: true })).toBeVisible();
     await imageCards.nth(1).getByRole("button", { name: "Pomeri gore" }).click();
-    await expect(imageCards.nth(0).getByText("Naslovna")).toBeVisible();
+    await expect(imageCards.nth(0).getByText("Naslovna", { exact: true })).toBeVisible();
   });
 
   const adminContext = await browser.newContext();
@@ -127,8 +139,14 @@ test("registration-to-sale marketplace journey", async ({
       { data: { type: "featured", package_days: 7 } }
     );
     expect(promotion.status()).toBe(400);
+    await sellerPage.setViewportSize({ width: 390, height: 844 });
     await sellerPage.goto(`/oglasi/${listingSlug}`);
-    await expect(sellerPage.getByText("Rezervisano", { exact: true })).toBeVisible();
+    await expect(sellerPage.locator("span").filter({ hasText: /^Rezervisano$/ }).first()).toBeVisible();
+    const ownerMobileActions = sellerPage.getByRole("complementary", { name: "Brze akcije oglasa" });
+    await expect(ownerMobileActions.getByRole("link", { name: "Izmeni oglas" })).toBeVisible();
+    await expect(ownerMobileActions.getByText("Rezervisano", { exact: true })).toBeVisible();
+    await expect(ownerMobileActions.getByRole("button", { name: /omiljene/i })).toHaveCount(0);
+    await sellerPage.setViewportSize({ width: 1280, height: 900 });
   });
 
   const buyerContext = await browser.newContext();
@@ -139,9 +157,9 @@ test("registration-to-sale marketplace journey", async ({
 
     await buyerPage.goto(`/oglasi?q=${encodeURIComponent(listingTitle)}&category=spin-stapovi`);
     const filters = buyerPage.locator("aside");
-    await filters.locator("#category-filter-options summary").click();
+    await filters.locator('[id$="category-filter-options"] summary').click();
     await filters.getByRole("checkbox", { name: "Feeder štapovi", exact: true }).check();
-    await filters.locator("#brand-filter-options summary").click();
+    await filters.locator('[id$="brand-filter-options"] summary').click();
     await filters.getByRole("checkbox", { name: "Shimano", exact: true }).check();
     await filters.getByRole("checkbox", { name: "Daiwa", exact: true }).check();
     await filters.getByRole("checkbox", { name: "Cena po dogovoru", exact: true }).check();
@@ -149,9 +167,10 @@ test("registration-to-sale marketplace journey", async ({
     await filters.getByRole("button", { name: "Primeni filtere" }).click();
 
     const attributeFilters = buyerPage.locator("aside");
-    const rodTypes = attributeFilters.getByLabel("Tip štapa");
+    const rodTypes = attributeFilters.getByRole("group", { name: "Tip štapa" });
     if (await rodTypes.count()) {
-      await rodTypes.selectOption(["spinning", "feeder"]);
+      await rodTypes.getByRole("checkbox", { name: "Spin", exact: true }).check();
+      await rodTypes.getByRole("checkbox", { name: "Feeder", exact: true }).check();
     }
     await attributeFilters.getByLabel("Dužina od", { exact: true }).fill("220");
     await attributeFilters.getByRole("button", { name: "Primeni filtere" }).click();
@@ -195,7 +214,16 @@ test("registration-to-sale marketplace journey", async ({
 
   let conversationId = "";
   await test.step("buyer favorites, reports, and sends the first message", async () => {
+    await buyerPage.setViewportSize({ width: 390, height: 844 });
     await buyerPage.goto(`/oglasi/${listingSlug}`);
+    const buyerMobileActions = buyerPage.getByRole("complementary", { name: "Brze akcije oglasa" });
+    await expect(buyerMobileActions.getByText("Rezervisano", { exact: true })).toBeVisible();
+    await expect(buyerMobileActions.getByRole("link", { name: "Pošalji poruku" })).toHaveAttribute(
+      "href",
+      `/nalog/poruke?listing=${listingId}`
+    );
+    await expect(buyerMobileActions.getByRole("button", { name: "Dodaj u omiljene" })).toBeVisible();
+    await buyerPage.setViewportSize({ width: 1280, height: 900 });
     const listingActions = buyerPage.locator("main aside").first();
     await listingActions.getByRole("button", { name: "Prati prodavca" }).click();
     await expect(
@@ -324,6 +352,14 @@ test("registration-to-sale marketplace journey", async ({
       sellerPage.getByRole("button", { name: "Ukloni moju blokadu" })
     ).toHaveCount(0);
 
+    await buyerPage.setViewportSize({ width: 390, height: 844 });
+    await buyerPage.goto(`/oglasi/${listingSlug}`);
+    const blockedMobileActions = buyerPage.getByRole("complementary", { name: "Brze akcije oglasa" });
+    await expect(blockedMobileActions.getByText("Kontakt nije dostupan", { exact: true })).toBeVisible();
+    await expect(blockedMobileActions.getByRole("link", { name: "Pošalji poruku" })).toHaveCount(0);
+    await buyerPage.setViewportSize({ width: 1280, height: 900 });
+    await buyerPage.goto(`/nalog/poruke/${conversationId}`);
+
     await buyerPage.getByRole("button", { name: "Ukloni moju blokadu" }).click();
     await expect(buyerPage.getByPlaceholder("Napišite odgovor...")).toBeVisible();
 
@@ -356,6 +392,14 @@ test("registration-to-sale marketplace journey", async ({
         return (await response.json()).data.status;
       })
       .toBe("sold");
+
+    await buyerPage.setViewportSize({ width: 390, height: 844 });
+    await buyerPage.goto(`/oglasi/${listingSlug}`);
+    const soldMobileActions = buyerPage.getByRole("complementary", { name: "Brze akcije oglasa" });
+    await expect(soldMobileActions.getByText("Prodato", { exact: true })).toBeVisible();
+    await expect(soldMobileActions.getByText("Oglas je prodat", { exact: true })).toBeVisible();
+    await expect(soldMobileActions.getByRole("link", { name: "Pošalji poruku" })).toHaveCount(0);
+    await buyerPage.setViewportSize({ width: 1280, height: 900 });
 
     const buyerReview = `Odličan prodavac E2E ${suffix}`;
     await buyerPage.goto("/nalog/ocene");

@@ -13,6 +13,7 @@ import {
 } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
 import { FieldLabel, Input, Select } from "@/components/ui/Field";
+import { SearchableCheckboxGroup } from "@/components/ui/SearchableCheckboxGroup";
 import { SearchCombobox } from "@/components/search/SearchCombobox";
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -93,14 +94,23 @@ function choiceSummary(
   return `${labels.get(selected[0]) ?? selected[0]} + još ${selected.length - 1}`;
 }
 
-function updateConditionalControls(event: ChangeEvent<HTMLSelectElement>) {
+function updateConditionalControls(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
   const key = event.currentTarget.name.match(/^attributes\[([^\]]+)\]$/)?.[1];
   const form = event.currentTarget.form;
   if (!key || !form) return;
+  const selected = Array.from(form.elements).flatMap((control) => {
+    if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement)) return [];
+    if (control.name !== event.currentTarget.name) return [];
+    if (control instanceof HTMLInputElement) {
+      return control.type === "checkbox" && control.checked ? [control.value] : [];
+    }
+    return control.multiple
+      ? Array.from(control.selectedOptions, (option) => option.value)
+      : control.value ? [control.value] : [];
+  });
   form.querySelectorAll<HTMLElement>("[data-conditional-key]").forEach((container) => {
     if (container.dataset.conditionalKey !== key) return;
     const allowed = (container.dataset.conditionalValues ?? "").split(",");
-    const selected = Array.from(event.currentTarget.selectedOptions, (option) => option.value);
     const visible = selected.some((value) => allowed.includes(value));
     container.hidden = !visible;
     container.querySelectorAll<HTMLInputElement | HTMLSelectElement>("input, select")
@@ -115,13 +125,19 @@ export function FilterSidebar({
   brands,
   cities,
   searchParams,
-  idPrefix = "filters"
+  idPrefix = "filters",
+  formId,
+  showActions = true,
+  compact = false
 }: {
   categories: Category[];
   brands: Brand[];
   cities: City[];
   searchParams: SearchParams;
   idPrefix?: string;
+  formId?: string;
+  showActions?: boolean;
+  compact?: boolean;
 }) {
   const selectedCategorySlugs = selectedValues(searchParams.category);
   const selectedBrandIds = selectedValues(searchParams.brand_id);
@@ -149,24 +165,28 @@ export function FilterSidebar({
   );
   const brandLabels = new Map(brands.map((brand) => [brand.id, brand.name]));
   return (
-    <form action="/oglasi" className="space-y-4 rounded-lg border border-slate-200 bg-white p-4 shadow-soft">
+    <form
+      id={formId}
+      action="/oglasi"
+      className={`min-w-0 space-y-4 ${compact ? "" : "rounded-lg border border-slate-200 bg-white p-4 shadow-soft"}`}
+    >
       {sort ? <input type="hidden" name="sort" value={sort} /> : null}
       <div>
         <FieldLabel htmlFor={`${idPrefix}-q`}>Pretraga</FieldLabel>
         <SearchCombobox
           id={`${idPrefix}-q`}
           defaultValue={typeof searchParams.q === "string" ? searchParams.q : ""}
-          className="focus-ring min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm transition hover:border-river-200"
+          className="focus-ring min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:border-river-200 motion-safe:transition-colors"
         />
       </div>
       <fieldset>
         <legend className="text-sm font-semibold text-slate-800">Kategorije</legend>
-        <details id="category-filter-options" className="group mt-1 rounded-lg border border-slate-200 bg-white">
+        <details id={`${idPrefix}-category-filter-options`} className="group mt-1 rounded-lg border border-slate-200 bg-white">
           <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm">
             <span className="truncate">
               {choiceSummary(selectedCategorySlugs, categoryLabels, "Sve kategorije")}
             </span>
-            <ChevronDownIcon className="ml-2 text-slate-400 transition group-open:rotate-180" size={16} />
+            <ChevronDownIcon className="ml-2 text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
           </summary>
           <div className="max-h-80 space-y-3 overflow-y-auto border-t border-slate-100 p-3">
             {categories.map((item) => (
@@ -207,143 +227,160 @@ export function FilterSidebar({
         </details>
         <p className="mt-1 text-xs text-slate-500">Možete izabrati više kategorija.</p>
       </fieldset>
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <FieldLabel htmlFor="price_min">Cena od</FieldLabel>
-          <Input id="price_min" name="price_min" inputMode="numeric" defaultValue={typeof searchParams.price_min === "string" ? searchParams.price_min : ""} />
+      <details open className="group rounded-xl border border-sand-200 bg-white">
+        <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-bold text-ink">
+          Cena i dostava
+          <ChevronDownIcon className="text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
+        </summary>
+        <div className="space-y-4 border-t border-sand-200 p-3">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="min-w-0">
+              <FieldLabel htmlFor={`${idPrefix}-price-min`}>Cena od</FieldLabel>
+              <Input id={`${idPrefix}-price-min`} name="price_min" inputMode="numeric" defaultValue={typeof searchParams.price_min === "string" ? searchParams.price_min : ""} />
+            </div>
+            <div className="min-w-0">
+              <FieldLabel htmlFor={`${idPrefix}-price-max`}>Cena do</FieldLabel>
+              <Input id={`${idPrefix}-price-max`} name="price_max" inputMode="numeric" defaultValue={typeof searchParams.price_max === "string" ? searchParams.price_max : ""} />
+            </div>
+          </div>
+          <div>
+            <FieldLabel htmlFor={`${idPrefix}-currency`}>Valuta</FieldLabel>
+            <Select id={`${idPrefix}-currency`} name="currency" defaultValue={typeof searchParams.currency === "string" ? searchParams.currency : ""}>
+              <option value="">Sve</option>
+              <option value="RSD">RSD</option>
+              <option value="EUR">EUR</option>
+            </Select>
+          </div>
+          <fieldset>
+            <legend className="text-sm font-semibold text-slate-800">Tip cene</legend>
+            <div className="mt-2 grid gap-2">
+              {priceTypeOptions.map(({ value, label }) => (
+                <label key={value} className="flex min-h-10 items-center gap-3 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    name="price_type"
+                    value={value}
+                    defaultChecked={selectedPriceTypes.includes(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend className="text-sm font-semibold text-slate-800">Preuzimanje i dostava</legend>
+            <div className="mt-2 grid gap-2">
+              {deliveryMethodOptions.map(({ value, label }) => (
+                <label key={value} className="flex min-h-10 items-center gap-3 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    name="delivery_method"
+                    value={value}
+                    defaultChecked={selectedDeliveryMethods.includes(value)}
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </div>
-        <div>
-          <FieldLabel htmlFor="price_max">Cena do</FieldLabel>
-          <Input id="price_max" name="price_max" inputMode="numeric" defaultValue={typeof searchParams.price_max === "string" ? searchParams.price_max : ""} />
-        </div>
-      </div>
-      <div>
-        <FieldLabel htmlFor="currency">Valuta</FieldLabel>
-        <Select id="currency" name="currency" defaultValue={typeof searchParams.currency === "string" ? searchParams.currency : ""}>
-          <option value="">Sve</option>
-          <option value="RSD">RSD</option>
-          <option value="EUR">EUR</option>
-        </Select>
-      </div>
-      <fieldset>
-        <legend className="text-sm font-semibold text-slate-800">Tip cene</legend>
-        <div className="mt-2 grid gap-2">
-          {priceTypeOptions.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                name="price_type"
-                value={value}
-                defaultChecked={selectedPriceTypes.includes(value)}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend className="text-sm font-semibold text-slate-800">Preuzimanje i dostava</legend>
-        <div className="mt-2 grid gap-2">
-          {deliveryMethodOptions.map(({ value, label }) => (
-            <label key={value} className="flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                name="delivery_method"
-                value={value}
-                defaultChecked={selectedDeliveryMethods.includes(value)}
-              />
-              {label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+      </details>
       <fieldset>
         <legend className="text-sm font-semibold text-slate-800">Brendovi</legend>
-        <details id="brand-filter-options" className="group mt-1 rounded-lg border border-slate-200 bg-white">
+        <details id={`${idPrefix}-brand-filter-options`} className="group mt-1 rounded-lg border border-slate-200 bg-white">
           <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm">
             <span className="truncate">
               {choiceSummary(selectedBrandIds, brandLabels, "Svi brendovi")}
             </span>
-            <ChevronDownIcon className="ml-2 text-slate-400 transition group-open:rotate-180" size={16} />
+            <ChevronDownIcon className="ml-2 text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
           </summary>
-          <div className="max-h-64 space-y-2 overflow-y-auto border-t border-slate-100 p-3">
-            {brands.map((brand) => (
-              <label key={brand.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  name="brand_id"
-                  value={brand.id}
-                  defaultChecked={selectedBrandIds.includes(brand.id)}
-                />
-                {brand.name}
-              </label>
-            ))}
+          <div className="border-t border-slate-100 p-3">
+            <SearchableCheckboxGroup
+              id={`${idPrefix}-brands`}
+              label="Izaberite brendove"
+              name="brand_id"
+              options={brands.map((brand) => ({ value: brand.id, label: brand.name }))}
+              defaultValues={selectedBrandIds}
+              searchPlaceholder="Pretraži brendove"
+            />
           </div>
         </details>
         <p className="mt-1 text-xs text-slate-500">Izabrani brendovi se kombinuju.</p>
       </fieldset>
-      <div>
-        <FieldLabel htmlFor="city">Grad</FieldLabel>
-        <Select id="city" name="city" defaultValue={typeof searchParams.city === "string" ? searchParams.city : ""}>
-          <option value="">Svi gradovi</option>
-          {cities.map((city) => (
-            <option value={city.name} key={city.id}>{city.name}</option>
-          ))}
-        </Select>
-      </div>
-      <div>
-        <FieldLabel htmlFor="condition">Stanje</FieldLabel>
-        <Select id="condition" name="condition" defaultValue={typeof searchParams.condition === "string" ? searchParams.condition : ""}>
-          <option value="">Sva stanja</option>
-          {conditionOptions.map(({ value, label }) => (
-            <option value={value} key={value}>
-              {label}
-            </option>
-          ))}
-        </Select>
-      </div>
-      <div>
-        <FieldLabel htmlFor="seller_type">Prodavac</FieldLabel>
-        <Select id="seller_type" name="seller_type" defaultValue={typeof searchParams.seller_type === "string" ? searchParams.seller_type : ""}>
-          <option value="">Svi prodavci</option>
-          <option value="private">Privatni prodavac</option>
-          <option value="shop">Prodavnica</option>
-        </Select>
-      </div>
-      <div>
-        <FieldLabel htmlFor="posted_within">Objavljeno</FieldLabel>
-        <Select id="posted_within" name="posted_within" defaultValue={typeof searchParams.posted_within === "string" ? searchParams.posted_within : ""}>
-          <option value="">Bilo kada</option>
-          <option value="24h">U poslednja 24 sata</option>
-          <option value="7d">U poslednjih 7 dana</option>
-          <option value="30d">U poslednjih 30 dana</option>
-        </Select>
-      </div>
-      <label className="flex items-center gap-2 text-sm font-semibold text-slate-700">
-        <input
-          type="checkbox"
-          name="with_images"
-          value="true"
-          defaultChecked={searchParams.with_images === "true"}
-        />
-        Samo oglasi sa slikom
-      </label>
+      <details open className="group rounded-xl border border-sand-200 bg-white">
+        <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-bold text-ink">
+          Oglas i prodavac
+          <ChevronDownIcon className="text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
+        </summary>
+        <div className="space-y-4 border-t border-sand-200 p-3">
+          <div>
+            <FieldLabel htmlFor={`${idPrefix}-city`}>Grad</FieldLabel>
+            <Select id={`${idPrefix}-city`} name="city" defaultValue={typeof searchParams.city === "string" ? searchParams.city : ""}>
+              <option value="">Svi gradovi</option>
+              {cities.map((city) => (
+                <option value={city.name} key={city.id}>{city.name}</option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <FieldLabel htmlFor={`${idPrefix}-condition`}>Stanje</FieldLabel>
+            <Select id={`${idPrefix}-condition`} name="condition" defaultValue={typeof searchParams.condition === "string" ? searchParams.condition : ""}>
+              <option value="">Sva stanja</option>
+              {conditionOptions.map(({ value, label }) => (
+                <option value={value} key={value}>{label}</option>
+              ))}
+            </Select>
+          </div>
+          <div>
+            <FieldLabel htmlFor={`${idPrefix}-seller-type`}>Prodavac</FieldLabel>
+            <Select id={`${idPrefix}-seller-type`} name="seller_type" defaultValue={typeof searchParams.seller_type === "string" ? searchParams.seller_type : ""}>
+              <option value="">Svi prodavci</option>
+              <option value="private">Privatni prodavac</option>
+              <option value="shop">Prodavnica</option>
+            </Select>
+          </div>
+          <div>
+            <FieldLabel htmlFor={`${idPrefix}-posted-within`}>Objavljeno</FieldLabel>
+            <Select id={`${idPrefix}-posted-within`} name="posted_within" defaultValue={typeof searchParams.posted_within === "string" ? searchParams.posted_within : ""}>
+              <option value="">Bilo kada</option>
+              <option value="24h">U poslednja 24 sata</option>
+              <option value="7d">U poslednjih 7 dana</option>
+              <option value="30d">U poslednjih 30 dana</option>
+            </Select>
+          </div>
+          <label className="flex min-h-10 items-center gap-3 text-sm font-semibold text-slate-700">
+            <input
+              type="checkbox"
+              name="with_images"
+              value="true"
+              defaultChecked={searchParams.with_images === "true"}
+            />
+            Samo oglasi sa slikom
+          </label>
+        </div>
+      </details>
       {selectedCategory?.attributes.some((attribute) => attribute.filterable) ? (
-        <fieldset className="space-y-4 border-t border-slate-200 pt-4">
-          <legend className="text-base font-black">Detalji: {selectedCategory.name_sr}</legend>
-          {selectedCategory.attributes.filter(
-            (attribute) => attribute.filterable && conditionMatches(searchParams, attribute.validation.visible_when)
-          ).map((attribute) => {
+        <details open className="group rounded-xl border border-river-200 bg-white">
+          <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-black text-ink">
+            Detalji: {selectedCategory.name_sr}
+            <ChevronDownIcon className="text-river-600 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
+          </summary>
+          <div className="space-y-4 border-t border-river-100 p-3">
+            {selectedCategory.attributes.filter(
+              (attribute) => attribute.filterable && conditionMatches(searchParams, attribute.validation.visible_when)
+            ).map((attribute) => {
             const name = `attributes[${attribute.key}]`;
+            const fieldId = `${idPrefix}-attribute-${attribute.key}`;
             const filterMode = attribute.validation.filter_mode;
             if (filterMode === "range") {
               return (
                 <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
-                  <FieldLabel htmlFor={`attributes[${attribute.key}][min]`}>
+                  <FieldLabel htmlFor={`${fieldId}-min`}>
                     {attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}
                   </FieldLabel>
                   <div className="grid grid-cols-2 gap-3">
                     <Input
+                      id={`${fieldId}-min`}
                       aria-label={`${attribute.label_sr} od`}
                       name={`attributes[${attribute.key}][min]`}
                       type="number"
@@ -354,6 +391,7 @@ export function FilterSidebar({
                       defaultValue={typeof searchParams[`attributes[${attribute.key}][min]`] === "string" ? searchParams[`attributes[${attribute.key}][min]`] : ""}
                     />
                     <Input
+                      id={`${fieldId}-max`}
                       aria-label={`${attribute.label_sr} do`}
                       name={`attributes[${attribute.key}][max]`}
                       type="number"
@@ -370,9 +408,9 @@ export function FilterSidebar({
             if (attribute.field_type === "boolean" || filterMode === "boolean") {
               return (
                 <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
-                  <FieldLabel htmlFor={name}>{attribute.label_sr}</FieldLabel>
+                  <FieldLabel htmlFor={fieldId}>{attribute.label_sr}</FieldLabel>
                   <Select
-                    id={name}
+                    id={fieldId}
                     name={name}
                     defaultValue={typeof searchParams[name] === "string" ? searchParams[name] : ""}
                     onChange={updateConditionalControls}
@@ -387,35 +425,35 @@ export function FilterSidebar({
             if (attribute.options.options?.length) {
               return (
                 <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
-                  <FieldLabel htmlFor={name}>{attribute.label_sr}</FieldLabel>
-                  <Select
-                    id={name}
+                  <SearchableCheckboxGroup
+                    id={fieldId}
+                    label={attribute.label_sr}
                     name={name}
-                    multiple
-                    className="min-h-28"
-                    defaultValue={selectedValues(searchParams[name])}
+                    options={attribute.options.options.map((option) => ({
+                      value: option.value,
+                      label: option.label_sr
+                    }))}
+                    defaultValues={selectedValues(searchParams[name])}
+                    searchPlaceholder={`Pretraži: ${attribute.label_sr}`}
                     onChange={updateConditionalControls}
-                  >
-                    {attribute.options.options.map((option) => (
-                      <option value={option.value} key={option.value}>{option.label_sr}</option>
-                    ))}
-                  </Select>
+                  />
                   <p className="mt-1 text-xs text-slate-500">Možete izabrati više stavki.</p>
                 </div>
               );
             }
             return (
               <div key={attribute.id} {...conditionalData(attribute.validation.visible_when)}>
-                <FieldLabel htmlFor={name}>{attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}</FieldLabel>
+                <FieldLabel htmlFor={fieldId}>{attribute.label_sr}{attribute.unit ? ` (${attribute.unit})` : ""}</FieldLabel>
                 <Input
-                  id={name}
+                  id={fieldId}
                   name={name}
                   defaultValue={typeof searchParams[name] === "string" ? searchParams[name] : ""}
                 />
               </div>
             );
-          })}
-        </fieldset>
+            })}
+          </div>
+        </details>
       ) : selectedCategorySlugs.length ? (
         <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
           {selectedRoots.size > 1
@@ -427,10 +465,12 @@ export function FilterSidebar({
           Izaberite kategoriju da biste videli specifične filtere.
         </p>
       )}
-      <div className="grid gap-2">
-        <Button type="submit" className="w-full">Primeni filtere</Button>
-        <Button href="/oglasi" variant="ghost" className="w-full">Poništi sve</Button>
-      </div>
+      {showActions ? (
+        <div className="grid gap-2">
+          <Button type="submit" className="w-full">Primeni filtere</Button>
+          <Button href="/oglasi" variant="ghost" className="w-full">Poništi sve</Button>
+        </div>
+      ) : null}
     </form>
   );
 }

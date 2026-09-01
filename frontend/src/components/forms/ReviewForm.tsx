@@ -6,6 +6,7 @@ import { useState } from "react";
 import { RatingIcon } from "@/components/icons";
 import { apiFetch, type PendingReview, type ReviewItem } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import { FieldLabel, Select, Textarea } from "@/components/ui/Field";
 
 export function ReviewForm({ item }: { item: PendingReview }) {
@@ -59,7 +60,7 @@ export function ReviewForm({ item }: { item: PendingReview }) {
         <FieldLabel htmlFor={`comment-${item.listing.id}`}>Komentar</FieldLabel>
         <Textarea id={`comment-${item.listing.id}`} value={comment} onChange={(event) => setComment(event.target.value)} maxLength={1500} />
       </div>
-      {message ? <p className="mt-3 rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">{message}</p> : null}
+      {message ? <Alert tone="error" className="mt-3">{message}</Alert> : null}
       <Button type="submit" disabled={pending} className="mt-4">
         <RatingIcon size={18} /> Ostavi ocenu
       </Button>

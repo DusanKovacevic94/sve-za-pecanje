@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 
+import { Alert } from "@/components/ui/Alert";
+
 declare global {
   interface Window {
     turnstile?: {
@@ -63,11 +65,7 @@ export function TurnstileChallenge({
   }, [onToken]);
 
   if (!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY) {
-    return (
-      <p className="rounded-md bg-red-50 p-3 text-sm font-semibold text-red-700">
-        Bezbednosna provera nije podešena. Pokušajte ponovo kasnije.
-      </p>
-    );
+    return <Alert tone="error">Bezbednosna provera nije podešena. Pokušajte ponovo kasnije.</Alert>;
   }
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 p-3">

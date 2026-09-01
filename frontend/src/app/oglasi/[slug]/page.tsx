@@ -12,7 +12,7 @@ import {
 } from "@/components/icons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { FavoriteButton, ReportButton } from "@/components/listings/ListingActions";
+import { FavoriteButton, MobileListingActions, ReportButton } from "@/components/listings/ListingActions";
 import { ListingGallery } from "@/components/listings/ListingGallery";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { ListingViewTracker } from "@/components/listings/ListingViewTracker";
@@ -77,6 +77,12 @@ export default async function ListingDetailPage({ params }: PageProps) {
     data: [] as ListingCardType[]
   }));
   const isOwner = user?.id === listing.seller.id;
+  const listingPath = `/oglasi/${listing.slug}`;
+  const messagePath = `/nalog/poruke?listing=${listing.id}`;
+  const messageHref = user
+    ? messagePath
+    : `/prijava?next=${encodeURIComponent(messagePath)}`;
+  const formattedPrice = formatListingPrice(listing.price_type, listing.price_amount, listing.currency);
   const sellerName = listing.seller.display_name ?? listing.seller.username;
   const initials = sellerName
     .split(/\s+/)
@@ -144,7 +150,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
     ["Pregledi", String(listing.view_count)]
   ].filter(([, value]) => Boolean(value)) as [string, string][];
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
+    <div className="mx-auto max-w-7xl px-4 pb-36 pt-8 lg:py-8">
       <ListingViewTracker listingId={listing.id} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
@@ -156,7 +162,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
         <Link href={`/kategorije/${listing.category.slug}`} className="hover:text-river-700">{listing.category.name_sr}</Link>
       </nav>
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
-        <section>
+        <section className="lg:col-start-1 lg:row-start-1">
           <ListingGallery listing={listing} />
           <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
           <div className="flex flex-wrap gap-2">
@@ -171,7 +177,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             <div>
               <h1 className="text-3xl font-black">{listing.title}</h1>
               <p className="mt-3 text-3xl font-black text-river-800">
-                {formatListingPrice(listing.price_type, listing.price_amount, listing.currency)}
+                {formattedPrice}
               </p>
               {listing.price_type === "negotiable" ? (
                 <p className="mt-1 text-sm font-semibold text-slate-600">Cena po dogovoru</p>
@@ -187,44 +193,9 @@ export default async function ListingDetailPage({ params }: PageProps) {
               </div>
             ))}
           </dl>
-          {listing.attributes_display.length ? (
-            <div className="mt-6">
-              <h2 className="font-black">Detalji opreme</h2>
-              <dl className="mt-3 grid gap-2 sm:grid-cols-2">
-                {listing.attributes_display.map((attribute) => (
-                  <div key={attribute.key} className="flex justify-between gap-4 border-b border-slate-100 py-2 text-sm">
-                    <dt className="font-semibold text-slate-600">{attribute.label_sr}</dt>
-                    <dd className="text-right">
-                      {attribute.value}
-                      {attribute.unit ? ` ${attribute.unit}` : ""}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-          ) : null}
-          {listing.delivery_methods.length || listing.delivery_note ? (
-            <div className="mt-6">
-              <h2 className="font-black">Preuzimanje i dostava</h2>
-              {listing.delivery_methods.length ? (
-                <ul className="mt-3 flex flex-wrap gap-2">
-                  {listing.delivery_methods.map((method) => (
-                    <li key={method}><Badge>{deliveryMethodLabels[method] ?? method}</Badge></li>
-                  ))}
-                </ul>
-              ) : null}
-              {listing.delivery_note ? (
-                <p className="mt-3 whitespace-pre-line text-sm text-slate-700">{listing.delivery_note}</p>
-              ) : null}
-            </div>
-          ) : null}
-          <div className="mt-6">
-            <h2 className="font-black">Opis</h2>
-            <p className="mt-3 whitespace-pre-line text-slate-700">{listing.description}</p>
-          </div>
           </div>
         </section>
-        <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
+        <aside className="space-y-4 lg:sticky lg:top-28 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
           <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
             <h2 className="font-black">Prodavac</h2>
             <div className="mt-4 flex items-center gap-3">
@@ -270,7 +241,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
               {listing.status === "sold" ? (
                 <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
               ) : listing.can_message ? (
-                <Button href={`/nalog/poruke?listing=${listing.id}`}><MessageIcon size={18} /> Pošalji poruku</Button>
+                <Button href={messageHref}><MessageIcon size={18} /> Pošalji poruku</Button>
               ) : !isOwner ? (
                 <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">
                   Kontakt trenutno nije dostupan.
@@ -291,6 +262,45 @@ export default async function ListingDetailPage({ params }: PageProps) {
             <p className="mt-2 font-semibold">Proverite opremu uživo i ne šaljite novac unapred nepoznatim prodavcima.</p>
           </div>
         </aside>
+        <section className="lg:col-start-1 lg:row-start-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+            {listing.attributes_display.length ? (
+              <div>
+                <h2 className="font-black">Detalji opreme</h2>
+                <dl className="mt-3 grid gap-2 sm:grid-cols-2">
+                  {listing.attributes_display.map((attribute) => (
+                    <div key={attribute.key} className="flex justify-between gap-4 border-b border-slate-100 py-2 text-sm">
+                      <dt className="font-semibold text-slate-600">{attribute.label_sr}</dt>
+                      <dd className="text-right">
+                        {attribute.value}
+                        {attribute.unit ? ` ${attribute.unit}` : ""}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
+            {listing.delivery_methods.length || listing.delivery_note ? (
+              <div className={listing.attributes_display.length ? "mt-6" : ""}>
+                <h2 className="font-black">Preuzimanje i dostava</h2>
+                {listing.delivery_methods.length ? (
+                  <ul className="mt-3 flex flex-wrap gap-2">
+                    {listing.delivery_methods.map((method) => (
+                      <li key={method}><Badge>{deliveryMethodLabels[method] ?? method}</Badge></li>
+                    ))}
+                  </ul>
+                ) : null}
+                {listing.delivery_note ? (
+                  <p className="mt-3 whitespace-pre-line text-sm text-slate-700">{listing.delivery_note}</p>
+                ) : null}
+              </div>
+            ) : null}
+            <div className={listing.attributes_display.length || listing.delivery_methods.length || listing.delivery_note ? "mt-6" : ""}>
+              <h2 className="font-black">Opis</h2>
+              <p className="mt-3 whitespace-pre-line text-slate-700">{listing.description}</p>
+            </div>
+          </div>
+        </section>
       </div>
       {similar.data.length ? (
         <section className="mt-10">
@@ -305,6 +315,16 @@ export default async function ListingDetailPage({ params }: PageProps) {
           </div>
         </section>
       ) : null}
+      <MobileListingActions
+        listingId={listing.id}
+        listingPath={listingPath}
+        price={formattedPrice}
+        status={listing.status}
+        canMessage={listing.can_message}
+        isOwner={isOwner}
+        isAuthenticated={Boolean(user)}
+        initialSaved={listing.is_favorited}
+      />
     </div>
   );
 }

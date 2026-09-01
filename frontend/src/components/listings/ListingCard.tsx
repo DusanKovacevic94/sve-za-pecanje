@@ -16,7 +16,8 @@ import { FavoriteIconButton } from "@/components/listings/ListingActions";
 export function ListingCard({ listing }: { listing: ListingCardType }) {
   return (
     <article
-      className={`group overflow-hidden rounded-xl border bg-white shadow-soft transition duration-200 hover:-translate-y-0.5 hover:shadow-lift ${
+      data-listing-card
+      className={`group overflow-hidden rounded-xl border bg-white shadow-soft hover:shadow-lift motion-safe:transition motion-safe:duration-200 motion-safe:hover:-translate-y-0.5 ${
         listing.is_featured ? "border-reed-300 ring-1 ring-reed-100" : "border-sand-200 hover:border-river-200"
       }`}
     >
@@ -28,7 +29,7 @@ export function ListingCard({ listing }: { listing: ListingCardType }) {
               alt={listing.title}
               fill
               sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 100vw"
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+              className="h-full w-full object-cover motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-[1.03]"
             />
           ) : (
             <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center text-sm font-semibold text-river-700">

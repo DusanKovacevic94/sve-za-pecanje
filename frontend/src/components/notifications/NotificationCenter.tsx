@@ -9,6 +9,7 @@ import {
   ExternalLinkIcon,
 } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
+import { Alert } from "@/components/ui/Alert";
 import {
   apiFetch,
   type ApiResponse,
@@ -159,15 +160,12 @@ export function NotificationCenter() {
       </p>
 
       {error ? (
-        <div
-          role="alert"
-          className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-800"
-        >
+        <Alert tone="error" className="mt-6">
           {error}{" "}
           <button className="underline" type="button" onClick={loadFirstPage}>
             Pokušaj ponovo
           </button>
-        </div>
+        </Alert>
       ) : null}
 
       {loading ? (

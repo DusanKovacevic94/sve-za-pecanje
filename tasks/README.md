@@ -138,3 +138,30 @@ and retention, then address account governance and sustainable SEO.
 
 - [x] [054 — Follow sellers and shops](054-seller-following.md)
 - [x] [058 — Faceted SEO policy and curated landing pages](058-faceted-seo-landing-pages.md)
+
+---
+
+# Round 7 — Brand consistency and marketplace UX (2026-09-01)
+
+This round comes from the Brand Manager audit. Tasks are written in English;
+customer-facing copy remains Serbian Latin. Order: correct accessibility and
+feedback first, improve buyer/seller conversion flows, consolidate the design
+system, then refine supporting identity surfaces and automated governance.
+
+## P0/P1 — Accessibility and core marketplace journeys
+
+- [x] [060 — Responsive header accessibility and navigation](060-responsive-header-accessibility.md)
+- [x] [061 — Semantic feedback and alert system](061-semantic-feedback-alerts.md)
+- [x] [062 — Reduced-motion policy and implementation](062-reduced-motion-policy.md)
+- [x] [063 — Mobile listing contact actions](063-mobile-listing-contact-actions.md)
+- [x] [064 — Mobile filter drawer and multi-select controls](064-mobile-filter-drawer.md)
+- [x] [065 — Guided listing creation and photo workflow](065-guided-listing-creation.md)
+- [ ] [066 — Design primitives and token adoption](066-design-primitives-token-adoption.md)
+- [ ] [067 — Listing-card information hierarchy](067-listing-card-information-hierarchy.md)
+
+## P2 — Trust, identity surfaces, and governance
+
+- [ ] [068 — Seller trust summary and semantic metrics](068-seller-trust-summary.md)
+- [ ] [069 — Homepage marketplace proof and hero refinement](069-homepage-marketplace-proof.md)
+- [ ] [070 — Editorial and supporting-page system](070-editorial-supporting-pages.md)
+- [ ] [071 — Brand visual regression and governance gate](071-brand-visual-regression-gate.md)

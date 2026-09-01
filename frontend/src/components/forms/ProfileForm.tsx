@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { apiFetch, type UserProfile } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { FieldLabel, Input, Textarea } from "@/components/ui/Field";
 import { PhoneVerificationPanel } from "@/components/forms/PhoneVerificationPanel";
 
@@ -45,7 +46,7 @@ function profileDefaults(profile: UserProfile): ProfileFormInput {
 
 export function ProfileForm({ profile }: { profile: UserProfile }) {
   const [currentProfile, setCurrentProfile] = useState(profile);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<AlertMessage | null>(null);
   const { register, handleSubmit, formState, reset } = useForm<ProfileFormInput, unknown, ProfileFormOutput>({
     resolver: zodResolver(profileSchema),
     defaultValues: profileDefaults(profile),
@@ -71,9 +72,9 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
         body: JSON.stringify(payload)
       });
       applyProfile(response.data);
-      setMessage("Profil je ažuriran.");
+      setMessage({ tone: "success", text: "Profil je ažuriran." });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Došlo je do greške.");
+      setMessage({ tone: "error", text: error instanceof Error ? error.message : "Došlo je do greške." });
     }
   }
 
@@ -134,11 +135,7 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
           </label>
         </div>
       </div>
-      {message ? (
-        <p className={`mt-4 rounded-md p-3 text-sm font-semibold ${message.includes("ažuriran") ? "bg-river-50 text-river-700" : "bg-red-50 text-red-700"}`}>
-          {message}
-        </p>
-      ) : null}
+      {message ? <Alert tone={message.tone} className="mt-4">{message.text}</Alert> : null}
       <Button type="submit" disabled={formState.isSubmitting} className="mt-5">
         Sačuvaj profil
       </Button>

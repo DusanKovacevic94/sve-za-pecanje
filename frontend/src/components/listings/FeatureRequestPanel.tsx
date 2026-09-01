@@ -7,6 +7,7 @@ import { PromotionIcon } from "@/components/icons";
 import { apiFetch, type FeatureRequest, type ListingCard, type PromotionPackage } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { useToast } from "@/components/ui/Toast";
 
 export function FeatureRequestPanel({
@@ -22,7 +23,7 @@ export function FeatureRequestPanel({
   const { pushToast } = useToast();
   const availablePackages = useMemo(() => packages, [packages]);
   const [optionId, setOptionId] = useState(availablePackages[0]?.option_id ?? "");
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<AlertMessage | null>(null);
   const [pending, setPending] = useState(false);
   const selected = availablePackages.find((item) => item.option_id === optionId) ?? availablePackages[0];
   const activeRequest = requests.find(
@@ -39,12 +40,12 @@ export function FeatureRequestPanel({
         body: JSON.stringify({ type: selected.type, package_days: selected.days })
       });
       const nextMessage = `Zahtev je poslat. Poziv na broj: ${response.data.payment_reference}`;
-      setMessage(nextMessage);
+      setMessage({ tone: "success", text: nextMessage });
       pushToast("Zahtev za promociju je poslat.", "success");
       router.refresh();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Zahtev nije poslat.";
-      setMessage(errorMessage);
+      setMessage({ tone: "error", text: errorMessage });
       pushToast(errorMessage, "error");
     } finally {
       setPending(false);
@@ -85,7 +86,7 @@ export function FeatureRequestPanel({
           <PromotionIcon size={16} /> Promoviši
         </Button>
       </div>
-      {message ? <p className="mt-2 font-semibold text-river-800">{message}</p> : null}
+      {message ? <Alert tone={message.tone} className="mt-3">{message.text}</Alert> : null}
     </div>
   );
 }

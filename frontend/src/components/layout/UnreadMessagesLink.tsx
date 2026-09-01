@@ -39,14 +39,14 @@ export function UnreadMessagesLink({ compact = false }: { compact?: boolean }) {
 
   if (compact) {
     return (
-      <Button href="/nalog/poruke" variant="ghost" className="bg-river-50 px-3 py-2">
+      <Button href="/nalog/poruke" variant="ghost" className="shrink-0 bg-river-50 px-3 py-2">
         <MessageIcon size={14} /> Poruke {badge}
       </Button>
     );
   }
 
   return (
-    <Button href="/nalog/poruke" variant="ghost" className="hidden px-3 md:inline-flex">
+    <Button href="/nalog/poruke" variant="ghost" className="hidden px-3 lg:inline-flex">
       <MessageIcon size={18} /> Poruke {badge}
     </Button>
   );

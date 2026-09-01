@@ -9,13 +9,14 @@ import { publicApiUrl } from "@/lib/api";
 import { trackEvent } from "@/lib/analytics";
 import { registerSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
+import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { FieldLabel, Input } from "@/components/ui/Field";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 type FormData = z.infer<typeof registerSchema>;
 
 export function RegisterForm() {
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<AlertMessage | null>(null);
   const [challengeRequired, setChallengeRequired] = useState(false);
   const [challengeToken, setChallengeToken] = useState<string | null>(null);
   const [challengeKey, setChallengeKey] = useState(0);
@@ -41,12 +42,17 @@ export function RegisterForm() {
       setChallengeToken(null);
       setChallengeKey((value) => value + 1);
     }
-    setMessage(response.ok ? "Nalog je kreiran. Proverite email za potvrdu." : json?.error?.message ?? "Došlo je do greške.");
+    setMessage({
+      tone: response.ok ? "success" : "error",
+      text: response.ok
+        ? "Nalog je kreiran. Proverite email za potvrdu."
+        : json?.error?.message ?? "Došlo je do greške."
+    });
   }
 
   async function resendVerification() {
     if (!email) {
-      setMessage("Unesite email adresu.");
+      setMessage({ tone: "warning", text: "Unesite email adresu." });
       return;
     }
     const response = await fetch(`${publicApiUrl}/auth/resend-verification`, {
@@ -55,7 +61,10 @@ export function RegisterForm() {
       body: JSON.stringify({ email })
     });
     const json = await response.json().catch(() => null);
-    setMessage(response.ok ? json.data.message : json?.error?.message ?? "Došlo je do greške.");
+    setMessage({
+      tone: response.ok ? "success" : "error",
+      text: response.ok ? json.data.message : json?.error?.message ?? "Došlo je do greške."
+    });
   }
 
   return (
@@ -90,7 +99,7 @@ export function RegisterForm() {
       >
         Pošalji ponovo verifikacioni email
       </button>
-      {message ? <p className="rounded-md bg-river-50 p-3 text-sm font-semibold text-river-700">{message}</p> : null}
+      {message ? <Alert tone={message.tone}>{message.text}</Alert> : null}
     </form>
   );
 }

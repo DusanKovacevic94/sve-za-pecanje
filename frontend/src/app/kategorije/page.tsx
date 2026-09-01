@@ -13,7 +13,7 @@ export default async function CategoriesPage() {
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {categories.data.map((category) => (
           <article key={category.id} className="surface p-5">
-            <Link href={`/kategorije/${category.slug}`} className="block transition hover:-translate-y-0.5">
+            <Link href={`/kategorije/${category.slug}`} className="block motion-safe:transition-transform motion-safe:hover:-translate-y-0.5">
             <div className="grid h-11 w-11 place-items-center rounded-lg bg-river-50 text-river-700">
               <CategoryIcon slug={category.slug} name={category.name_sr} />
             </div>

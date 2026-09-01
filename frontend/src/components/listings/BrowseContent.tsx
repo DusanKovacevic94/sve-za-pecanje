@@ -1,10 +1,11 @@
 import Link from "next/link";
 
-import { CloseIcon, FiltersIcon } from "@/components/icons";
+import { CloseIcon } from "@/components/icons";
 import { MarketplaceSearchTracker } from "@/components/analytics/MarketplaceSearchTracker";
 import { FilterSidebar } from "@/components/filters/FilterSidebar";
 import { ListingCard } from "@/components/listings/ListingCard";
 import { Button } from "@/components/ui/Button";
+import { FilterDrawer } from "@/components/ui/Drawer";
 import { Select } from "@/components/ui/Field";
 import {
   TrackedRecoveryContainer,
@@ -270,20 +271,22 @@ export async function BrowseContent({
             idPrefix="desktop-filters"
           />
         </aside>
-        <details className="lg:hidden">
-          <summary className="focus-ring flex cursor-pointer items-center gap-2 rounded-md bg-white p-3 font-semibold shadow-soft">
-            <FiltersIcon size={18} /> Filteri{chips.length ? ` (${chips.length})` : ""}
-          </summary>
-          <div className="mt-3">
-            <FilterSidebar
-              categories={categories.data}
-              brands={brands.data}
-              cities={cities.data}
-              searchParams={params}
-              idPrefix="mobile-filters"
-            />
-          </div>
-        </details>
+        <FilterDrawer
+          selectedCount={chips.length}
+          resultCount={total}
+          formId="mobile-filter-form"
+        >
+          <FilterSidebar
+            categories={categories.data}
+            brands={brands.data}
+            cities={cities.data}
+            searchParams={params}
+            idPrefix="mobile-filters"
+            formId="mobile-filter-form"
+            showActions={false}
+            compact
+          />
+        </FilterDrawer>
         <section>
           {chips.length ? (
             <div className="mb-4 flex flex-wrap items-center gap-2">
