@@ -1,0 +1,13 @@
+*,
+*::before,
+*::after {
+  caret-color: transparent !important;
+  animation: none !important;
+  transition: none !important;
+}
+
+time,
+nextjs-portal,
+[data-next-badge-root] {
+  visibility: hidden !important;
+}

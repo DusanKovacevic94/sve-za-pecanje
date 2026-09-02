@@ -7,9 +7,12 @@
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start --hostname 0.0.0.0",
-    "lint": "eslint .",
+    "lint": "eslint . && pnpm lint:design-tokens",
+    "lint:design-tokens": "node scripts/check-design-tokens.mjs",
     "test:e2e": "playwright test",
-    "test:e2e:critical": "playwright test e2e/critical-marketplace.spec.ts"
+    "test:e2e:critical": "playwright test e2e/critical-marketplace.spec.ts",
+    "test:e2e:brand": "playwright test e2e/brand-visual.spec.ts e2e/brand-resilience.spec.ts e2e/icons.spec.ts e2e/reduced-motion.spec.ts",
+    "test:e2e:brand:update": "node scripts/update-brand-snapshots.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",

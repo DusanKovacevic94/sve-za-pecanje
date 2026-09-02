@@ -129,16 +129,16 @@ export function NotificationCenter() {
     <section aria-labelledby="notification-center-title">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-sm font-black uppercase tracking-wide text-river-700">
+          <p className="text-sm font-extrabold uppercase tracking-wide text-river-700">
             Moj nalog
           </p>
           <h1
             id="notification-center-title"
-            className="mt-1 text-3xl font-black text-ink"
+            className="mt-1 text-3xl font-extrabold text-ink"
           >
             Obaveštenja
           </h1>
-          <p className="mt-2 text-slate-600">
+          <p className="mt-2 text-ink-600">
             Važne promene u vezi sa porukama, oglasima i pretragama.
           </p>
         </div>
@@ -169,18 +169,18 @@ export function NotificationCenter() {
       ) : null}
 
       {loading ? (
-        <p className="mt-8 text-slate-600" role="status">
+        <p className="mt-8 text-ink-600" role="status">
           Učitavanje obaveštenja…
         </p>
       ) : null}
 
       {!loading && items.length === 0 ? (
-        <div className="mt-8 rounded-lg border border-slate-200 bg-white p-8 text-center shadow-soft">
+        <div className="mt-8 rounded-xl border border-sand-200 bg-white p-8 text-center shadow-soft">
           <BellIcon className="mx-auto text-river-600" size={32} />
-          <h2 className="mt-3 text-xl font-black text-ink">
+          <h2 className="mt-3 text-xl font-extrabold text-ink">
             Još nema obaveštenja
           </h2>
-          <p className="mt-2 text-slate-600">
+          <p className="mt-2 text-ink-600">
             Ovde će se pojaviti važne promene na vašem nalogu.
           </p>
         </div>
@@ -191,9 +191,9 @@ export function NotificationCenter() {
           <li
             key={item.id}
             className={[
-              "rounded-lg border bg-white p-4 shadow-soft",
+              "rounded-xl border bg-white p-4 shadow-soft",
               item.read_at
-                ? "border-slate-200"
+                ? "border-sand-200"
                 : "border-river-300 bg-river-50/40",
             ].join(" ")}
           >
@@ -201,13 +201,13 @@ export function NotificationCenter() {
               <span
                 className={[
                   "mt-2 h-2.5 w-2.5 shrink-0 rounded-full",
-                  item.read_at ? "bg-slate-300" : "bg-river-600",
+                  item.read_at ? "bg-sand-300" : "bg-river-600",
                 ].join(" ")}
                 aria-hidden
               />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <h2 className="font-black text-ink">
+                  <h2 className="font-extrabold text-ink">
                     {item.title}
                     {item.group_count > 1 ? (
                       <span className="ml-2 text-sm text-river-700">
@@ -216,17 +216,17 @@ export function NotificationCenter() {
                     ) : null}
                   </h2>
                   <time
-                    className="text-xs font-semibold text-slate-500"
+                    className="text-xs font-semibold text-ink-500"
                     dateTime={item.last_event_at}
                   >
                     {formatter.format(new Date(item.last_event_at))}
                   </time>
                 </div>
-                <p className="mt-1 text-sm text-slate-600">{item.body}</p>
+                <p className="mt-1 text-sm text-ink-600">{item.body}</p>
                 <div className="mt-3 flex flex-wrap gap-3">
                   {item.href ? (
                     <Link
-                      className="focus-ring inline-flex items-center gap-1 rounded-md text-sm font-black text-river-700 hover:text-river-900"
+                      className="focus-ring inline-flex items-center gap-1 rounded-xl text-sm font-extrabold text-river-700 hover:text-river-900"
                       href={item.href}
                       onClick={() => markRead(item.id)}
                     >
@@ -236,7 +236,7 @@ export function NotificationCenter() {
                   {!item.read_at ? (
                     <button
                       type="button"
-                      className="focus-ring rounded-md text-sm font-semibold text-slate-600 underline hover:text-ink"
+                      className="focus-ring rounded-xl text-sm font-semibold text-ink-600 underline hover:text-ink"
                       onClick={() => markRead(item.id)}
                     >
                       Označi kao pročitano

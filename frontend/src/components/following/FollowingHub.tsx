@@ -51,14 +51,14 @@ export function FollowingHub({
     <div>
       <header>
         <p className="text-sm font-semibold text-river-700">Praćenje</p>
-        <h1 className="mt-1 text-3xl font-black">Prodavci koje pratite</h1>
-        <p className="mt-2 text-slate-600">
+        <h1 className="mt-1 text-3xl font-extrabold">Prodavci koje pratite</h1>
+        <p className="mt-2 text-ink-600">
           Novi aktivni oglasi svih prodavaca i prodavnica koje pratite.
         </p>
       </header>
 
       <section className="mt-7">
-        <h2 className="text-xl font-black">Praćeni prodavci</h2>
+        <h2 className="text-xl font-extrabold">Praćeni prodavci</h2>
         {sellers.length ? (
           <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
             {sellers.map(({ follow_id, seller }) => {
@@ -69,7 +69,7 @@ export function FollowingHub({
                 <Link
                   key={follow_id}
                   href={shopHref}
-                  className="focus-ring min-w-52 rounded-lg border border-slate-200 bg-white p-4 shadow-soft hover:border-river-300"
+                  className="focus-ring min-w-52 rounded-xl border border-sand-200 bg-white p-4 shadow-soft hover:border-river-300"
                 >
                   <div className="flex items-center gap-2 text-river-700">
                     {seller.shop_slug ? <StoreIcon size={18} /> : <UserIcon size={18} />}
@@ -77,25 +77,25 @@ export function FollowingHub({
                       {seller.shop_slug ? "Prodavnica" : "Prodavac"}
                     </span>
                   </div>
-                  <p className="mt-2 font-black">
+                  <p className="mt-2 font-extrabold">
                     {seller.shop_name ?? seller.display_name ?? seller.username}
                   </p>
                   {seller.city ? (
-                    <p className="mt-1 text-sm text-slate-500">{seller.city}</p>
+                    <p className="mt-1 text-sm text-ink-500">{seller.city}</p>
                   ) : null}
                 </Link>
               );
             })}
           </div>
         ) : (
-          <p className="mt-3 rounded-lg border border-slate-200 bg-white p-5 text-slate-600">
+          <p className="mt-3 rounded-xl border border-sand-200 bg-white p-5 text-ink-600">
             Još ne pratite nijednog prodavca.
           </p>
         )}
       </section>
 
       <section className="mt-8">
-        <h2 className="text-xl font-black">Najnoviji oglasi</h2>
+        <h2 className="text-xl font-extrabold">Najnoviji oglasi</h2>
         {listings.length ? (
           <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {listings.map((listing) => (
@@ -103,7 +103,7 @@ export function FollowingHub({
             ))}
           </div>
         ) : (
-          <p className="mt-4 rounded-lg border border-slate-200 bg-white p-6 text-slate-600">
+          <p className="mt-4 rounded-xl border border-sand-200 bg-white p-6 text-ink-600">
             Praćeni prodavci trenutno nemaju aktivne oglase.
           </p>
         )}

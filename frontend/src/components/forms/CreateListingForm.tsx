@@ -728,7 +728,7 @@ export function CreateListingForm({
       />
       {!isEdit ? (
         <div
-          className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-3 text-sm ${
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-sm ${
             saveState === "error" || saveState === "conflict"
               ? "border-red-200 bg-red-50 text-red-800"
               : saveState === "offline"
@@ -797,9 +797,9 @@ export function CreateListingForm({
       <section
         id={formSectionIds.category}
         tabIndex={-1}
-        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+        className="scroll-mt-24 rounded-xl border border-sand-200 bg-white p-5 shadow-soft"
       >
-        <h2 className="text-xl font-black">1. Kategorija</h2>
+        <h2 className="text-xl font-extrabold">1. Kategorija</h2>
         <div className="mt-4">
           <FieldLabel htmlFor="category_id">Kategorija</FieldLabel>
           <Select
@@ -819,7 +819,7 @@ export function CreateListingForm({
               ))
             ])}
           </Select>
-          <p id="category-selection-help" className="mt-2 text-sm text-slate-600">
+          <p id="category-selection-help" className="mt-2 text-sm text-ink-600">
             {selectedCategoryPath
               ? `Izabrano: ${selectedCategoryPath}.`
               : "Izaberite kategoriju koja najbolje opisuje opremu."}
@@ -834,9 +834,9 @@ export function CreateListingForm({
       <section
         id={formSectionIds.basics}
         tabIndex={-1}
-        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+        className="scroll-mt-24 rounded-xl border border-sand-200 bg-white p-5 shadow-soft"
       >
-        <h2 className="text-xl font-black">2. Osnovni podaci</h2>
+        <h2 className="text-xl font-extrabold">2. Osnovni podaci</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <FieldLabel htmlFor="title">Naslov</FieldLabel>
@@ -911,9 +911,9 @@ export function CreateListingForm({
       <section
         id={formSectionIds.details}
         tabIndex={-1}
-        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+        className="scroll-mt-24 rounded-xl border border-sand-200 bg-white p-5 shadow-soft"
       >
-        <h2 className="text-xl font-black">3. Specifični detalji</h2>
+        <h2 className="text-xl font-extrabold">3. Specifični detalji</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           {visibleAttributes.map((attribute) => {
             const conditionallyRequired = conditionMatches(
@@ -949,7 +949,7 @@ export function CreateListingForm({
                       </label>
                     ))}
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">Izaberite sve opcije koje odgovaraju oglasu.</p>
+                  <p className="mt-1 text-xs text-ink-500">Izaberite sve opcije koje odgovaraju oglasu.</p>
                 </fieldset>
               ) : (
                 <>
@@ -997,12 +997,12 @@ export function CreateListingForm({
       <section
         id={formSectionIds.handoff}
         tabIndex={-1}
-        className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+        className="scroll-mt-24 rounded-xl border border-sand-200 bg-white p-5 shadow-soft"
       >
-        <h2 className="text-xl font-black">4. Preuzimanje i kontakt</h2>
+        <h2 className="text-xl font-extrabold">4. Preuzimanje i kontakt</h2>
         <div className="mt-4 space-y-3">
           <fieldset>
-            <legend className="text-sm font-semibold text-slate-800">Način preuzimanja ili dostave</legend>
+            <legend className="text-sm font-semibold text-ink-800">Način preuzimanja ili dostave</legend>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               {deliveryMethodOptions.map(({ value, label }) => (
                 <label key={value} className="flex items-center gap-2 text-sm">
@@ -1029,7 +1029,7 @@ export function CreateListingForm({
             <input type="checkbox" {...register("phone_visible")} />
             Prikaži broj telefona prijavljenim korisnicima
           </label>
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-ink-600">
             Zabranjeni su nelegalna oprema, ukradena roba, falsifikati i sadržaj koji podstiče nezakonit ribolov.
           </p>
         </div>
@@ -1052,13 +1052,13 @@ export function CreateListingForm({
       {challengeRequired ? (
         <TurnstileChallenge key={challengeKey} onToken={setChallengeToken} />
       ) : null}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-sand-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.10)] backdrop-blur md:static md:rounded-xl md:border md:p-4 md:shadow-soft">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-sand-200 bg-white/95 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-action-bar backdrop-blur md:static md:rounded-xl md:border md:p-4 md:shadow-soft">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-black text-ink">
+            <p className="truncate text-sm font-extrabold text-ink">
               {sections.findIndex((section) => section.id === currentSectionData.id) + 1}. {currentSectionData.label}
             </p>
-            <p className="text-xs text-slate-600">
+            <p className="text-xs text-ink-600">
               {!isEdit ? `${stickySaveLabel} · ` : ""}
               {currentSectionData.complete ? "korak je popunjen" : "korak treba dopuniti"}
             </p>
@@ -1084,8 +1084,8 @@ export function CreateListingForm({
         </div>
       </div>
       {isEdit ? (
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="text-xl font-black">Akcije oglasa</h2>
+        <section className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-extrabold">Akcije oglasa</h2>
           <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <Button type="button" variant="secondary" onClick={() => runOwnerAction("mark-sold")}>
               <SuccessIcon size={18} /> Označi kao prodato

@@ -68,8 +68,8 @@ export function TurnstileChallenge({
     return <Alert tone="error">Bezbednosna provera nije podešena. Pokušajte ponovo kasnije.</Alert>;
   }
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
-      <p className="mb-2 text-sm font-semibold text-slate-700">Potvrdite bezbednosnu proveru.</p>
+    <div className="rounded-xl border border-sand-200 bg-sand-50 p-3">
+      <p className="mb-2 text-sm font-semibold text-ink-700">Potvrdite bezbednosnu proveru.</p>
       <div ref={container} />
     </div>
   );

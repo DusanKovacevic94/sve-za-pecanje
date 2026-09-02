@@ -149,7 +149,7 @@ export function SafetyReportButton({
   }
 
   if (submitted) {
-    return <span className="self-center text-xs font-bold text-slate-500">Prijavljeno</span>;
+    return <span className="self-center text-xs font-bold text-ink-500">Prijavljeno</span>;
   }
 
   return (
@@ -165,14 +165,14 @@ export function SafetyReportButton({
       {open ? (
         <form
           onSubmit={submit}
-          className="mt-2 w-[min(28rem,80vw)] space-y-3 rounded-md border border-slate-200 bg-white p-3 text-left text-ink shadow-soft"
+          className="mt-2 w-[min(28rem,80vw)] space-y-3 rounded-xl border border-sand-200 bg-white p-3 text-left text-ink shadow-soft"
         >
           <label className="block text-sm font-bold">
             Razlog
             <select
               value={reason}
               onChange={(event) => setReason(event.target.value as typeof reason)}
-              className="focus-ring mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-normal"
+              className="focus-ring mt-1 w-full rounded-xl border border-sand-300 bg-white px-3 py-2 font-normal"
             >
               {reportReasons.map(([value, label]) => (
                 <option key={value} value={value}>{label}</option>

@@ -162,10 +162,10 @@ export function ListingImageManager({
     <section
       id={sectionId}
       tabIndex={-1}
-      className="scroll-mt-24 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+      className="scroll-mt-24 rounded-xl border border-sand-200 bg-white p-5 shadow-soft"
     >
-      <h2 className="text-xl font-black">5. Slike</h2>
-      <p className="mt-1 text-sm text-slate-600">
+      <h2 className="text-xl font-extrabold">5. Slike</h2>
+      <p className="mt-1 text-sm text-ink-600">
         Dodajte do {maxListingImages} jasnih fotografija. Prva fotografija je naslovna dok ne izaberete drugu.
       </p>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -183,7 +183,7 @@ export function ListingImageManager({
               void uploadImages(files);
             }}
           />
-          <p className="mt-1 text-xs text-slate-500">Možete izabrati više fotografija odjednom.</p>
+          <p className="mt-1 text-xs text-ink-500">Možete izabrati više fotografija odjednom.</p>
         </div>
         <div className="min-w-0">
           <FieldLabel htmlFor="listing-camera">Fotografiši opremu</FieldLabel>
@@ -216,8 +216,8 @@ export function ListingImageManager({
       {message ? <Alert tone="error" className="mt-3">{message}</Alert> : null}
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         {images.map((image, index) => (
-          <article key={image.id} className="rounded-lg border border-slate-200 p-3">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-slate-100">
+          <article key={image.id} className="rounded-xl border border-sand-200 p-3">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-sand-100">
               <Image src={image.url} alt={`Slika ${index + 1}`} fill sizes="360px" className="object-cover" />
               {image.is_cover ? (
                 <span className="absolute left-2 top-2 rounded-full bg-river-600 px-2.5 py-1 text-xs font-semibold text-white">

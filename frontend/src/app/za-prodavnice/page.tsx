@@ -1,10 +1,14 @@
+import { AnalyticsIcon, StoreIcon, VerifiedBadgeIcon } from "@/components/icons";
 import {
-  AnalyticsIcon,
-  StoreIcon,
-  VerifiedBadgeIcon,
-} from "@/components/icons";
-
+  EditorialCallout,
+  EditorialCta,
+  EditorialFacts,
+  EditorialIntro,
+  EditorialPage,
+  EditorialSection,
+} from "@/components/editorial/Editorial";
 import { Button } from "@/components/ui/Button";
+import { Panel } from "@/components/ui/Primitives";
 import type { ShopPlan } from "@/lib/api";
 import { apiFetch } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
@@ -12,48 +16,91 @@ import { formatPrice } from "@/lib/format";
 export const metadata = { title: "Za prodavnice | Sve Za Pecanje" };
 
 export default async function ForShopsPage() {
-  const plans = await apiFetch<ShopPlan[]>("/shops/plans", { next: { revalidate: 3600 } }).catch(() => ({ data: [] as ShopPlan[] }));
+  const plans = await apiFetch<ShopPlan[]>("/shops/plans", { next: { revalidate: 3600 } }).catch(
+    () => ({ data: [] as ShopPlan[] })
+  );
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <section className="grid gap-8 lg:grid-cols-[1fr_360px] lg:items-start">
-        <div>
-          <VerifiedBadgeIcon className="text-river-700" size={32} />
-          <h1 className="mt-4 text-4xl font-black">Prodavnica na Sve Za Pecanje</h1>
-          <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-700">
-            Za pecaroške radnje, servise i male uvoznike koji žele svoju stranicu, bedž poverenja i više prostora za aktivne oglase.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+    <EditorialPage>
+      <EditorialIntro
+        eyebrow="Za profesionalne prodavce"
+        title="Prodavnica na Sve Za Pecanje"
+        summary="Za pecaroške radnje, servise i male uvoznike koji žele svoju stranicu i više prostora za aktivne oglase."
+        Icon={StoreIcon}
+        actions={
+          <>
             <Button href="/nalog/prodavnica">Zatraži predračun</Button>
             <Button href="/prodavnice" variant="secondary">Pogledaj prodavnice</Button>
-          </div>
-        </div>
-        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="text-xl font-black">Paketi</h2>
-          <div className="mt-4 space-y-3">
+          </>
+        }
+      />
+
+      <EditorialFacts
+        facts={[
+          { label: "Stranica", value: "Logo, opis i aktivni oglasi na jednoj adresi." },
+          { label: "Oznaka", value: "Jasna oznaka aktivne prodavnice na njenim oglasima." },
+          { label: "Statistika", value: "Pregledi, omiljeni i poruke dostupni po oglasu." },
+        ]}
+      />
+
+      <EditorialSection
+        id="paketi"
+        title="Paketi za prodavnice"
+        intro="Dostupne opcije i cene učitavaju se iz aktuelne ponude platforme."
+        Icon={StoreIcon}
+      >
+        {plans.data.length ? (
+          <div className="space-y-3">
             {plans.data.map((plan) => (
-              <div key={plan.plan} className="rounded-md bg-slate-50 p-4">
-                <p className="font-black">{plan.label}</p>
-                <p className="mt-1 text-2xl font-black text-river-800">{formatPrice(plan.price_amount, plan.currency)}</p>
-                <p className="mt-1 text-sm text-slate-600">{plan.description}</p>
-              </div>
+              <Panel key={plan.plan} className="p-5">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+                  <h3 className="font-extrabold text-ink">{plan.label}</h3>
+                  <p className="text-xl font-extrabold text-river-800">
+                    {formatPrice(plan.price_amount, plan.currency)}
+                  </p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-ink-600">{plan.description}</p>
+              </Panel>
             ))}
           </div>
-        </div>
-      </section>
-      <section className="mt-10 grid gap-4 md:grid-cols-3">
-        {[
-          { Icon: StoreIcon, title: "Brendirana stranica", copy: "Logo, opis i svi aktivni oglasi prodavnice na jednoj adresi." },
-          { Icon: VerifiedBadgeIcon, title: "Bedž prodavnice", copy: "Oglasi aktivne prodavnice dobijaju vidljiv signal poverenja." },
-          { Icon: AnalyticsIcon, title: "Statistika oglasa", copy: "Pregledi, omiljeni i poruke ostaju dostupni po oglasu u nalogu." }
-        ].map(({ Icon, title, copy }) => (
-          <article key={title} className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-            <Icon className="text-river-700" size={24} aria-hidden />
-            <h2 className="mt-4 text-xl font-black">{title}</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{copy}</p>
-          </article>
-        ))}
-      </section>
-    </div>
+        ) : (
+          <Panel className="p-5">
+            <p className="font-bold text-ink">Paketi trenutno nisu prikazani.</p>
+            <p className="mt-1 text-sm text-ink-600">
+              Kontaktiraj nas za aktuelne opcije, bez obaveze i bez automatske naplate.
+            </p>
+          </Panel>
+        )}
+      </EditorialSection>
+
+      <EditorialSection
+        id="sta-dobijate"
+        title="Šta prodavnica dobija"
+        intro="Alati su usmereni na predstavljanje inventara i upravljanje oglasima."
+        Icon={AnalyticsIcon}
+      >
+        <ul className="list-disc space-y-2 pl-5 marker:text-reed-600">
+          <li>Brendiranu stranicu sa opisom i svim aktivnim oglasima.</li>
+          <li>Jasnu oznaku da oglas pripada aktivnoj prodavnici.</li>
+          <li>Statistiku pregleda, omiljenih i poruka za svaki oglas u nalogu.</li>
+        </ul>
+      </EditorialSection>
+
+      <EditorialCallout title="Oznaka prodavnice nije garancija transakcije" Icon={VerifiedBadgeIcon}>
+        Ona potvrđuje status naloga na platformi. Kupac i dalje treba da proveri opremu, uslove
+        kupovine i podatke prodavca.
+      </EditorialCallout>
+
+      <EditorialCta
+        title="Predstavi inventar ribolovcima"
+        copy="Pošalji zahtev za predračun ili prvo pogledaj kako izgledaju postojeće stranice prodavnica."
+        actions={
+          <>
+            <Button href="/nalog/prodavnica" variant="secondary">Zatraži predračun</Button>
+            <Button href="/prodavnice" variant="ghost" className="!text-white hover:!bg-white/10">Pogledaj prodavnice</Button>
+          </>
+        }
+      />
+    </EditorialPage>
   );
 }

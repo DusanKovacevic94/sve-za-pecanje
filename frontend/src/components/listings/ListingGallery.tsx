@@ -21,7 +21,7 @@ export function ListingGallery({ listing }: { listing: ListingDetail }) {
 
   return (
     <div className="space-y-3">
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-soft">
+      <div className="overflow-hidden rounded-xl border border-sand-200 bg-white shadow-soft">
         <div className="relative aspect-[4/3] bg-gradient-to-br from-river-50 via-white to-reed-100">
           {selected ? (
             <Image
@@ -51,8 +51,8 @@ export function ListingGallery({ listing }: { listing: ListingDetail }) {
                 setSelectedId(image.id);
                 setLoadedId("");
               }}
-              className={`focus-ring relative aspect-square overflow-hidden rounded-md border bg-white ${
-                selected?.id === image.id ? "border-river-600 ring-2 ring-river-100" : "border-slate-200"
+              className={`focus-ring relative aspect-square overflow-hidden rounded-xl border bg-white ${
+                selected?.id === image.id ? "border-river-600 ring-2 ring-river-100" : "border-sand-200"
               }`}
               aria-label={`Prikaži sliku ${index + 1}`}
             >

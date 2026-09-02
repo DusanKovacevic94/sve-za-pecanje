@@ -7,8 +7,8 @@ export default async function ProfilePage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-black">Profil</h1>
-      <p className="mt-2 text-slate-600">Podaci koje drugi ribolovci vide na vašem javnom profilu.</p>
+      <h1 className="text-3xl font-extrabold">Profil</h1>
+      <p className="mt-2 text-ink-600">Podaci koje drugi ribolovci vide na vašem javnom profilu.</p>
       <div className="mt-6">
         <ProfileForm profile={profile.data} />
       </div>

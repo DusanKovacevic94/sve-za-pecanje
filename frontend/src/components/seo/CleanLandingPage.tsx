@@ -93,7 +93,7 @@ export async function CleanLandingPage({
       />
       <nav
         aria-label="Putanja"
-        className="mx-auto flex max-w-7xl flex-wrap gap-2 px-4 pt-8 text-sm font-semibold text-slate-600"
+        className="mx-auto flex max-w-7xl flex-wrap gap-2 px-4 pt-8 text-sm font-semibold text-ink-600"
       >
         {breadcrumbs.map((item, index) => (
           <span key={item.href} className="contents">

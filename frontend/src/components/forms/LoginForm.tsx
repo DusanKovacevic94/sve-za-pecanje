@@ -12,6 +12,7 @@ import { loginSchema } from "@/lib/validation";
 import { Button } from "@/components/ui/Button";
 import { Alert, type AlertMessage } from "@/components/ui/Alert";
 import { FieldLabel, Input } from "@/components/ui/Field";
+import { raisedPanelClassName } from "@/components/ui/Primitives";
 import { TurnstileChallenge } from "@/components/forms/TurnstileChallenge";
 
 type FormData = z.infer<typeof loginSchema>;
@@ -66,7 +67,7 @@ export function LoginForm({ nextPath = "/nalog" }: { nextPath?: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+    <form onSubmit={handleSubmit(onSubmit)} className={`${raisedPanelClassName} space-y-4 p-5`}>
       <div>
         <FieldLabel htmlFor="email">Email</FieldLabel>
         <Input id="email" type="email" error={formState.errors.email?.message} {...register("email")} />

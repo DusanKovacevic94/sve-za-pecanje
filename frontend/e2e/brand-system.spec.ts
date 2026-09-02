@@ -10,7 +10,7 @@ test("brand catalog exposes the vector identity without layout overflow", async 
   await expect(page.locator("main img[src='/brand/logo.svg']")).toBeVisible();
   await expect(page.locator("main img[src='/brand/logo-inverse.svg']")).toBeVisible();
 
-  const iconSvgs = page.locator("main svg[data-icon]");
+  const iconSvgs = page.locator("[data-brand-icon-sample] svg[data-icon]");
   await expect(iconSvgs).toHaveCount(5);
   expect(
     await iconSvgs.evaluateAll((items) =>

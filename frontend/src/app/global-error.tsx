@@ -20,8 +20,8 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
       <body>
         <main className="mx-auto grid min-h-screen max-w-lg place-items-center px-4 text-center">
           <div>
-            <h1 className="text-3xl font-black">Došlo je do greške</h1>
-            <p className="mt-3 text-slate-600">
+            <h1 className="text-3xl font-extrabold">Došlo je do greške</h1>
+            <p className="mt-3 text-ink-600">
               Nešto nije u redu na našoj strani. Pokušajte ponovo za nekoliko trenutaka.
             </p>
             <div className="mt-6 flex justify-center gap-3">

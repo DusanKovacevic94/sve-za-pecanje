@@ -33,8 +33,8 @@ export default async function CreateListingPage({
     : null;
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-3xl font-black">Postavi oglas</h1>
-      <p className="mt-2 text-slate-600">Popunite podatke o opremi. Novi oglasi idu na ručni pregled pre objave.</p>
+      <h1 className="text-3xl font-extrabold">Postavi oglas</h1>
+      <p className="mt-2 text-ink-600">Popunite podatke o opremi. Novi oglasi idu na ručni pregled pre objave.</p>
       <div className="mt-6">
         <CreateListingForm
           categories={categories.data}

@@ -36,9 +36,9 @@ export default async function ShopDetailPage({ params }: PageProps) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
+      <section className="rounded-xl border border-sand-200 bg-white p-6 shadow-soft">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-lg bg-river-700 text-2xl font-black text-white">
+          <div className="relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-river-700 text-2xl font-extrabold text-white">
             {shop.shop_logo_url ? (
               <Image src={shop.shop_logo_url} alt={shop.shop_name ?? "Logo prodavnice"} fill sizes="80px" className="object-cover" />
             ) : (
@@ -47,11 +47,11 @@ export default async function ShopDetailPage({ params }: PageProps) {
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-3xl font-black">{shop.shop_name}</h1>
+              <h1 className="text-3xl font-extrabold">{shop.shop_name}</h1>
               <Badge>Prodavnica</Badge>
             </div>
-            {shop.shop_description ? <p className="mt-2 max-w-3xl whitespace-pre-line text-slate-600">{shop.shop_description}</p> : null}
-            <p className="mt-2 text-sm font-semibold text-slate-500">{shop.listings.length} aktivnih oglasa</p>
+            {shop.shop_description ? <p className="mt-2 max-w-3xl whitespace-pre-line text-ink-600">{shop.shop_description}</p> : null}
+            <p className="mt-2 text-sm font-semibold text-ink-500">{shop.listings.length} aktivnih oglasa</p>
             {user?.id !== shop.user_id ? (
               <FollowSellerButton
                 sellerId={shop.user_id}
@@ -60,7 +60,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
                 className="mt-4 max-w-xs"
               />
             ) : (
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-ink-500">
                 {shop.follower_count} {shop.follower_count === 1 ? "pratilac" : "pratilaca"}
               </p>
             )}
@@ -70,7 +70,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
 
       <section className="mt-8">
         <div className="flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-black">Oglasi prodavnice</h2>
+          <h2 className="text-2xl font-extrabold">Oglasi prodavnice</h2>
           <Button href="/prodavnice" variant="secondary">Sve prodavnice</Button>
         </div>
         {shop.listings.length ? (
@@ -80,7 +80,7 @@ export default async function ShopDetailPage({ params }: PageProps) {
             ))}
           </div>
         ) : (
-          <p className="mt-5 rounded-lg border border-slate-200 bg-white p-6 text-slate-600 shadow-soft">Prodavnica trenutno nema aktivne oglase.</p>
+          <p className="mt-5 rounded-xl border border-sand-200 bg-white p-6 text-ink-600 shadow-soft">Prodavnica trenutno nema aktivne oglase.</p>
         )}
       </section>
     </div>

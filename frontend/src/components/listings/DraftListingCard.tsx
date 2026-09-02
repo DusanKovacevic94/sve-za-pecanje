@@ -38,9 +38,9 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-lg border border-dashed border-river-300 bg-white shadow-soft">
+    <article className="overflow-hidden rounded-xl border border-dashed border-river-300 bg-white shadow-soft">
       <div className="grid gap-4 p-4 sm:grid-cols-[8rem_1fr]">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-river-50">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-river-50">
           {listing.cover_image_url ? (
             <Image
               src={listing.cover_image_url}
@@ -56,9 +56,9 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
           )}
         </div>
         <div>
-          <p className="text-xs font-black uppercase tracking-wide text-river-700">Nacrt</p>
-          <h3 className="mt-1 text-lg font-black">{listing.title || "Oglas bez naslova"}</h3>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-river-700">Nacrt</p>
+          <h3 className="mt-1 text-lg font-extrabold">{listing.title || "Oglas bez naslova"}</h3>
+          <p className="mt-1 text-sm text-ink-600">
             Poslednji put sačuvano: {formatDate(listing.updated_at)}
           </p>
           {listing.draft_expires_soon && listing.draft_expires_at ? (
@@ -68,7 +68,7 @@ export function DraftListingCard({ listing }: { listing: ListingCard }) {
           ) : null}
         </div>
       </div>
-      <div className="flex flex-wrap gap-2 border-t border-slate-100 p-4">
+      <div className="flex flex-wrap gap-2 border-t border-sand-200 p-4">
         <Button href={`/postavi-oglas?draft=${listing.id}`} className="flex-1">
           <EditIcon size={16} /> Nastavi uređivanje
         </Button>

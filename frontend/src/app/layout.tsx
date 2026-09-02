@@ -5,6 +5,7 @@ import { AnalyticsScript } from "@/components/analytics/AnalyticsScript";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { ToastProvider } from "@/components/ui/Toast";
+import { BRAND_THEME_COLOR } from "@/lib/brand";
 import "@/styles/globals.css";
 
 const manrope = Manrope({
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#173f37"
+  themeColor: BRAND_THEME_COLOR
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

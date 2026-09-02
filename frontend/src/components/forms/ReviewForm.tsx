@@ -39,11 +39,11 @@ export function ReviewForm({ item }: { item: PendingReview }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+    <form onSubmit={onSubmit} className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="font-black">{item.listing.title}</h3>
-          <p className="mt-1 text-sm text-slate-600">
+          <h3 className="font-extrabold">{item.listing.title}</h3>
+          <p className="mt-1 text-sm text-ink-600">
             Ocenjujete {item.reviewee.display_name ?? item.reviewee.username}
           </p>
         </div>

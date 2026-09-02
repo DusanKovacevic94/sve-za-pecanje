@@ -28,8 +28,8 @@ export function ListingFormProgress({
     >
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className="text-base font-black text-ink">Napredak oglasa</h2>
-          <p className="mt-0.5 text-sm text-slate-600">
+          <h2 className="text-base font-extrabold text-ink">Napredak oglasa</h2>
+          <p className="mt-0.5 text-sm text-ink-600">
             {remaining === 0
               ? "Svi koraci su popunjeni."
               : `${completed}/${sections.length} koraka popunjeno · preostalo ${remaining}`}
@@ -62,7 +62,7 @@ export function ListingFormProgress({
                 className={`focus-ring flex min-h-11 items-center gap-2 rounded-xl border px-3 py-2 text-left text-sm font-bold motion-safe:transition-colors ${
                   active
                     ? "border-river-700 bg-river-50 text-river-900"
-                    : "border-sand-200 bg-white text-slate-700 hover:border-river-300"
+                    : "border-sand-200 bg-white text-ink-700 hover:border-river-300"
                 }`}
               >
                 {section.hasError ? (
@@ -70,7 +70,7 @@ export function ListingFormProgress({
                 ) : section.complete ? (
                   <SuccessIcon className="shrink-0 text-river-700" size={18} />
                 ) : (
-                  <PendingCircleIcon className="shrink-0 text-slate-400" size={18} />
+                  <PendingCircleIcon className="shrink-0 text-ink-400" size={18} />
                 )}
                 <span>{index + 1}. {section.label}</span>
               </button>

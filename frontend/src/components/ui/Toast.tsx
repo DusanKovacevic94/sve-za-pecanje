@@ -47,7 +47,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             </p>
             <button
               type="button"
-              className="focus-ring rounded-md p-1 text-slate-500 hover:bg-slate-100"
+              className="focus-ring rounded-xl p-1 text-ink-500 hover:bg-sand-100"
               aria-label="Zatvori obaveštenje"
               onClick={() => setItems((current) => current.filter((toast) => toast.id !== item.id))}
             >

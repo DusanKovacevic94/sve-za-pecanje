@@ -8,6 +8,13 @@ import { Button } from "@/components/ui/Button";
 import { FilterDrawer } from "@/components/ui/Drawer";
 import { Select } from "@/components/ui/Field";
 import {
+  ActionRow,
+  PageTitle,
+  Panel,
+  SectionHeading,
+  SupportingCopy,
+} from "@/components/ui/Primitives";
+import {
   TrackedRecoveryContainer,
   TrackedRecoveryLink
 } from "@/components/search/TrackedRecoveryLink";
@@ -232,13 +239,13 @@ export async function BrowseContent({
       />
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-black">{heading}</h1>
+          <PageTitle>{heading}</PageTitle>
           {landing?.intro_copy ? (
-            <p className="mt-3 max-w-3xl whitespace-pre-line text-slate-700">
+            <p className="mt-3 max-w-3xl whitespace-pre-line text-ink-700">
               {landing.intro_copy}
             </p>
           ) : null}
-          <p className="mt-2 text-slate-600">{total} rezultata za izabrane filtere</p>
+          <SupportingCopy className="mt-2">{total} rezultata za izabrane filtere</SupportingCopy>
         </div>
         <div className="flex flex-col gap-3 sm:flex-row">
           <form action="/oglasi" className="flex items-center gap-2">
@@ -291,11 +298,11 @@ export async function BrowseContent({
           {chips.length ? (
             <div className="mb-4 flex flex-wrap items-center gap-2">
               {chips.map((chip) => (
-                <Link key={chip.id} href={chip.href} rel="nofollow" className="focus-ring rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-soft hover:text-river-700">
+                <Link key={chip.id} href={chip.href} rel="nofollow" className="focus-ring rounded-xl bg-white px-3 py-2 text-sm font-semibold text-ink-700 shadow-soft hover:text-river-700">
                   {chip.label} <CloseIcon className="inline" size={14} />
                 </Link>
               ))}
-              <Link href="/oglasi" className="focus-ring rounded-md px-3 py-2 text-sm font-semibold text-river-700 hover:bg-river-50">
+              <Link href="/oglasi" className="focus-ring rounded-xl px-3 py-2 text-sm font-semibold text-river-700 hover:bg-river-50">
                 Poništi sve
               </Link>
             </div>
@@ -316,7 +323,7 @@ export async function BrowseContent({
                   ) : null}
                   {pageNumbers(page, totalPages).map((pageNumber, index, pages) => (
                     <span key={pageNumber} className="contents">
-                      {index > 0 && pageNumber - pages[index - 1] > 1 ? <span className="px-1 text-slate-500">...</span> : null}
+                      {index > 0 && pageNumber - pages[index - 1] > 1 ? <span className="px-1 text-ink-500">...</span> : null}
                       <Button
                         href={`/oglasi?${toQuery(params, { page: String(pageNumber) })}`}
                         rel="nofollow"
@@ -337,21 +344,21 @@ export async function BrowseContent({
             </>
           ) : (
             <div className="space-y-6">
-              <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
-                <h2 className="text-2xl font-black">Nema oglasa za izabranu pretragu</h2>
-                <p className="mt-2 text-slate-600">
+              <Panel elevation="soft" className="p-6">
+                <SectionHeading>Nema oglasa za izabranu pretragu</SectionHeading>
+                <SupportingCopy className="mt-2">
                   Nijedan filter nije automatski uklonjen. Izaberite samo promenu koja vam odgovara.
-                </p>
+                </SupportingCopy>
                 {recovery?.data.did_you_mean.length ? (
                   <div className="mt-5">
-                    <h3 className="font-black">Da li ste mislili?</h3>
+                    <SectionHeading as="h3" level="card">Da li ste mislili?</SectionHeading>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {recovery.data.did_you_mean.map((suggestion) => (
                         <TrackedRecoveryLink
                           key={suggestion.id}
                           href={`/oglasi?${toQuery(params, { q: suggestion.value, page: null })}`}
                           action="spelling"
-                          className="focus-ring rounded-md bg-river-50 px-3 py-2 text-sm font-bold text-river-800 hover:bg-river-100"
+                          className="focus-ring rounded-xl bg-river-50 px-3 py-2 text-sm font-bold text-river-800 hover:bg-river-100"
                         >
                           {suggestion.display}
                         </TrackedRecoveryLink>
@@ -361,7 +368,7 @@ export async function BrowseContent({
                 ) : null}
                 {chips.length ? (
                   <div className="mt-5">
-                    <h3 className="font-black">Uklonite samo jedan filter</h3>
+                    <SectionHeading as="h3" level="card">Uklonite samo jedan filter</SectionHeading>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {chips.slice(0, 6).map((chip) => (
                         <TrackedRecoveryLink
@@ -369,7 +376,7 @@ export async function BrowseContent({
                           href={chip.href}
                           action="remove_filter"
                           removedFilter={chip.key}
-                          className="focus-ring rounded-md border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-river-300 hover:text-river-700"
+                          className="focus-ring rounded-xl border border-sand-200 px-3 py-2 text-sm font-semibold text-ink-700 hover:border-river-300 hover:text-river-700"
                         >
                           Ukloni: {chip.label}
                         </TrackedRecoveryLink>
@@ -379,7 +386,7 @@ export async function BrowseContent({
                 ) : null}
                 {recovery?.data.related_categories.length ? (
                   <div className="mt-5">
-                    <h3 className="font-black">Srodne kategorije</h3>
+                    <SectionHeading as="h3" level="card">Srodne kategorije</SectionHeading>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {recovery.data.related_categories.map((category) => (
                         <TrackedRecoveryLink
@@ -390,7 +397,7 @@ export async function BrowseContent({
                             ["category"]
                           )}`}
                           action="related_category"
-                          className="focus-ring rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:text-river-700"
+                          className="focus-ring rounded-xl bg-sand-100 px-3 py-2 text-sm font-semibold text-ink-700 hover:text-river-700"
                         >
                           {category.name_sr}
                         </TrackedRecoveryLink>
@@ -398,20 +405,20 @@ export async function BrowseContent({
                     </div>
                   </div>
                 ) : null}
-                <div className="mt-5 flex flex-wrap gap-3">
+                <ActionRow className="mt-5">
                   <TrackedRecoveryLink
                     href={`/nalog/sacuvane-pretrage?${toQuery(params)}`}
                     action="save_search"
-                    className="focus-ring rounded-md bg-river-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-river-600"
+                    className="focus-ring rounded-xl bg-river-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-river-600"
                   >
                     Sačuvaj ovu pretragu
                   </TrackedRecoveryLink>
                   <Button href="/oglasi" variant="secondary">Pogledaj sve oglase</Button>
-                </div>
-              </div>
+                </ActionRow>
+              </Panel>
               {recovery?.data.recent_listings.length ? (
                 <section>
-                  <h2 className="text-xl font-black">Nedavno objavljeni srodni oglasi</h2>
+                  <SectionHeading>Nedavno objavljeni srodni oglasi</SectionHeading>
                   <div className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {recovery.data.recent_listings.map((listing) => (
                       <TrackedRecoveryContainer key={listing.id} action="recent_listing">

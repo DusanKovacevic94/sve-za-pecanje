@@ -168,7 +168,7 @@ export function FilterSidebar({
     <form
       id={formId}
       action="/oglasi"
-      className={`min-w-0 space-y-4 ${compact ? "" : "rounded-lg border border-slate-200 bg-white p-4 shadow-soft"}`}
+      className={`min-w-0 space-y-4 ${compact ? "" : "rounded-xl border border-sand-200 bg-white p-4 shadow-soft"}`}
     >
       {sort ? <input type="hidden" name="sort" value={sort} /> : null}
       <div>
@@ -176,22 +176,22 @@ export function FilterSidebar({
         <SearchCombobox
           id={`${idPrefix}-q`}
           defaultValue={typeof searchParams.q === "string" ? searchParams.q : ""}
-          className="focus-ring min-h-11 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm hover:border-river-200 motion-safe:transition-colors"
+          className="focus-ring min-h-11 w-full rounded-xl border border-sand-200 bg-white px-3 py-2 text-sm hover:border-river-200 motion-safe:transition-colors"
         />
       </div>
       <fieldset>
-        <legend className="text-sm font-semibold text-slate-800">Kategorije</legend>
-        <details id={`${idPrefix}-category-filter-options`} className="group mt-1 rounded-lg border border-slate-200 bg-white">
+        <legend className="text-sm font-semibold text-ink-800">Kategorije</legend>
+        <details id={`${idPrefix}-category-filter-options`} className="group mt-1 rounded-xl border border-sand-200 bg-white">
           <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm">
             <span className="truncate">
               {choiceSummary(selectedCategorySlugs, categoryLabels, "Sve kategorije")}
             </span>
-            <ChevronDownIcon className="ml-2 text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
+            <ChevronDownIcon className="ml-2 text-ink-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
           </summary>
-          <div className="max-h-80 space-y-3 overflow-y-auto border-t border-slate-100 p-3">
+          <div className="max-h-80 space-y-3 overflow-y-auto border-t border-sand-200 p-3">
             {categories.map((item) => (
               <div key={item.id}>
-                <label className="flex cursor-pointer items-center gap-2 font-semibold text-slate-800">
+                <label className="flex cursor-pointer items-center gap-2 font-semibold text-ink-800">
                   <input
                     type="checkbox"
                     name="category"
@@ -204,9 +204,9 @@ export function FilterSidebar({
                   {item.name_sr}
                 </label>
                 {item.children.length ? (
-                  <div className="mt-2 space-y-2 border-l border-slate-200 pl-5">
+                  <div className="mt-2 space-y-2 border-l border-sand-200 pl-5">
                     {item.children.map((child) => (
-                      <label key={child.id} className="flex cursor-pointer items-center gap-2 text-sm text-slate-700">
+                      <label key={child.id} className="flex cursor-pointer items-center gap-2 text-sm text-ink-700">
                         <input
                           type="checkbox"
                           name="category"
@@ -225,12 +225,12 @@ export function FilterSidebar({
             ))}
           </div>
         </details>
-        <p className="mt-1 text-xs text-slate-500">Možete izabrati više kategorija.</p>
+        <p className="mt-1 text-xs text-ink-500">Možete izabrati više kategorija.</p>
       </fieldset>
       <details open className="group rounded-xl border border-sand-200 bg-white">
         <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-bold text-ink">
           Cena i dostava
-          <ChevronDownIcon className="text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
+          <ChevronDownIcon className="text-ink-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
         </summary>
         <div className="space-y-4 border-t border-sand-200 p-3">
           <div className="grid grid-cols-2 gap-3">
@@ -252,10 +252,10 @@ export function FilterSidebar({
             </Select>
           </div>
           <fieldset>
-            <legend className="text-sm font-semibold text-slate-800">Tip cene</legend>
+            <legend className="text-sm font-semibold text-ink-800">Tip cene</legend>
             <div className="mt-2 grid gap-2">
               {priceTypeOptions.map(({ value, label }) => (
-                <label key={value} className="flex min-h-10 items-center gap-3 text-sm text-slate-700">
+                <label key={value} className="flex min-h-10 items-center gap-3 text-sm text-ink-700">
                   <input
                     type="checkbox"
                     name="price_type"
@@ -268,10 +268,10 @@ export function FilterSidebar({
             </div>
           </fieldset>
           <fieldset>
-            <legend className="text-sm font-semibold text-slate-800">Preuzimanje i dostava</legend>
+            <legend className="text-sm font-semibold text-ink-800">Preuzimanje i dostava</legend>
             <div className="mt-2 grid gap-2">
               {deliveryMethodOptions.map(({ value, label }) => (
-                <label key={value} className="flex min-h-10 items-center gap-3 text-sm text-slate-700">
+                <label key={value} className="flex min-h-10 items-center gap-3 text-sm text-ink-700">
                   <input
                     type="checkbox"
                     name="delivery_method"
@@ -286,15 +286,15 @@ export function FilterSidebar({
         </div>
       </details>
       <fieldset>
-        <legend className="text-sm font-semibold text-slate-800">Brendovi</legend>
-        <details id={`${idPrefix}-brand-filter-options`} className="group mt-1 rounded-lg border border-slate-200 bg-white">
+        <legend className="text-sm font-semibold text-ink-800">Brendovi</legend>
+        <details id={`${idPrefix}-brand-filter-options`} className="group mt-1 rounded-xl border border-sand-200 bg-white">
           <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm">
             <span className="truncate">
               {choiceSummary(selectedBrandIds, brandLabels, "Svi brendovi")}
             </span>
-            <ChevronDownIcon className="ml-2 text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
+            <ChevronDownIcon className="ml-2 text-ink-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
           </summary>
-          <div className="border-t border-slate-100 p-3">
+          <div className="border-t border-sand-200 p-3">
             <SearchableCheckboxGroup
               id={`${idPrefix}-brands`}
               label="Izaberite brendove"
@@ -305,12 +305,12 @@ export function FilterSidebar({
             />
           </div>
         </details>
-        <p className="mt-1 text-xs text-slate-500">Izabrani brendovi se kombinuju.</p>
+        <p className="mt-1 text-xs text-ink-500">Izabrani brendovi se kombinuju.</p>
       </fieldset>
       <details open className="group rounded-xl border border-sand-200 bg-white">
         <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-bold text-ink">
           Oglas i prodavac
-          <ChevronDownIcon className="text-slate-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
+          <ChevronDownIcon className="text-ink-400 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
         </summary>
         <div className="space-y-4 border-t border-sand-200 p-3">
           <div>
@@ -348,7 +348,7 @@ export function FilterSidebar({
               <option value="30d">U poslednjih 30 dana</option>
             </Select>
           </div>
-          <label className="flex min-h-10 items-center gap-3 text-sm font-semibold text-slate-700">
+          <label className="flex min-h-10 items-center gap-3 text-sm font-semibold text-ink-700">
             <input
               type="checkbox"
               name="with_images"
@@ -361,7 +361,7 @@ export function FilterSidebar({
       </details>
       {selectedCategory?.attributes.some((attribute) => attribute.filterable) ? (
         <details open className="group rounded-xl border border-river-200 bg-white">
-          <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-black text-ink">
+          <summary className="focus-ring flex min-h-11 cursor-pointer list-none items-center justify-between px-3 py-2 text-sm font-extrabold text-ink">
             Detalji: {selectedCategory.name_sr}
             <ChevronDownIcon className="text-river-600 motion-safe:transition-transform motion-safe:group-open:rotate-180" size={16} />
           </summary>
@@ -437,7 +437,7 @@ export function FilterSidebar({
                     searchPlaceholder={`Pretraži: ${attribute.label_sr}`}
                     onChange={updateConditionalControls}
                   />
-                  <p className="mt-1 text-xs text-slate-500">Možete izabrati više stavki.</p>
+                  <p className="mt-1 text-xs text-ink-500">Možete izabrati više stavki.</p>
                 </div>
               );
             }
@@ -455,13 +455,13 @@ export function FilterSidebar({
           </div>
         </details>
       ) : selectedCategorySlugs.length ? (
-        <p className="rounded-md bg-slate-50 p-3 text-sm text-slate-600">
+        <p className="rounded-xl bg-sand-50 p-3 text-sm text-ink-600">
           {selectedRoots.size > 1
             ? "Specifični filteri su dostupni kada izabrane kategorije pripadaju istoj glavnoj kategoriji."
             : "Za ovu kategoriju još nema posebnih filtera."}
         </p>
       ) : (
-        <p className="rounded-md bg-river-50 p-3 text-sm text-river-800">
+        <p className="rounded-xl bg-river-50 p-3 text-sm text-river-800">
           Izaberite kategoriju da biste videli specifične filtere.
         </p>
       )}

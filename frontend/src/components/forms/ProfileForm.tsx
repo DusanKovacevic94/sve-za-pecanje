@@ -79,7 +79,7 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+    <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <FieldLabel htmlFor="display_name">Ime za prikaz</FieldLabel>
@@ -100,7 +100,7 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
         <div className="md:col-span-2">
           <FieldLabel htmlFor="fishing_styles">Stilovi ribolova</FieldLabel>
           <Input id="fishing_styles" {...register("fishing_styles")} placeholder="varaličarenje, feeder, šaran" />
-          <p className="mt-1 text-xs text-slate-500">Odvojite vrednosti zarezom.</p>
+          <p className="mt-1 text-xs text-ink-500">Odvojite vrednosti zarezom.</p>
         </div>
         <div className="md:col-span-2">
           <FieldLabel htmlFor="bio">Bio</FieldLabel>
@@ -115,8 +115,8 @@ export function ProfileForm({ profile }: { profile: UserProfile }) {
           phoneDirty={Boolean(formState.dirtyFields.phone_number)}
           onVerified={applyProfile}
         />
-        <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-4 md:col-span-2">
-          <p className="text-sm font-black text-slate-800">Email notifikacije</p>
+        <div className="space-y-3 rounded-xl border border-sand-200 bg-sand-50 p-4 md:col-span-2">
+          <p className="text-sm font-extrabold text-ink-800">Email notifikacije</p>
           <label className="flex items-center gap-3 text-sm font-semibold">
             <input type="checkbox" {...register("notify_messages")} />
             Nove poruke

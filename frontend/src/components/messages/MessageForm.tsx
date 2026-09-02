@@ -84,7 +84,7 @@ export function MessageForm(props: MessageFormProps) {
         maxLength={3000}
       />
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-slate-500">{body.length}/3000</p>
+        <p className="text-xs font-semibold text-ink-500">{body.length}/3000</p>
         <Button type="submit" disabled={pending || !body.trim()} isLoading={pending} className="sm:w-auto">
           <SendIcon size={18} /> Pošalji
         </Button>

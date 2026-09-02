@@ -20,7 +20,7 @@ export default async function SavedSearchesPage({ searchParams }: PageProps) {
   ]);
   return (
     <div>
-      <h1 className="text-3xl font-black">Sačuvane pretrage</h1>
+      <h1 className="text-3xl font-extrabold">Sačuvane pretrage</h1>
       <div className="mt-6">
         <SavedSearchManager
           searches={searches.data}

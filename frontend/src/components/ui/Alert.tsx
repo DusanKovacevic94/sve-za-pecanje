@@ -20,7 +20,7 @@ const toneStyles: Record<AlertTone, string> = {
   success: "border-river-200 bg-river-50 text-river-900",
   error: "border-red-200 bg-red-50 text-red-800",
   warning: "border-reed-200 bg-reed-50 text-reed-900",
-  info: "border-slate-200 bg-slate-50 text-slate-800"
+  info: "border-sand-200 bg-sand-50 text-ink-800"
 };
 
 const toneLabels: Record<AlertTone, string> = {
@@ -48,13 +48,13 @@ export function Alert({
     <div
       role={role}
       data-alert-tone={tone}
-      className={`flex items-start gap-3 rounded-lg border p-3 text-sm ${toneStyles[tone]} ${className}`}
+      className={`flex items-start gap-3 rounded-xl border p-3 text-sm ${toneStyles[tone]} ${className}`}
       {...props}
     >
       <ToneIcon tone={tone} />
       <div className="min-w-0 flex-1">
         <span className="sr-only">{toneLabels[tone]}: </span>
-        {title ? <p className="font-black">{title}</p> : null}
+        {title ? <p className="font-extrabold">{title}</p> : null}
         <div className={title ? "mt-1" : "font-semibold"}>{children}</div>
       </div>
     </div>

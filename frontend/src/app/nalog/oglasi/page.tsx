@@ -19,10 +19,10 @@ export default async function MyListingsPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-black">Moji oglasi</h1>
+        <h1 className="text-3xl font-extrabold">Moji oglasi</h1>
         <Button href="/postavi-oglas">Postavi oglas</Button>
       </div>
-      <div className="mt-4 rounded-md border border-river-100 bg-river-50 p-4 text-sm text-river-900">
+      <div className="mt-4 rounded-xl border border-river-100 bg-river-50 p-4 text-sm text-river-900">
         Za promociju oglasa izaberite paket i pošaljite zahtev. Uplatu izvršite na račun koji je naveden u
         instrukcijama za plaćanje, a kao poziv na broj unesite ID zahteva. Admin potvrđuje isticanje po evidentiranoj
         uplati.
@@ -30,8 +30,8 @@ export default async function MyListingsPage() {
       {drafts.length ? (
         <section className="mt-8">
           <div>
-            <h2 className="text-2xl font-black">Nacrti</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-2xl font-extrabold">Nacrti</h2>
+            <p className="mt-1 text-sm text-ink-600">
               Privatni su i ne ulaze u pretragu dok ih ne pošaljete na pregled.
             </p>
           </div>
@@ -44,12 +44,12 @@ export default async function MyListingsPage() {
       ) : null}
       {publishedListings.length ? (
         <section className="mt-8">
-          {drafts.length ? <h2 className="text-2xl font-black">Objavljeni oglasi</h2> : null}
+          {drafts.length ? <h2 className="text-2xl font-extrabold">Objavljeni oglasi</h2> : null}
         <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {publishedListings.map((listing) => (
             <div key={listing.id} className="space-y-3">
               <ListingCard listing={listing} />
-              <div className="grid grid-cols-3 gap-2 rounded-lg border border-slate-200 bg-white p-3 text-center text-xs font-semibold text-slate-600 shadow-soft">
+              <div className="grid grid-cols-3 gap-2 rounded-xl border border-sand-200 bg-white p-3 text-center text-xs font-semibold text-ink-600 shadow-soft">
                 <span>{listing.view_count ?? 0} pregleda</span>
                 <span>{listing.favorite_count ?? 0} omiljenih</span>
                 <span>{listing.message_count ?? 0} poruka</span>
@@ -72,18 +72,18 @@ export default async function MyListingsPage() {
         </div>
       ) : null}
       {requests.data.length ? (
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="text-xl font-black">Zahtevi za promocije</h2>
-          <div className="mt-4 divide-y divide-slate-100">
+        <section className="mt-8 rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-extrabold">Zahtevi za promocije</h2>
+          <div className="mt-4 divide-y divide-sand-200">
             {requests.data.map((request) => (
               <div key={request.id} className="py-3 text-sm">
                 <p className="font-bold">{request.listing?.title ?? request.listing_id}</p>
-                <p className="mt-1 text-slate-600">
+                <p className="mt-1 text-ink-600">
                   {request.type_label} · {request.package_days ? `${request.package_days} dana · ` : ""}
                   {formatPrice(request.price_amount, request.currency)} · {request.status} ·{" "}
                   {formatDate(request.created_at)}
                 </p>
-                <p className="mt-1 text-slate-600">Poziv na broj: {request.payment_reference}</p>
+                <p className="mt-1 text-ink-600">Poziv na broj: {request.payment_reference}</p>
               </div>
             ))}
           </div>

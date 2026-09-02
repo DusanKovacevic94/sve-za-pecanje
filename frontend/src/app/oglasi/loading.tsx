@@ -10,7 +10,7 @@ export default function ListingsLoading() {
         <div className="skeleton h-8 w-48" />
         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="space-y-3 rounded-md border border-slate-200 bg-white p-3">
+            <div key={index} className="space-y-3 rounded-xl border border-sand-200 bg-white p-3">
               <div className="skeleton aspect-[4/3]" />
               <div className="skeleton h-5" />
               <div className="skeleton h-5 w-2/3" />

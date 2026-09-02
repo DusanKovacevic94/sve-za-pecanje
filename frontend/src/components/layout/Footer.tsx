@@ -15,30 +15,30 @@ export function Footer() {
       <BrandWaterline className="pointer-events-none absolute -right-20 -top-8 w-[42rem] text-reed-500 opacity-20" />
       <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-[1.2fr_0.9fr_0.9fr_1fr]">
         <div>
-          <Link href="/" aria-label="Sve Za Pecanje — početna" className="focus-ring inline-block rounded-lg">
+          <Link href="/" aria-label="Sve Za Pecanje — početna" className="focus-ring inline-block rounded-xl">
             <BrandLogo variant="inverse" alt="" className="h-10 w-auto" />
           </Link>
-          <p className="mt-3 text-sm leading-6 text-slate-300">Specijalizovani oglasi za ribolovce u Srbiji.</p>
+          <p className="mt-3 text-sm leading-6 text-ink-400">Specijalizovani oglasi za ribolovce u Srbiji.</p>
         </div>
         <div>
-          <h2 className="text-sm font-black uppercase tracking-[0.16em] text-river-100">Platforma</h2>
-          <div className="mt-3 grid gap-2 text-sm text-slate-300">
+          <h2 className="text-sm font-extrabold uppercase tracking-[0.16em] text-river-100">Platforma</h2>
+          <div className="mt-3 grid gap-2 text-sm text-ink-400">
             <Link href="/oglasi" className="hover:text-white">Oglasi</Link>
             <Link href="/kategorije" className="hover:text-white">Kategorije</Link>
             <Link href="/postavi-oglas" className="hover:text-white">Postavi oglas</Link>
           </div>
         </div>
         <div>
-          <h2 className="text-sm font-black uppercase tracking-[0.16em] text-river-100">Podrška</h2>
-          <div className="mt-3 grid gap-2 text-sm text-slate-300">
+          <h2 className="text-sm font-extrabold uppercase tracking-[0.16em] text-river-100">Podrška</h2>
+          <div className="mt-3 grid gap-2 text-sm text-ink-400">
             <Link href="/kontakt" className="hover:text-white">Kontakt</Link>
             <Link href="/saveti-za-bezbednost" className="hover:text-white">Bezbedna kupovina</Link>
             <Link href="/o-nama" className="hover:text-white">O nama</Link>
           </div>
         </div>
         <div>
-          <h2 className="text-sm font-black uppercase tracking-[0.16em] text-river-100">Kontakt</h2>
-          <div className="mt-3 grid gap-3 text-sm text-slate-300">
+          <h2 className="text-sm font-extrabold uppercase tracking-[0.16em] text-river-100">Kontakt</h2>
+          <div className="mt-3 grid gap-3 text-sm text-ink-400">
             <span className="inline-flex items-center gap-2"><MailIcon size={16} /> kontakt@svezapecanje.rs</span>
             <span className="inline-flex items-center gap-2"><LocationIcon size={16} /> Srbija</span>
             <span className="inline-flex items-center gap-2"><TrustShieldIcon size={16} /> Moderisani oglasi</span>
@@ -46,7 +46,7 @@ export function Footer() {
         </div>
       </div>
       <div className="relative border-t border-white/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-5 text-xs text-ink-400 sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} Sve Za Pecanje. Sva prava zadržana.</p>
           <div className="flex gap-4">
             <Link href="/uslovi-koriscenja" className="hover:text-white">Uslovi korišćenja</Link>

@@ -27,19 +27,19 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-black">Poruke</h1>
-          <p className="mt-2 text-slate-600">Razgovori sa kupcima i prodavcima.</p>
+          <h1 className="text-3xl font-extrabold">Poruke</h1>
+          <p className="mt-2 text-ink-600">Razgovori sa kupcima i prodavcima.</p>
         </div>
         <Button href="/oglasi" variant="secondary">Pronađi oglas</Button>
       </div>
 
       {listingId ? (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="text-xl font-black">Nova poruka</h2>
-          <p className="mt-2 text-sm text-slate-600">
+        <section className="mt-6 rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-extrabold">Nova poruka</h2>
+          <p className="mt-2 text-sm text-ink-600">
             Pošaljite prvu poruku prodavcu. Razgovor će se pojaviti u listi čim poruka bude poslata.
           </p>
-          <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm font-semibold text-amber-950">
+          <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm font-semibold text-amber-950">
             Ne šaljite kodove, podatke kartice ili novac unapred. Platforma ne posreduje
             pri plaćanju ili isporuci.
           </p>
@@ -56,12 +56,12 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
             <Link
               key={conversation.id}
               href={`/nalog/poruke/${conversation.id}`}
-              className="focus-ring block rounded-lg border border-slate-200 bg-white p-5 shadow-soft hover:border-river-500"
+              className="focus-ring block rounded-xl border border-sand-200 bg-white p-5 shadow-soft hover:border-river-500"
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-river-700">{conversation.listing.title}</p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
+                  <p className="mt-1 text-xs font-semibold text-ink-500">
                     {formatListingPrice(
                       conversation.listing.price_type,
                       conversation.listing.price_amount,
@@ -69,7 +69,7 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
                     )} · {priceTypeLabels[conversation.listing.price_type]} ·{" "}
                     {listingStatusLabels[conversation.listing.status] ?? conversation.listing.status}
                   </p>
-                  <h2 className="mt-1 truncate text-xl font-black">
+                  <h2 className="mt-1 truncate text-xl font-extrabold">
                     {conversation.counterpart.display_name ?? conversation.counterpart.username}
                   </h2>
                 </div>
@@ -78,19 +78,19 @@ export default async function MessagesPage({ searchParams }: MessagesPageProps) 
                   {!conversation.conversation_available ? <Badge tone="warn">Nedostupno</Badge> : null}
                   {conversation.unread_count ? <Badge tone="accent">{conversation.unread_count} novo</Badge> : null}
                   {conversation.last_message_at ? (
-                    <span className="text-xs font-semibold text-slate-500">
+                    <span className="text-xs font-semibold text-ink-500">
                       {formatDate(conversation.last_message_at)}
                     </span>
                   ) : null}
                 </div>
               </div>
-              <p className="mt-3 line-clamp-2 text-slate-700">{lastMessage?.body ?? "Nema poruka."}</p>
+              <p className="mt-3 line-clamp-2 text-ink-700">{lastMessage?.body ?? "Nema poruka."}</p>
             </Link>
           );
         }) : (
-          <div className="rounded-lg border border-slate-200 bg-white p-8 text-center">
-            <h2 className="text-xl font-black">Nemate poruke.</h2>
-            <p className="mt-2 text-slate-600">Kada kontaktirate prodavca ili neko kontaktira vas, poruke će se prikazati ovde.</p>
+          <div className="rounded-xl border border-sand-200 bg-white p-8 text-center">
+            <h2 className="text-xl font-extrabold">Nemate poruke.</h2>
+            <p className="mt-2 text-ink-600">Kada kontaktirate prodavca ili neko kontaktira vas, poruke će se prikazati ovde.</p>
           </div>
         )}
       </div>

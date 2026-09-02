@@ -86,6 +86,9 @@ jobs:
         working-directory: backend
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Reject canonical brand asset drift
+        run: python3 ops/validate_brand_assets.py
+        working-directory: .
       - run: pnpm lint
       - run: pnpm exec tsc --noEmit
       - run: pnpm build
@@ -101,6 +104,16 @@ jobs:
             frontend/playwright-report
           if-no-files-found: ignore
           retention-days: 7
+      - name: Upload brand visual baselines and run evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: brand-visual-evidence
+          path: |
+            frontend/e2e/brand-visual.spec.ts-snapshots
+            frontend/test-results/brand-visual-*
+          if-no-files-found: ignore
+          retention-days: 14
 
   production-images:
     runs-on: ubuntu-latest

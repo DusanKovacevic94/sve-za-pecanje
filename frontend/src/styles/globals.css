@@ -46,6 +46,10 @@ textarea {
 }
 
 .surface {
+  @apply rounded-xl border border-sand-200 bg-white;
+}
+
+.surface-raised {
   @apply rounded-xl border border-sand-200 bg-white shadow-soft;
 }
 

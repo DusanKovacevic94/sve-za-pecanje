@@ -166,7 +166,7 @@ export function SearchCombobox({
         <ul
           id={listboxId}
           role="listbox"
-          className="absolute left-0 right-0 z-40 mt-1 max-h-80 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 text-ink shadow-lift"
+          className="absolute left-0 right-0 z-40 mt-1 max-h-80 overflow-y-auto rounded-xl border border-sand-200 bg-white p-1 text-ink shadow-lift"
         >
           {suggestions.map((suggestion, index) => (
             <li
@@ -177,8 +177,8 @@ export function SearchCombobox({
             >
               <button
                 type="button"
-                className={`focus-ring flex w-full items-start justify-between gap-3 rounded-md px-3 py-2 text-left ${
-                  index === activeIndex ? "bg-river-50 text-river-800" : "hover:bg-slate-50"
+                className={`focus-ring flex w-full items-start justify-between gap-3 rounded-xl px-3 py-2 text-left ${
+                  index === activeIndex ? "bg-river-50 text-river-800" : "hover:bg-sand-50"
                 }`}
                 onMouseDown={(event) => event.preventDefault()}
                 onClick={() => choose(suggestion, index)}
@@ -186,12 +186,12 @@ export function SearchCombobox({
                 <span className="min-w-0">
                   <span className="block truncate font-semibold">{suggestion.display}</span>
                   {suggestion.description ? (
-                    <span className="block truncate text-xs text-slate-500">
+                    <span className="block truncate text-xs text-ink-500">
                       {suggestion.description}
                     </span>
                   ) : null}
                 </span>
-                <span className="shrink-0 rounded bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">
+                <span className="shrink-0 rounded bg-sand-100 px-2 py-1 text-xs font-semibold text-ink-600">
                   {typeLabels[suggestion.type]}
                 </span>
               </button>

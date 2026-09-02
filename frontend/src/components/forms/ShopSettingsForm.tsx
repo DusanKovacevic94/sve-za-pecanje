@@ -73,7 +73,7 @@ export function ShopSettingsForm({
 
   return (
     <div className="space-y-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <form onSubmit={handleSubmit(onSubmit)} className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <FieldLabel htmlFor="shop_name">Naziv prodavnice</FieldLabel>
@@ -101,14 +101,14 @@ export function ShopSettingsForm({
         </Button>
       </form>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-xl font-black">Pretplata</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-xl font-extrabold">Pretplata</h2>
+            <p className="mt-1 text-sm text-ink-600">
               Status: {shop.shop_active && shop.shop_active_until ? `aktivna do ${formatDate(shop.shop_active_until)}` : "nije aktivna"}
             </p>
-            <p className="mt-1 text-sm text-slate-600">Limit aktivnih oglasa: {shop.listing_limit}</p>
+            <p className="mt-1 text-sm text-ink-600">Limit aktivnih oglasa: {shop.listing_limit}</p>
           </div>
           {shop.shop_slug ? (
             <Button href={`/prodavnice/${shop.shop_slug}`} variant="secondary">
@@ -136,16 +136,16 @@ export function ShopSettingsForm({
       </section>
 
       {requests.length ? (
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="text-xl font-black">Zahtevi</h2>
-          <div className="mt-3 divide-y divide-slate-100">
+        <section className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-extrabold">Zahtevi</h2>
+          <div className="mt-3 divide-y divide-sand-200">
             {requests.map((request) => (
               <div key={request.id} className="py-3 text-sm">
                 <p className="font-bold">{request.plan_label}</p>
-                <p className="text-slate-600">
+                <p className="text-ink-600">
                   {formatPrice(request.price_amount, request.currency)} · {request.status} · {formatDate(request.created_at)}
                 </p>
-                <p className="text-slate-600">Poziv na broj: {request.payment_reference}</p>
+                <p className="text-ink-600">Poziv na broj: {request.payment_reference}</p>
               </div>
             ))}
           </div>

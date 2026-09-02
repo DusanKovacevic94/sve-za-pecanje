@@ -73,7 +73,7 @@ export function FollowSellerButton({
         {following ? <FollowedUserIcon size={18} /> : <FollowUserIcon size={18} />}
         {following ? "Pratite prodavca" : "Prati prodavca"}
       </Button>
-      <p className="mt-1 text-center text-xs text-slate-500">
+      <p className="mt-1 text-center text-xs text-ink-500">
         {followerCount} {followerCount === 1 ? "pratilac" : "pratilaca"}
       </p>
     </div>

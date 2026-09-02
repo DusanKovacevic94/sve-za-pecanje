@@ -49,18 +49,18 @@ export default async function ConversationPage({ params, searchParams }: Convers
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <Button href="/nalog/poruke" variant="ghost" className="mb-3 px-0">Nazad na poruke</Button>
-          <h1 className="text-3xl font-black">{conversation.listing.title}</h1>
-          <p className="mt-2 text-slate-600">
+          <h1 className="text-3xl font-extrabold">{conversation.listing.title}</h1>
+          <p className="mt-2 text-ink-600">
             Razgovor sa {conversation.counterpart.display_name ?? conversation.counterpart.username}
           </p>
           {conversation.counterpart.trust ? (
-            <TrustIndicators trust={conversation.counterpart.trust} compact />
+            <TrustIndicators trust={conversation.counterpart.trust} variant="compact" className="mt-2" />
           ) : null}
         </div>
         <Button href={`/oglasi/${conversation.listing.slug}`} variant="secondary">Otvori oglas</Button>
       </div>
 
-      <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section className="mt-6 rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
         <div className="flex flex-wrap items-center gap-2">
           <Badge tone={conversation.listing.status === "reserved" ? "warn" : "neutral"}>
             {listingStatusLabels[conversation.listing.status] ?? conversation.listing.status}
@@ -76,16 +76,16 @@ export default async function ConversationPage({ params, searchParams }: Convers
           {conversation.listing.delivery_methods.map((method) => (
             <Badge key={method}>{deliveryMethodLabels[method] ?? method}</Badge>
           ))}
-          <span className="text-sm font-semibold text-slate-500">
+          <span className="text-sm font-semibold text-ink-500">
             {conversation.messages_meta.total} poruka
           </span>
         </div>
         {conversation.listing.delivery_note ? (
-          <p className="mt-3 rounded-md bg-slate-50 p-3 text-sm text-slate-700">
+          <p className="mt-3 rounded-xl bg-sand-50 p-3 text-sm text-ink-700">
             {conversation.listing.delivery_note}
           </p>
         ) : null}
-        <div className="mt-4 border-t border-slate-100 pt-4">
+        <div className="mt-4 border-t border-sand-200 pt-4">
           <ConversationSafetyControls
             conversationId={conversation.id}
             initialMuted={conversation.is_muted}
@@ -94,7 +94,7 @@ export default async function ConversationPage({ params, searchParams }: Convers
           />
         </div>
         {!conversation.conversation_available ? (
-          <p className="mt-4 rounded-md bg-slate-100 p-3 text-sm font-semibold text-slate-700">
+          <p className="mt-4 rounded-xl bg-sand-100 p-3 text-sm font-semibold text-ink-700">
             Razgovor trenutno nije dostupan. Prethodne poruke ostaju sačuvane.
           </p>
         ) : null}
@@ -105,7 +105,7 @@ export default async function ConversationPage({ params, searchParams }: Convers
             const sender = message.sender_id === conversation.buyer_id ? conversation.buyer : conversation.seller;
             return (
               <div key={message.id} className={`flex ${own ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[min(680px,85%)] rounded-lg px-4 py-3 ${own ? "bg-river-600 text-white" : "bg-slate-100 text-ink"}`}>
+                <div className={`max-w-[min(680px,85%)] rounded-xl px-4 py-3 ${own ? "bg-river-600 text-white" : "bg-sand-100 text-ink"}`}>
                   <div className="flex flex-wrap items-center gap-2 text-xs font-semibold opacity-80">
                     <span>{sender.display_name ?? sender.username}</span>
                     <span>{formatDate(message.created_at)}</span>
@@ -128,7 +128,7 @@ export default async function ConversationPage({ params, searchParams }: Convers
             {page > 1 ? (
               <Button href={`/nalog/poruke/${conversation.id}?page=${page - 1}`} variant="secondary">Prethodna</Button>
             ) : <span />}
-            <span className="text-sm font-semibold text-slate-500">
+            <span className="text-sm font-semibold text-ink-500">
               Strana {conversation.messages_meta.page} / {conversation.messages_meta.total_pages}
             </span>
             {page < conversation.messages_meta.total_pages ? (
@@ -139,8 +139,8 @@ export default async function ConversationPage({ params, searchParams }: Convers
       </section>
 
       {conversation.conversation_available ? (
-        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <h2 className="text-xl font-black">Odgovor</h2>
+        <section className="mt-6 rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-extrabold">Odgovor</h2>
           <p className="mt-2 text-sm text-amber-900">
             Ne šaljite kodove, podatke kartice ili novac unapred. Platforma ne posreduje
             pri plaćanju ili isporuci.

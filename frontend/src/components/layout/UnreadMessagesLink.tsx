@@ -32,7 +32,7 @@ export function UnreadMessagesLink({ compact = false }: { compact?: boolean }) {
   }, [loadCount]);
 
   const badge = count > 0 ? (
-    <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-black text-white">
+    <span className="ml-1 rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-extrabold text-white">
       {count > 99 ? "99+" : count}
     </span>
   ) : null;

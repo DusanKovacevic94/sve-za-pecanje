@@ -46,7 +46,7 @@ export function SearchableCheckboxGroup({
           <span className="sr-only">{searchPlaceholder}</span>
           <SearchIcon
             aria-hidden="true"
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
             size={17}
           />
           <input
@@ -64,13 +64,13 @@ export function SearchableCheckboxGroup({
           className="max-h-56 space-y-1 overflow-y-auto overscroll-contain p-2"
         >
           {!visibleOptions.length ? (
-            <p className="px-2 py-3 text-sm text-slate-500">Nema odgovarajućih opcija.</p>
+            <p className="px-2 py-3 text-sm text-ink-500">Nema odgovarajućih opcija.</p>
           ) : null}
           {options.map((option) => (
             <label
               key={option.value}
               hidden={!visibleValues.has(option.value)}
-              className="flex min-h-10 cursor-pointer items-center gap-3 rounded-lg px-2 py-1.5 text-sm text-slate-700 hover:bg-river-50"
+              className="flex min-h-10 cursor-pointer items-center gap-3 rounded-xl px-2 py-1.5 text-sm text-ink-700 hover:bg-river-50"
             >
               <input
                 type="checkbox"

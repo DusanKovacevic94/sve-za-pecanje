@@ -84,27 +84,27 @@ export function PhoneVerificationPanel({
 
   return (
     <section
-      className="rounded-md border border-river-100 bg-river-50 p-4 md:col-span-2"
+      className="rounded-xl border border-river-100 bg-river-50 p-4 md:col-span-2"
       aria-labelledby="phone-verification-title"
     >
       <div className="flex items-start gap-3">
         <PhoneIcon className="mt-0.5 text-river-700" size={20} />
         <div className="min-w-0 flex-1">
-          <h2 id="phone-verification-title" className="font-black text-ink">
+          <h2 id="phone-verification-title" className="font-extrabold text-ink">
             Potvrda broja telefona
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-ink-600">
             Potvrda vlasništva ne menja podešavanje vidljivosti broja.
           </p>
           {profile.phone_verified_at && !phoneDirty ? (
-            <p className="mt-3 inline-flex items-center gap-2 text-sm font-black text-river-800">
+            <p className="mt-3 inline-flex items-center gap-2 text-sm font-extrabold text-river-800">
               <SuccessIcon size={18} />
               Telefon je potvrđen
             </p>
           ) : (
             <div className="mt-3">
               {!profile.phone_number_e164 ? (
-                <p className="text-sm font-semibold text-slate-700">
+                <p className="text-sm font-semibold text-ink-700">
                   Unesite i sačuvajte broj telefona pre potvrde.
                 </p>
               ) : null}

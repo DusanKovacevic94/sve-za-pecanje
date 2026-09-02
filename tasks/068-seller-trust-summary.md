@@ -1,6 +1,6 @@
 # 068 — Seller trust summary and semantic metrics
 
-Status: todo
+Status: done
 Priority: P2
 
 ## Goal
@@ -10,11 +10,11 @@ collection of listing and seller statistics.
 
 ## Work
 
-- [ ] Separate listing engagement metrics from seller trust metrics.
-- [ ] Use semantically correct icons for active listings and completed sales.
-- [ ] Prioritize verification, rating, completed sales, and membership age.
-- [ ] Define compact and full variants for cards, detail, and seller pages.
-- [ ] Keep the disclaimer that trust indicators are not transaction guarantees.
+- [x] Separate listing engagement metrics from seller trust metrics.
+- [x] Use semantically correct icons for active listings and completed sales.
+- [x] Prioritize verification, rating, completed sales, and membership age.
+- [x] Define compact and full variants for cards, detail, and seller pages.
+- [x] Keep the disclaimer that trust indicators are not transaction guarantees.
 
 ## Acceptance criteria
 
@@ -28,4 +28,3 @@ collection of listing and seller statistics.
 - `frontend/src/components/trust/TrustIndicators.tsx`
 - `frontend/src/app/oglasi/[slug]/page.tsx`
 - `frontend/src/app/prodavci/[username]/page.tsx`
-

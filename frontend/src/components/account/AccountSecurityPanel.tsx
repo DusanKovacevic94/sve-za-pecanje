@@ -132,11 +132,11 @@ export function AccountSecurityPanel({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <section className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="text-xl font-black">Aktivne sesije</h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <h2 className="text-xl font-extrabold">Aktivne sesije</h2>
+            <p className="mt-1 text-sm text-ink-600">
               Pregled uređaja na kojima je nalog trenutno prijavljen.
             </p>
           </div>
@@ -151,14 +151,14 @@ export function AccountSecurityPanel({
         </div>
         <div className="mt-4 space-y-3">
           {sessions.map((session) => (
-            <article key={session.id} className="rounded-md border border-slate-200 p-4">
+            <article key={session.id} className="rounded-xl border border-sand-200 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-black">{session.device}</p>
+                    <p className="font-extrabold">{session.device}</p>
                     {session.is_current ? <Badge tone="accent">Ova sesija</Badge> : null}
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-ink-500">
                     Kreirana {formatDate(session.created_at)} · poslednja aktivnost{" "}
                     {session.last_seen_at ? formatDate(session.last_seen_at) : "nije zabeležena"} ·
                     ističe {formatDate(session.expires_at)}
@@ -180,9 +180,9 @@ export function AccountSecurityPanel({
         </div>
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-        <h2 className="text-xl font-black">Izvoz mojih podataka</h2>
-        <p className="mt-2 text-sm text-slate-600">
+      <section className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+        <h2 className="text-xl font-extrabold">Izvoz mojih podataka</h2>
+        <p className="mt-2 text-sm text-ink-600">
           Pripremićemo šifrovanu arhivu. Jednokratni link stiže emailom, važi 24 sata,
           a novi zahtev je moguć nakon sedam dana.
         </p>
@@ -198,7 +198,7 @@ export function AccountSecurityPanel({
         {exports.length ? (
           <ul className="mt-4 space-y-2 text-sm">
             {exports.map((item) => (
-              <li key={item.id} className="flex flex-wrap justify-between gap-2 rounded-md bg-slate-50 p-3">
+              <li key={item.id} className="flex flex-wrap justify-between gap-2 rounded-xl bg-sand-50 p-3">
                 <span>{formatDate(item.created_at)}</span>
                 <span className="font-bold">{exportLabels[item.status] ?? item.status}</span>
               </li>
@@ -207,19 +207,19 @@ export function AccountSecurityPanel({
         ) : null}
       </section>
 
-      <section className="rounded-lg border border-red-200 bg-white p-5 shadow-soft">
+      <section className="rounded-xl border border-red-200 bg-white p-5 shadow-soft">
         <div className="flex items-center gap-2 text-red-800">
           <TrustShieldIcon size={20} />
-          <h2 className="text-xl font-black">Zatvaranje naloga</h2>
+          <h2 className="text-xl font-extrabold">Zatvaranje naloga</h2>
         </div>
         {!closure.enabled ? (
-          <p className="mt-3 rounded-md bg-slate-100 p-3 text-sm text-slate-700">
+          <p className="mt-3 rounded-xl bg-sand-100 p-3 text-sm text-ink-700">
             Samostalno zatvaranje naloga još nije omogućeno dok politika čuvanja podataka
             ne prođe pravnu proveru.
           </p>
         ) : closure.status === "grace_period" ? (
           <div className="mt-4">
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-ink-700">
               Nalog je sakriven i biće anonimizovan{" "}
               {closure.scheduled_for ? formatDate(closure.scheduled_for) : "nakon perioda oporavka"}.
             </p>
@@ -243,7 +243,7 @@ export function AccountSecurityPanel({
           </div>
         ) : (
           <div className="mt-4">
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-ink-700">
               Aktivni oglasi i prodavnica se odmah skrivaju, a sve sesije se odjavljuju.
               Zahtev možete otkazati tokom narednih 30 dana ponovnom prijavom.
             </p>

@@ -36,8 +36,8 @@ export function AccountSidebar({ username }: { username: string }) {
     <aside className="lg:sticky lg:top-24 lg:self-start">
       <div className="surface p-4">
         <div className="border-b border-sand-200 pb-4">
-          <p className="text-xs font-semibold uppercase tracking-normal text-slate-500">Moj nalog</p>
-          <p className="mt-1 truncate font-black text-ink">{username}</p>
+          <p className="text-xs font-semibold uppercase tracking-normal text-ink-500">Moj nalog</p>
+          <p className="mt-1 truncate font-extrabold text-ink">{username}</p>
         </div>
         <nav className="mt-4 flex gap-2 overflow-x-auto lg:block lg:space-y-1 lg:overflow-visible">
           {accountLinks.map(({ href, label, Icon }) => {
@@ -51,7 +51,7 @@ export function AccountSidebar({ username }: { username: string }) {
                   "focus-ring inline-flex min-h-11 shrink-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold motion-safe:transition-colors lg:flex lg:w-full",
                   active
                     ? "bg-river-700 text-white"
-                    : "text-slate-700 hover:bg-river-50 hover:text-river-800",
+                    : "text-ink-700 hover:bg-river-50 hover:text-river-800",
                 ].join(" ")}
               >
                 <Icon size={18} aria-hidden />

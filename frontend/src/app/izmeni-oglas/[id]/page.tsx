@@ -35,8 +35,8 @@ export default async function EditListingPage({ params }: { params: Promise<{ id
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <h1 className="text-3xl font-black">Izmeni oglas</h1>
-      <p className="mt-2 text-slate-600">
+      <h1 className="text-3xl font-extrabold">Izmeni oglas</h1>
+      <p className="mt-2 text-ink-600">
         Izmene aktivnog oglasa mogu ponovo poslati oglas na pregled administratorima.
       </p>
       <div className="mt-6">

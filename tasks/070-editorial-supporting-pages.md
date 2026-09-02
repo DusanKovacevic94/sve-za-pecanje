@@ -1,6 +1,6 @@
 # 070 — Editorial and supporting-page system
 
-Status: todo
+Status: done
 Priority: P2
 
 ## Goal
@@ -10,11 +10,11 @@ editorial structure instead of generic text-in-card layouts.
 
 ## Work
 
-- [ ] Add reusable editorial intro, section, fact, callout, and CTA patterns.
-- [ ] Restructure safety guidance around recognizable risks and next actions.
-- [ ] Strengthen About and shop-acquisition pages with factual proof and purpose.
-- [ ] Improve legal-page readability without decorative distraction.
-- [ ] Use canonical icons and motifs sparingly and semantically.
+- [x] Add reusable editorial intro, section, fact, callout, and CTA patterns.
+- [x] Restructure safety guidance around recognizable risks and next actions.
+- [x] Strengthen About and shop-acquisition pages with factual proof and purpose.
+- [x] Improve legal-page readability without decorative distraction.
+- [x] Use canonical icons and motifs sparingly and semantically.
 
 ## Acceptance criteria
 
@@ -31,4 +31,3 @@ editorial structure instead of generic text-in-card layouts.
 - `frontend/src/app/uslovi-koriscenja/page.tsx`
 - `frontend/src/app/privatnost/page.tsx`
 - `frontend/src/app/za-prodavnice/page.tsx`
-

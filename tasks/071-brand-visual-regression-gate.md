@@ -1,6 +1,6 @@
 # 071 — Brand visual regression and governance gate
 
-Status: todo
+Status: done
 Priority: P2
 
 ## Goal
@@ -10,12 +10,12 @@ before release.
 
 ## Work
 
-- [ ] Add deterministic screenshots for core anonymous, buyer, seller, and
+- [x] Add deterministic screenshots for core anonymous, buyer, seller, and
   mobile surfaces.
-- [ ] Add icon catalogue snapshots at 14, 18, 24, and 32 px.
-- [ ] Check reduced motion, high zoom, and narrow viewport behavior.
-- [ ] Enforce canonical Brand Manager asset synchronization in the release path.
-- [ ] Document intentional snapshot updates and required brand review evidence.
+- [x] Add icon catalogue snapshots at 14, 18, 24, and 32 px.
+- [x] Check reduced motion, high zoom, and narrow viewport behavior.
+- [x] Enforce canonical Brand Manager asset synchronization in the release path.
+- [x] Document intentional snapshot updates and required brand review evidence.
 
 ## Acceptance criteria
 
@@ -29,4 +29,3 @@ before release.
 - `frontend/e2e/`
 - `.github/workflows/`
 - `sve-za-pecanje-brand-manager/scripts/`
-

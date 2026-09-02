@@ -42,7 +42,7 @@ export function NotificationBell({ compact = false }: { compact?: boolean }) {
   const badge =
     count > 0 ? (
       <span
-        className="ml-1 min-w-5 rounded-full bg-red-600 px-1.5 py-0.5 text-center text-xs font-black text-white"
+        className="ml-1 min-w-5 rounded-full bg-red-600 px-1.5 py-0.5 text-center text-xs font-extrabold text-white"
         aria-label={`${count} nepročitanih obaveštenja`}
       >
         {count > 99 ? "99+" : count}

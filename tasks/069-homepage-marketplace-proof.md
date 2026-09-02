@@ -1,6 +1,6 @@
 # 069 — Homepage marketplace proof and hero refinement
 
-Status: todo
+Status: done
 Priority: P2
 
 ## Goal
@@ -10,11 +10,11 @@ depending on a second oversized logo for identity.
 
 ## Work
 
-- [ ] Replace the hero logo repetition with a clear customer-value headline.
-- [ ] Add real listing/category proof using marketplace content, not stock art.
-- [ ] Preserve the waterline motif, search prominence, and restrained Orange.
-- [ ] Improve empty-data behavior so the hero never looks unfinished.
-- [ ] Validate LCP, responsive image behavior, and crawlable heading structure.
+- [x] Replace the hero logo repetition with a clear customer-value headline.
+- [x] Add real listing/category proof using marketplace content, not stock art.
+- [x] Preserve the waterline motif, search prominence, and restrained Orange.
+- [x] Improve empty-data behavior so the hero never looks unfinished.
+- [x] Validate LCP, responsive image behavior, and crawlable heading structure.
 
 ## Acceptance criteria
 
@@ -28,4 +28,3 @@ depending on a second oversized logo for identity.
 - `frontend/src/app/page.tsx`
 - `frontend/src/components/listings/ListingCard.tsx`
 - `frontend/src/components/brand/`
-

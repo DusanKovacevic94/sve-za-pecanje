@@ -14,14 +14,14 @@ export default async function ResetPasswordPage({
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
-      <h1 className="text-3xl font-black">Reset lozinke</h1>
+      <h1 className="text-3xl font-extrabold">Reset lozinke</h1>
       {token ? (
         <div className="mt-6">
           <ResetPasswordForm token={token} />
         </div>
       ) : (
-        <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-          <p className="text-slate-600">
+        <div className="mt-6 rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+          <p className="text-ink-600">
             Link za reset lozinke nije ispravan. Zatražite novi na stranici{" "}
             <Link href="/zaboravljena-lozinka" className="font-semibold text-river-700">
               zaboravljena lozinka

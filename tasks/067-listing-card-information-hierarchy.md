@@ -1,6 +1,6 @@
 # 067 — Listing-card information hierarchy
 
-Status: todo
+Status: done
 Priority: P1
 
 ## Goal
@@ -10,12 +10,12 @@ that help a buyer decide whether to open a listing.
 
 ## Work
 
-- [ ] Define a fixed hierarchy for image, status, title, price, condition,
+- [x] Define a fixed hierarchy for image, status, title, price, condition,
   location, seller/trust, and category-specific attributes.
-- [ ] Limit visible attribute pills and remove redundant price/delivery metadata.
-- [ ] Standardize card height and spacing across sparse and detailed listings.
-- [ ] Preserve featured, reserved, sold, shop, favorite, and no-photo states.
-- [ ] Review 320 px list/grid and large desktop grids.
+- [x] Limit visible attribute pills and remove redundant price/delivery metadata.
+- [x] Standardize card height and spacing across sparse and detailed listings.
+- [x] Preserve featured, reserved, sold, shop, favorite, and no-photo states.
+- [x] Review 320 px list/grid and large desktop grids.
 
 ## Acceptance criteria
 
@@ -28,4 +28,3 @@ that help a buyer decide whether to open a listing.
 
 - `frontend/src/components/listings/ListingCard.tsx`
 - `frontend/src/components/ui/Badge.tsx`
-

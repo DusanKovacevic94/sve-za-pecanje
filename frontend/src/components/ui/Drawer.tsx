@@ -132,8 +132,8 @@ export function FilterDrawer({
           >
             <header className="flex shrink-0 items-center justify-between gap-3 border-b border-sand-200 bg-white px-4 py-3">
               <div className="min-w-0">
-                <h2 id="mobile-filter-title" className="text-lg font-black text-ink">Filteri</h2>
-                <p className="text-xs text-slate-600">
+                <h2 id="mobile-filter-title" className="text-lg font-extrabold text-ink">Filteri</h2>
+                <p className="text-xs text-ink-600">
                   {filterCountLabel(selectedCount)}
                 </p>
               </div>
@@ -142,7 +142,7 @@ export function FilterDrawer({
                 type="button"
                 aria-label="Zatvori filtere"
                 onClick={close}
-                className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-slate-700 hover:bg-sand-100"
+                className="focus-ring inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl text-ink-700 hover:bg-sand-100"
               >
                 <CloseIcon aria-hidden="true" size={20} />
               </button>
@@ -152,7 +152,7 @@ export function FilterDrawer({
               {children}
             </div>
 
-            <footer className="grid shrink-0 grid-cols-[auto_1fr] gap-2 border-t border-sand-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(15,23,42,0.08)]">
+            <footer className="grid shrink-0 grid-cols-[auto_1fr] gap-2 border-t border-sand-200 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-action-bar">
               <Link
                 href={resetHref}
                 onClick={close}

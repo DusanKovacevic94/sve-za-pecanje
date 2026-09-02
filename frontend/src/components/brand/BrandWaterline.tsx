@@ -8,6 +8,7 @@ export function BrandWaterline({ className, ...props }: SVGProps<SVGSVGElement>)
       fill="none"
       aria-hidden="true"
       focusable="false"
+      data-brand-motif
       className={className}
       {...props}
     >

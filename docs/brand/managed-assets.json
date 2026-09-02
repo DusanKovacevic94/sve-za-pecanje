@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "generated_by": "sve-za-pecanje-brand-manager/scripts/sync_assets.py",
+  "assets": [
+    {
+      "name": "Primary logo",
+      "destination": "frontend/public/brand/logo.svg",
+      "sha256": "af4c020a16bd43d0e8336daead3604fd09037ea40e7b8d5c683c2bce619376b2"
+    },
+    {
+      "name": "Inverse logo",
+      "destination": "frontend/public/brand/logo-inverse.svg",
+      "sha256": "16cf2a6afa6c84482bfc099e367a804d623a8a02e61097b8a77080cd8c13d221"
+    },
+    {
+      "name": "Monochrome logo",
+      "destination": "frontend/public/brand/logo-monochrome.svg",
+      "sha256": "359a45f581561abd914690825b5a73b502982676b7cbd6fac3e21437116236c5"
+    },
+    {
+      "name": "Standalone mark",
+      "destination": "frontend/public/brand/mark.svg",
+      "sha256": "cef75996a2a116bafd9f075d9956000508420b447446ec3a3aeb3faa11094007"
+    },
+    {
+      "name": "Browser icon",
+      "destination": "frontend/src/app/icon.svg",
+      "sha256": "5660d2706fcadcfcdba693d9d70ce9b925cad7baa3380e121ceae09be8bd8840"
+    },
+    {
+      "name": "Apple touch icon",
+      "destination": "frontend/src/app/apple-icon.svg",
+      "sha256": "5660d2706fcadcfcdba693d9d70ce9b925cad7baa3380e121ceae09be8bd8840"
+    },
+    {
+      "name": "Open Graph artwork",
+      "destination": "frontend/src/assets/opengraph-image.svg",
+      "sha256": "2479313fd6c13570fc44782d025f9aa716900cf2093d5875cd47d29fae23b60c"
+    },
+    {
+      "name": "Waterline motif",
+      "destination": "frontend/src/components/brand/BrandWaterline.tsx",
+      "sha256": "f99fcc419df5fdbc39e5847d5b0b92547d03fd04cfc297233ea3848c1c9e82c1"
+    },
+    {
+      "name": "Icon SVG foundation",
+      "destination": "frontend/src/components/icons/IconBase.tsx",
+      "sha256": "4d638c4f21bac7a4b1514438d4dac1b2ddbbe1ffe79dd9a3fbfd0c5e1a88efba"
+    },
+    {
+      "name": "Category icons",
+      "destination": "frontend/src/components/icons/brand-categories.tsx",
+      "sha256": "f2668f154eec12e0396fd2081ebb557379267fc8a240848f055afd446e22f09a"
+    },
+    {
+      "name": "Marketplace action icons",
+      "destination": "frontend/src/components/icons/marketplace-actions.tsx",
+      "sha256": "e5c705d489545c34cbed9fc612fa4e03adc7f2612914595152b1c5c8e1a2a57d"
+    },
+    {
+      "name": "Navigation and communication icons",
+      "destination": "frontend/src/components/icons/navigation-communication.tsx",
+      "sha256": "baf0560cadc66c0048665e06bd6207a07c42832933e29a01b2170d1f1832950b"
+    },
+    {
+      "name": "Status icons",
+      "destination": "frontend/src/components/icons/status.tsx",
+      "sha256": "c46c9dc3f4e56d49506d0c0eb03722c1c11e313af1972eccc7d8acced6c8c602"
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { LoginForm } from "@/components/forms/LoginForm";
+import { PageTitle, SupportingCopy } from "@/components/ui/Primitives";
 import { registrationHref, safeNextPath } from "@/lib/navigation";
 
 export const metadata = { title: "Prijava | Sve Za Pecanje" };
@@ -17,11 +18,11 @@ export default async function LoginPage({
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
-      <h1 className="text-3xl font-black">Prijava</h1>
-      <p className="mt-2 text-slate-600">
+      <PageTitle>Prijava</PageTitle>
+      <SupportingCopy className="mt-2">
         {isPostingListing ? "Prijavite se da biste postavili oglas. " : null}
         Nemate nalog? <Link href={registerLink} className="font-semibold text-river-700">Registrujte se</Link>.
-      </p>
+      </SupportingCopy>
       <div className="mt-6">
         <LoginForm nextPath={nextPath} />
       </div>

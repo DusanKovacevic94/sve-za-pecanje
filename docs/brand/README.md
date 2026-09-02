@@ -10,6 +10,12 @@ The same operations are available from this repository as
 `make brand-assets-check` and `make brand-assets-sync`. Set `BRAND_MANAGER_DIR`
 if the repositories are not siblings.
 
+Every sync also writes `docs/brand/managed-assets.json`, a deterministic receipt
+containing the canonical SHA-256 for each copied asset. `make brand-release-check`
+validates the application against that receipt without requiring the Brand
+Manager checkout. CI runs this standalone check before build and browser tests,
+so stale or locally edited copies fail the release path.
+
 The deployable SVG files live in `frontend/public/brand`:
 
 - `logo.svg` — primary wordmark for light backgrounds;
@@ -29,3 +35,4 @@ space around the mark. Action and category glyphs remain in the separate
 The broader palette, typography, shape, motion, and SVG motif rules are in
 `docs/brand/visual-identity.md`. During local development, `/dev/brand` provides
 a rendered catalogue and `/dev/icons` provides the complete UI glyph catalogue.
+See `docs/brand/visual-regression.md` for the screenshot review and update flow.

@@ -13,8 +13,8 @@ export default async function AccountSecurityPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-black">Bezbednost i privatnost</h1>
-      <p className="mt-2 text-slate-600">
+      <h1 className="text-3xl font-extrabold">Bezbednost i privatnost</h1>
+      <p className="mt-2 text-ink-600">
         Upravljajte prijavljenim uređajima, izvozom podataka i životnim ciklusom naloga.
       </p>
       <div className="mt-6">

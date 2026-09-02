@@ -21,6 +21,7 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.models.email_outbox import EmailOutbox
+from app.models.favorite import Favorite
 from app.models.brand import Brand
 from app.models.category import Category
 from app.models.listing import Listing
@@ -34,6 +35,9 @@ from app.services.account_service import process_data_exports
 ADMIN_EMAIL = "e2e-admin@example.com"
 ADMIN_USERNAME = "e2e_admin"
 ADMIN_PASSWORD = "E2eAdmin123!"
+VISUAL_BUYER_EMAIL = "visual-buyer@example.com"
+VISUAL_BUYER_USERNAME = "visual_buyer"
+VISUAL_BUYER_PASSWORD = "VisualBuyer123!"
 
 
 def require_test_environment() -> None:
@@ -64,6 +68,38 @@ def seed(db: Session) -> None:
             admin.profile.display_name = "E2E administrator"
         else:
             admin.profile = UserProfile(display_name="E2E administrator")
+
+    visual_buyer = db.scalar(select(User).where(User.email == VISUAL_BUYER_EMAIL))
+    if visual_buyer is None:
+        visual_buyer = User(
+            email=VISUAL_BUYER_EMAIL,
+            username=VISUAL_BUYER_USERNAME,
+            password_hash=hash_password(VISUAL_BUYER_PASSWORD),
+            role="user",
+            status="active",
+            email_verified_at=datetime.now(UTC),
+        )
+        visual_buyer.profile = UserProfile(display_name="Vizuelni kupac", city="Novi Sad")
+        db.add(visual_buyer)
+    else:
+        visual_buyer.username = VISUAL_BUYER_USERNAME
+        visual_buyer.password_hash = hash_password(VISUAL_BUYER_PASSWORD)
+        visual_buyer.status = "active"
+        visual_buyer.email_verified_at = visual_buyer.email_verified_at or datetime.now(UTC)
+    db.flush()
+
+    visual_listing = db.scalar(
+        select(Listing).where(Listing.status == "active").order_by(Listing.title.asc())
+    )
+    if visual_listing is not None:
+        existing_favorite = db.scalar(
+            select(Favorite).where(
+                Favorite.user_id == visual_buyer.id,
+                Favorite.listing_id == visual_listing.id,
+            )
+        )
+        if existing_favorite is None:
+            db.add(Favorite(user_id=visual_buyer.id, listing_id=visual_listing.id))
 
     db.commit()
     print(ADMIN_EMAIL)

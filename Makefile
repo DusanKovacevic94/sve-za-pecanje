@@ -1,4 +1,4 @@
-.PHONY: dev migrate migration-gate-postgres seed test test-storage-minio create-admin validate-prod brand-assets-check brand-assets-sync
+.PHONY: dev migrate migration-gate-postgres seed test test-storage-minio create-admin validate-prod brand-assets-check brand-assets-sync brand-release-check
 
 BRAND_MANAGER_DIR ?= ../sve-za-pecanje-brand-manager
 
@@ -36,3 +36,7 @@ brand-assets-check:
 
 brand-assets-sync:
 	$(MAKE) -C "$(BRAND_MANAGER_DIR)" assets-sync
+
+brand-release-check:
+	python3 ops/validate_brand_assets.py
+	python3 -m unittest ops/test_validate_brand_assets.py

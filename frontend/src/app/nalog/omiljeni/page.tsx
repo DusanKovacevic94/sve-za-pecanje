@@ -14,7 +14,7 @@ async function FavoritesContent() {
 
   return (
     <div>
-      <h1 className="text-3xl font-black">Omiljeni oglasi</h1>
+      <h1 className="text-3xl font-extrabold">Omiljeni oglasi</h1>
       {favorites.data.length ? (
         <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {favorites.data.map((listing) => (

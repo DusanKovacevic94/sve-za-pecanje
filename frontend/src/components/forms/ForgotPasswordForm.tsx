@@ -47,7 +47,7 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <div className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
         <Alert tone="success" title="Link za reset je poslat">
           Ako nalog postoji, email je na putu. Proverite prijemno sanduče i spam folder.
         </Alert>
@@ -56,7 +56,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
       <div>
         <FieldLabel htmlFor="email">Email</FieldLabel>
         <Input id="email" type="email" {...register("email")} />

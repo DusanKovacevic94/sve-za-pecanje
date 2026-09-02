@@ -51,7 +51,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
   if (done) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <div className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
         <Alert tone="success">Lozinka je uspešno promenjena.</Alert>
         <Button href="/prijava" className="mt-4">
           Prijavite se
@@ -61,7 +61,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
       <div>
         <FieldLabel htmlFor="new_password">Nova lozinka</FieldLabel>
         <Input id="new_password" type="password" {...register("new_password")} />

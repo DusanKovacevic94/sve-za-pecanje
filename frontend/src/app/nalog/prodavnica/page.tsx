@@ -13,8 +13,8 @@ export default async function AccountShopPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-black">Prodavnica</h1>
-      <p className="mt-2 text-slate-600">Podešavanja prodavnice i zahtev za mesečnu ili godišnju pretplatu.</p>
+      <h1 className="text-3xl font-extrabold">Prodavnica</h1>
+      <p className="mt-2 text-ink-600">Podešavanja prodavnice i zahtev za mesečnu ili godišnju pretplatu.</p>
       <div className="mt-6">
         <ShopSettingsForm shop={shop.data} plans={plans.data} requests={requests.data} />
       </div>

@@ -156,12 +156,12 @@ system, then refine supporting identity surfaces and automated governance.
 - [x] [063 — Mobile listing contact actions](063-mobile-listing-contact-actions.md)
 - [x] [064 — Mobile filter drawer and multi-select controls](064-mobile-filter-drawer.md)
 - [x] [065 — Guided listing creation and photo workflow](065-guided-listing-creation.md)
-- [ ] [066 — Design primitives and token adoption](066-design-primitives-token-adoption.md)
-- [ ] [067 — Listing-card information hierarchy](067-listing-card-information-hierarchy.md)
+- [x] [066 — Design primitives and token adoption](066-design-primitives-token-adoption.md)
+- [x] [067 — Listing-card information hierarchy](067-listing-card-information-hierarchy.md)
 
 ## P2 — Trust, identity surfaces, and governance
 
-- [ ] [068 — Seller trust summary and semantic metrics](068-seller-trust-summary.md)
-- [ ] [069 — Homepage marketplace proof and hero refinement](069-homepage-marketplace-proof.md)
-- [ ] [070 — Editorial and supporting-page system](070-editorial-supporting-pages.md)
-- [ ] [071 — Brand visual regression and governance gate](071-brand-visual-regression-gate.md)
+- [x] [068 — Seller trust summary and semantic metrics](068-seller-trust-summary.md)
+- [x] [069 — Homepage marketplace proof and hero refinement](069-homepage-marketplace-proof.md)
+- [x] [070 — Editorial and supporting-page system](070-editorial-supporting-pages.md)
+- [x] [071 — Brand visual regression and governance gate](071-brand-visual-regression-gate.md)

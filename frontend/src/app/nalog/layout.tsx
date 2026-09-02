@@ -10,8 +10,8 @@ export default async function AccountLayout({ children }: { children: ReactNode 
   if (!user) {
     return (
       <div className="mx-auto max-w-lg px-4 py-10">
-        <h1 className="text-3xl font-black">Prijava je obavezna</h1>
-        <p className="mt-2 text-slate-600">Prijavite se da biste videli nalog.</p>
+        <h1 className="text-3xl font-extrabold">Prijava je obavezna</h1>
+        <p className="mt-2 text-ink-600">Prijavite se da biste videli nalog.</p>
         <Button href="/prijava" className="mt-5">
           Prijava
         </Button>

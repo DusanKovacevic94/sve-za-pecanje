@@ -43,7 +43,7 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4 rounded-lg border border-slate-200 bg-white p-6 shadow-soft">
+    <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4 rounded-xl border border-sand-200 bg-white p-6 shadow-soft">
       <div>
         <FieldLabel htmlFor="name">Ime</FieldLabel>
         <Input id="name" error={formState.errors.name?.message} {...register("name")} />

@@ -84,8 +84,8 @@ export function FavoriteIconButton({ listingId, initialSaved = false, loginPath 
   return (
     <button
       type="button"
-      className={`focus-ring rounded-md p-2 hover:bg-river-50 motion-safe:transition motion-safe:duration-150 disabled:opacity-60 ${
-        saved ? "text-river-700 motion-safe:scale-105" : "text-slate-500"
+      className={`focus-ring rounded-xl p-2 hover:bg-river-50 motion-safe:transition motion-safe:duration-150 disabled:opacity-60 ${
+        saved ? "text-river-700 motion-safe:scale-105" : "text-ink-500"
       }`}
       aria-label={saved ? "Ukloni iz omiljenih" : "Dodaj u omiljene"}
       aria-pressed={saved}
@@ -132,15 +132,15 @@ export function MobileListingActions({
   return (
     <aside
       aria-label="Brze akcije oglasa"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-sand-200 bg-white/95 px-4 pt-3 shadow-[0_-8px_24px_rgba(23,63,55,0.12)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-sand-200 bg-white/95 px-4 pt-3 shadow-action-bar backdrop-blur lg:hidden"
       style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
     >
       <div className="mx-auto max-w-7xl">
         <div className="mb-2 flex items-center justify-between gap-3">
-          <p className="truncate text-lg font-black text-river-800" data-mobile-listing-price>{price}</p>
-          <p className={`shrink-0 text-xs font-black ${
+          <p className="truncate text-lg font-extrabold text-river-800" data-mobile-listing-price>{price}</p>
+          <p className={`shrink-0 text-xs font-extrabold ${
             status === "sold"
-              ? "text-slate-600"
+              ? "text-ink-600"
               : status === "reserved"
                 ? "text-reed-800"
                 : "text-river-700"
@@ -154,7 +154,7 @@ export function MobileListingActions({
               <EditIcon size={18} /> Izmeni oglas
             </Button>
           ) : status === "sold" ? (
-            <p className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-slate-100 px-3 text-sm font-bold text-slate-700">
+            <p className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-sand-100 px-3 text-sm font-bold text-ink-700">
               Oglas je prodat
             </p>
           ) : canMessage ? (
@@ -162,7 +162,7 @@ export function MobileListingActions({
               <MessageIcon size={18} /> Pošalji poruku
             </Button>
           ) : (
-            <p className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-slate-100 px-3 text-center text-sm font-bold text-slate-700">
+            <p className="flex min-h-11 min-w-0 flex-1 items-center justify-center rounded-xl bg-sand-100 px-3 text-center text-sm font-bold text-ink-700">
               Kontakt nije dostupan
             </p>
           )}
@@ -205,7 +205,7 @@ export function ReportButton({ listingId }: { listingId: string }) {
   }
 
   if (reported) {
-    return <p className="rounded-md bg-slate-100 p-3 text-center text-sm font-semibold">Hvala, prijava je poslata.</p>;
+    return <p className="rounded-xl bg-sand-100 p-3 text-center text-sm font-semibold">Hvala, prijava je poslata.</p>;
   }
   return (
     <Button onClick={onReport} variant="ghost">

@@ -167,8 +167,8 @@ export function SavedSearchManager({
   return (
     <div className="space-y-6">
       {hasCurrentSearch ? (
-        <section className="rounded-lg border border-river-100 bg-white p-5 shadow-soft">
-          <h2 className="text-xl font-black">Sačuvaj ovu pretragu</h2>
+        <section className="rounded-xl border border-river-100 bg-white p-5 shadow-soft">
+          <h2 className="text-xl font-extrabold">Sačuvaj ovu pretragu</h2>
           <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]">
             <div>
               <FieldLabel htmlFor="saved-search-name">Naziv</FieldLabel>
@@ -178,7 +178,7 @@ export function SavedSearchManager({
               <BellIcon size={18} /> Sačuvaj
             </Button>
           </div>
-          <label className="mt-3 flex gap-2 text-sm font-semibold text-slate-700">
+          <label className="mt-3 flex gap-2 text-sm font-semibold text-ink-700">
             <input type="checkbox" checked={notify} onChange={(event) => setNotify(event.target.checked)} />
             Obaveštavaj me o novim oglasima
           </label>
@@ -189,15 +189,15 @@ export function SavedSearchManager({
 
       <div className="grid gap-4">
         {visibleSearches.map((search) => (
-          <article key={search.id} className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <article key={search.id} className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
             <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
               <div>
-                <h2 className="font-black">{search.name}</h2>
-                <p className="mt-1 text-sm text-slate-600">
+                <h2 className="font-extrabold">{search.name}</h2>
+                <p className="mt-1 text-sm text-ink-600">
                   {search.query ?? "Bez ključne reči"} · {search.matching_count} rezultata
                 </p>
                 {Object.keys(search.filters).length ? (
-                  <p className="mt-2 text-xs text-slate-500">
+                  <p className="mt-2 text-xs text-ink-500">
                     {filterSummary(search.filters, categories).join(" · ")}
                   </p>
                 ) : null}

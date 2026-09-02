@@ -3,15 +3,15 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import {
+  AddListingIcon,
   EditIcon,
-  FavoriteIcon,
   MessageIcon,
   StoreIcon,
   TrustShieldIcon,
-  ViewIcon,
 } from "@/components/icons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { PageTitle, Panel, SectionHeading } from "@/components/ui/Primitives";
 import { FavoriteButton, MobileListingActions, ReportButton } from "@/components/listings/ListingActions";
 import { ListingGallery } from "@/components/listings/ListingGallery";
 import { ListingCard } from "@/components/listings/ListingCard";
@@ -154,7 +154,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
       <ListingViewTracker listingId={listing.id} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <nav aria-label="Putanja" className="mb-5 flex flex-wrap gap-2 text-sm font-semibold text-slate-600">
+      <nav aria-label="Putanja" className="mb-5 flex flex-wrap gap-2 text-sm font-semibold text-ink-600">
         <Link href="/" className="hover:text-river-700">Početna</Link>
         <span>/</span>
         <Link href="/oglasi" className="hover:text-river-700">Oglasi</Link>
@@ -164,7 +164,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
         <section className="lg:col-start-1 lg:row-start-1">
           <ListingGallery listing={listing} />
-          <div className="mt-6 rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <Panel elevation="soft" className="mt-6 p-5">
           <div className="flex flex-wrap gap-2">
             <Badge tone={listing.status === "sold" ? "sold" : listing.status === "reserved" ? "warn" : "accent"}>
               {listing.status === "sold" ? "Prodato" : listing.status === "reserved" ? "Rezervisano" : "Aktivan oglas"}
@@ -175,35 +175,35 @@ export default async function ListingDetailPage({ params }: PageProps) {
           </div>
           <div className="mt-4 flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
             <div>
-              <h1 className="text-3xl font-black">{listing.title}</h1>
-              <p className="mt-3 text-3xl font-black text-river-800">
+              <PageTitle>{listing.title}</PageTitle>
+              <p className="mt-3 text-3xl font-extrabold text-river-800">
                 {formattedPrice}
               </p>
               {listing.price_type === "negotiable" ? (
-                <p className="mt-1 text-sm font-semibold text-slate-600">Cena po dogovoru</p>
+                <p className="mt-1 text-sm font-semibold text-ink-600">Cena po dogovoru</p>
               ) : null}
             </div>
             <ShareButton title={listing.title} />
           </div>
           <dl className="mt-6 grid gap-3 sm:grid-cols-2">
             {metaRows.map(([label, value]) => (
-              <div key={label} className="rounded-md bg-slate-50 p-3">
-                <dt className="text-xs font-semibold uppercase text-slate-500">{label}</dt>
+              <div key={label} className="rounded-xl bg-sand-50 p-3">
+                <dt className="text-xs font-semibold uppercase text-ink-500">{label}</dt>
                 <dd className="mt-1 font-semibold">{value}</dd>
               </div>
             ))}
           </dl>
-          </div>
+          </Panel>
         </section>
         <aside className="space-y-4 lg:sticky lg:top-28 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-            <h2 className="font-black">Prodavac</h2>
+          <Panel elevation="soft" className="p-5">
+            <SectionHeading level="card">Prodavac</SectionHeading>
             <div className="mt-4 flex items-center gap-3">
-              <div className="grid h-12 w-12 place-items-center rounded-lg bg-river-700 text-lg font-black text-white">
+              <div className="grid h-12 w-12 place-items-center rounded-xl bg-river-700 text-lg font-extrabold text-white">
                 {initials || "SZ"}
               </div>
               <div>
-                <Link href={`/prodavci/${listing.seller.username}`} className="block text-lg font-black text-river-800 hover:text-river-600">
+                <Link href={`/prodavci/${listing.seller.username}`} className="block text-lg font-extrabold text-river-800 hover:text-river-600">
                   {sellerName}
                 </Link>
                 {listing.seller.shop_active && listing.seller.shop_slug ? (
@@ -212,24 +212,20 @@ export default async function ListingDetailPage({ params }: PageProps) {
                     {listing.seller.shop_name}
                   </Link>
                 ) : null}
-                <p className="text-sm text-slate-600">{listing.city}</p>
+                <p className="text-sm text-ink-600">{listing.city}</p>
               </div>
             </div>
             {listing.seller.trust ? (
-              <TrustIndicators trust={listing.seller.trust} />
+              <TrustIndicators trust={listing.seller.trust} className="mt-4" />
             ) : null}
-            <div className="mt-5 grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-md bg-slate-50 p-3">
-                <ViewIcon className="text-river-700" size={18} />
-                <p className="mt-1 font-black">{listing.view_count}</p>
-                <p className="text-xs text-slate-500">pregleda</p>
-              </div>
-              <div className="rounded-md bg-slate-50 p-3">
-                <FavoriteIcon className="text-river-700" size={18} />
-                <p className="mt-1 font-black">{listing.seller.active_listing_count ?? 0}</p>
-                <p className="text-xs text-slate-500">aktivnih oglasa</p>
-              </div>
-            </div>
+            <Link
+              href={`/prodavci/${listing.seller.username}`}
+              className="mt-4 flex items-center gap-2 rounded-xl border border-sand-200 px-3 py-2.5 text-sm font-semibold text-ink-700 hover:border-river-300 hover:text-river-700"
+              data-seller-activity
+            >
+              <AddListingIcon className="text-river-700" size={18} />
+              {listing.seller.active_listing_count ?? 0} aktivnih oglasa prodavca
+            </Link>
             <div className="mt-4 grid gap-2">
               {!isOwner ? (
                 <FollowSellerButton
@@ -239,11 +235,11 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 />
               ) : null}
               {listing.status === "sold" ? (
-                <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
+                <p className="rounded-xl bg-sand-100 p-3 text-sm font-semibold">Ovaj oglas je označen kao prodat.</p>
               ) : listing.can_message ? (
                 <Button href={messageHref}><MessageIcon size={18} /> Pošalji poruku</Button>
               ) : !isOwner ? (
-                <p className="rounded-md bg-slate-100 p-3 text-sm font-semibold">
+                <p className="rounded-xl bg-sand-100 p-3 text-sm font-semibold">
                   Kontakt trenutno nije dostupan.
                 </p>
               ) : null}
@@ -256,21 +252,21 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 </>
               )}
             </div>
-          </div>
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
+          </Panel>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-950">
             <TrustShieldIcon size={20} />
             <p className="mt-2 font-semibold">Proverite opremu uživo i ne šaljite novac unapred nepoznatim prodavcima.</p>
           </div>
         </aside>
         <section className="lg:col-start-1 lg:row-start-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <Panel elevation="soft" className="p-5">
             {listing.attributes_display.length ? (
               <div>
-                <h2 className="font-black">Detalji opreme</h2>
+                <SectionHeading level="card">Detalji opreme</SectionHeading>
                 <dl className="mt-3 grid gap-2 sm:grid-cols-2">
                   {listing.attributes_display.map((attribute) => (
-                    <div key={attribute.key} className="flex justify-between gap-4 border-b border-slate-100 py-2 text-sm">
-                      <dt className="font-semibold text-slate-600">{attribute.label_sr}</dt>
+                    <div key={attribute.key} className="flex justify-between gap-4 border-b border-sand-200 py-2 text-sm">
+                      <dt className="font-semibold text-ink-600">{attribute.label_sr}</dt>
                       <dd className="text-right">
                         {attribute.value}
                         {attribute.unit ? ` ${attribute.unit}` : ""}
@@ -282,7 +278,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
             ) : null}
             {listing.delivery_methods.length || listing.delivery_note ? (
               <div className={listing.attributes_display.length ? "mt-6" : ""}>
-                <h2 className="font-black">Preuzimanje i dostava</h2>
+                <SectionHeading level="card">Preuzimanje i dostava</SectionHeading>
                 {listing.delivery_methods.length ? (
                   <ul className="mt-3 flex flex-wrap gap-2">
                     {listing.delivery_methods.map((method) => (
@@ -291,21 +287,21 @@ export default async function ListingDetailPage({ params }: PageProps) {
                   </ul>
                 ) : null}
                 {listing.delivery_note ? (
-                  <p className="mt-3 whitespace-pre-line text-sm text-slate-700">{listing.delivery_note}</p>
+                  <p className="mt-3 whitespace-pre-line text-sm text-ink-700">{listing.delivery_note}</p>
                 ) : null}
               </div>
             ) : null}
             <div className={listing.attributes_display.length || listing.delivery_methods.length || listing.delivery_note ? "mt-6" : ""}>
-              <h2 className="font-black">Opis</h2>
-              <p className="mt-3 whitespace-pre-line text-slate-700">{listing.description}</p>
+              <SectionHeading level="card">Opis</SectionHeading>
+              <p className="mt-3 whitespace-pre-line text-ink-700">{listing.description}</p>
             </div>
-          </div>
+          </Panel>
         </section>
       </div>
       {similar.data.length ? (
         <section className="mt-10">
           <div className="flex items-center justify-between gap-4">
-            <h2 className="text-2xl font-black">Slični oglasi</h2>
+            <SectionHeading>Slični oglasi</SectionHeading>
             <Button href={`/kategorije/${listing.category.slug}`} variant="secondary">Još iz kategorije</Button>
           </div>
           <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

@@ -17,13 +17,13 @@ import { UnreadMessagesLink } from "@/components/layout/UnreadMessagesLink";
 export async function Header() {
   const user = await getCurrentUser();
   return (
-    <header className="sticky top-0 z-40 border-b border-sand-200 bg-sand-50/95 shadow-[0_4px_18px_rgba(23,63,55,0.05)] backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-sand-200 bg-sand-50/95 shadow-header backdrop-blur">
       <div className="h-0.5 bg-reed-500" aria-hidden="true" />
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4">
         <Link
           href="/"
           aria-label="Sve Za Pecanje — početna"
-          className="focus-ring shrink-0 rounded-lg"
+          className="focus-ring shrink-0 rounded-xl"
         >
           <BrandLogo alt="" className="h-9 w-auto max-w-32 sm:h-10 sm:max-w-none md:h-9 xl:h-10" priority />
         </Link>

@@ -121,7 +121,7 @@ export default function BrandCatalogPage() {
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Rounded monoline SVGs remain legible from metadata to empty-state scale.
           </p>
-          <div className="mt-8 flex flex-wrap items-end gap-7 text-river-700">
+          <div data-brand-icon-sample className="mt-8 flex flex-wrap items-end gap-7 text-river-700">
             <SearchIcon size={14} />
             <LocationIcon size={18} />
             <FiltersIcon size={24} />

@@ -26,7 +26,7 @@ export function VerifyEmailCard({ token }: { token: string }) {
 
   if (verified) {
     return (
-      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+      <div className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
         <Alert tone="success">Email adresa je potvrđena. Sada možete da postavljate oglase.</Alert>
         <Button href="/prijava" className="mt-4">
           Prijavite se
@@ -36,8 +36,8 @@ export function VerifyEmailCard({ token }: { token: string }) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
-      <p className="text-slate-600">Kliknite na dugme da potvrdite svoju email adresu.</p>
+    <div className="rounded-xl border border-sand-200 bg-white p-5 shadow-soft">
+      <p className="text-ink-600">Kliknite na dugme da potvrdite svoju email adresu.</p>
       <Button onClick={onVerify} disabled={pending} className="mt-4">
         Potvrdi email
       </Button>
