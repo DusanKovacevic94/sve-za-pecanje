@@ -45,27 +45,27 @@
     {
       "name": "Icon SVG foundation",
       "destination": "frontend/src/components/icons/IconBase.tsx",
-      "sha256": "4d638c4f21bac7a4b1514438d4dac1b2ddbbe1ffe79dd9a3fbfd0c5e1a88efba"
+      "sha256": "7e91116c6083f5df9634438a5f38ed6a42c02377c11161077469f624215b6f5a"
     },
     {
       "name": "Category icons",
       "destination": "frontend/src/components/icons/brand-categories.tsx",
-      "sha256": "f2668f154eec12e0396fd2081ebb557379267fc8a240848f055afd446e22f09a"
+      "sha256": "bb0b5ab0b6e7bd1446964e819684d9ee7595aa272270d0dbd0f132d4484a0ba7"
     },
     {
       "name": "Marketplace action icons",
       "destination": "frontend/src/components/icons/marketplace-actions.tsx",
-      "sha256": "e5c705d489545c34cbed9fc612fa4e03adc7f2612914595152b1c5c8e1a2a57d"
+      "sha256": "aec4680ec006aaef8ad9740defb03ccec81b5cd401ac23e6295ebb53cc929fd2"
     },
     {
       "name": "Navigation and communication icons",
       "destination": "frontend/src/components/icons/navigation-communication.tsx",
-      "sha256": "baf0560cadc66c0048665e06bd6207a07c42832933e29a01b2170d1f1832950b"
+      "sha256": "cac5adae8c5194b7d8d29df1d653eaba5045919aa28e06a8fd17cdface949f72"
     },
     {
       "name": "Status icons",
       "destination": "frontend/src/components/icons/status.tsx",
-      "sha256": "c46c9dc3f4e56d49506d0c0eb03722c1c11e313af1972eccc7d8acced6c8c602"
+      "sha256": "8025a5311d6f226245825fd1c7f53e3012912b979c5568ce257c5ee45739788f"
     }
   ]
 }
