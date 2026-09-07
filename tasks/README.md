@@ -180,14 +180,14 @@ Start with 072; dependencies and release boundaries are documented in the plan.
 ## P1 — CMS foundation and public publishing
 
 - [x] [072 — Payload CMS foundation and database isolation](072-payload-cms-foundation.md)
-- [ ] [073 — Blog content model and editor access](073-blog-content-editor-access.md)
-- [ ] [074 — CMS media library and object storage](074-cms-media-storage.md)
-- [ ] [075 — Public blog pages and SEO](075-public-blog-pages-seo.md)
-- [ ] [076 — Secure draft preview and publishing cache updates](076-blog-preview-publishing-cache.md)
+- [x] [073 — Blog content model and editor access](073-blog-content-editor-access.md)
+- [x] [074 — CMS media library and object storage](074-cms-media-storage.md)
+- [x] [075 — Public blog pages and SEO](075-public-blog-pages-seo.md)
+- [x] [076 — Secure draft preview and publishing cache updates](076-blog-preview-publishing-cache.md)
 
 ## P2 — Marketplace discovery and measurement
 
-- [ ] [077 — Blog discovery links and marketplace engagement metrics](077-blog-marketplace-discovery-metrics.md)
+- [x] [077 — Blog discovery links and marketplace engagement metrics](077-blog-marketplace-discovery-metrics.md)
 
 ## P1 — Release preparation and handoff
 

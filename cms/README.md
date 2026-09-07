@@ -1,9 +1,11 @@
 # Sve Za Pecanje CMS
 
-Payload foundation for the planned blog. Public articles will be rendered by the
-existing frontend. This service currently provides administrator authentication,
-explicit migrations, health checks, and isolated database provisioning (task 072).
-Article fields and editorial roles are task 073; image storage is task 074.
+Payload CMS for the blog rendered by the existing marketplace frontend.
+The service provides isolated database provisioning, explicit migrations,
+health checks, administrator/editor accounts, draft/versioned articles, public author
+profiles, image uploads/variants, password recovery, scoped editor previews and
+signed publishing notifications (tasks 072–076). See [the content API](CONTENT_API.md),
+[image storage](MEDIA_STORAGE.md), and [public blog/preview setup](../docs/blog-publishing.md).
 
 ## Pinned stack
 
@@ -19,6 +21,8 @@ From the application repository:
 1. Follow the existing application setup to create the root `.env`. Add distinct
    random `CMS_DATABASE_PASSWORD` (16+ characters) and `CMS_SECRET` (32+ characters).
    `openssl rand -hex 32` generates a suitable value; run it separately for each.
+   Also set `CMS_S3_ACCESS_KEY_ID=szp-cms` and a distinct random
+   `CMS_S3_SECRET_ACCESS_KEY` (16+ characters) for the dedicated local MinIO identity.
 2. Ensure `POSTGRES_USER` and `POSTGRES_PASSWORD` match the existing local PostgreSQL
    volume. Changing an environment file does not change an existing server password.
 3. Run `make cms-dev` for the CMS and its database dependencies, or `make dev-with-cms`
@@ -26,9 +30,9 @@ From the application repository:
 4. In another terminal, bootstrap the initial administrator using the procedure below.
 5. Open `http://localhost:3002/admin`.
 
-The optional `docker-compose.cms.yml` overlay starts a one-shot provisioning service,
-then migrations, then the CMS. The regular development and production Compose commands
-do not include this overlay and do not start the CMS. The public production editor URL
+The optional `docker-compose.cms.yml` overlay starts database provisioning/migrations
+and a separate local storage provisioner before the CMS. The regular development and
+production Compose commands do not include this overlay and do not start the CMS. The public production editor URL
 will be `https://cms.svezapecanje.rs/admin` once task 078 and an authorized rollout land.
 
 CMS source files are mounted for development; dependencies and Next.js output use
@@ -52,8 +56,10 @@ unset CMS_BOOTSTRAP_EMAIL CMS_BOOTSTRAP_PASSWORD
 The command works only in development/test against loopback or Compose PostgreSQL.
 It refuses when any CMS user exists and serializes concurrent attempts. It never resets
 an existing password. The web first-user form is disabled and the database write hook
-also blocks the first-registration API. All foundation accounts are administrators;
-separate editor permissions and email password recovery will be implemented in 073.
+also blocks the first-registration API. Bootstrap creates an administrator; existing
+foundation accounts remain administrators after the task 073 migration. Administrators
+create editor accounts in the Users collection. Editors manage content and publish,
+but cannot manage accounts, change roles, or unlock users.
 
 ## Direct local commands
 
@@ -67,6 +73,7 @@ cd cms
 pnpm install --frozen-lockfile
 pnpm db:provision
 pnpm migrate
+pnpm storage:provision
 pnpm bootstrap
 pnpm dev
 ```
@@ -97,6 +104,17 @@ pnpm migrate
 pnpm migrate:status
 ```
 
+Task 073 adds `20260907_094724_editorial_content`. Its upgrade preserves existing
+administrators and its downgrade removes editorial tables and the role field. Payload
+rollbacks apply to the whole latest migration batch; do not use them casually against
+valuable data. Back up before release migrations (production procedures are task 078).
+
+Local password recovery goes to Mailpit at `http://localhost:8025`; `make cms-dev`
+starts it as a dependency. Direct local commands use `CMS_SMTP_HOST=127.0.0.1` and
+`CMS_SMTP_PORT=1025`. Production requires separate CMS configuration for the existing
+Resend account: `CMS_RESEND_API_KEY` and verified `CMS_EMAIL_FROM`. Neither is needed
+for builds or local tests. See [authentication and recovery](CONTENT_API.md#authentication-and-recovery).
+
 Review generated SQL and retain its snapshot and index in source control. A release
 uses migrations from the `tools` image before starting the matching `runner` image.
 Never mix these with backend Alembic migrations. The initial schema is included as
@@ -126,6 +144,12 @@ marketplace schema/data. They also verify initial migration rollback and re-upgr
 standalone image instead of a local Next.js process. Only resources created by the
 test run are removed afterward; no developer/production database URL is accepted.
 
+The suite also provisions isolated MinIO/Mailpit and tests uploads, version-safe media
+deletion, and restart persistence. Its browser check renders actual image URLs through
+the frontend optimizer. Install frontend dependencies and Chromium first:
+`cd frontend && pnpm install --frozen-lockfile && pnpm exec playwright install chromium`
+(from the application root). See [media verification](MEDIA_STORAGE.md#verification-and-rollout-limits).
+
 `cms-test-compose` rehearses the documented development overlay with its own project
 name, volumes, random ports, and synthetic credentials. It verifies startup ordering,
 administrator bootstrap, and repeated provisioning/migrations against an existing
@@ -135,8 +159,8 @@ The lockfile pins DOMPurify 3.4.15 to pick up upstream sanitizer fixes. At found
 validation, `pnpm audit --prod --audit-level high` passes. Two moderate advisories
 remain: esbuild in migration tooling (its development HTTP server is not used here),
 and Payload's default unlock access (this collection explicitly grants unlock only
-to signed-in CMS administrators). Task 073 must preserve administrator-only unlock
-when introducing editors. Recheck the audit when upgrading dependencies.
+to CMS administrators, with negative editor/anonymous integration tests). Recheck the
+audit when upgrading dependencies.
 
 ## Health and operating limits
 
@@ -146,8 +170,9 @@ when introducing editors. Recheck the audit when upgrading dependencies.
 - PostgreSQL pool: at most five connections per CMS process, five-second connect timeout.
 - For local development, budget roughly 2 GB RAM for the CMS plus its shared services;
   allow more headroom during builds. This is a starting budget, not a capacity benchmark.
-- There is no article/media service yet. Production DNS/TLS, resource sizing, mail,
-  backup/restore, monitoring, and production bootstrap are addressed by later tasks.
+- Public blog pages are not implemented yet. Production DNS/TLS,
+  resource sizing, mail credentials, backup/restore, monitoring, and production
+  bootstrap are addressed by later tasks.
 
 Reference: [Payload compatibility](https://payloadcms.com/docs/getting-started/installation)
 and [Payload migrations](https://payloadcms.com/docs/database/migrations), checked 2026-09-07.

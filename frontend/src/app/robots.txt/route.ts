@@ -6,9 +6,12 @@ export function GET() {
 Allow: /
 Disallow: /admin
 Disallow: /nalog
+Disallow: /blog/preview
+Disallow: /api/blog
 ${facetRobotsRules().join("\n")}
 
 Sitemap: ${process.env.NEXT_PUBLIC_APP_URL ?? "https://svezapecanje.rs"}/sitemap.xml
+Sitemap: ${process.env.NEXT_PUBLIC_APP_URL ?? "https://svezapecanje.rs"}/blog/sitemap.xml
 `,
     { headers: { "Content-Type": "text/plain" } }
   );

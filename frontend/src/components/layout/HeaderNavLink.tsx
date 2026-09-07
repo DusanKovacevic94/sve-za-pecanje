@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BlogLink } from "@/components/blog/BlogLink";
 
-export function HeaderNavLink({ href, children, mobile = false }: { href: string; children: React.ReactNode; mobile?: boolean }) {
+export function HeaderNavLink({ href, children, mobile = false, documentNavigation = false }: { href: string; children: React.ReactNode; mobile?: boolean; documentNavigation?: boolean }) {
   const pathname = usePathname();
   const active = pathname === href || (href !== "/" && pathname.startsWith(`${href}/`));
   const classes = mobile
@@ -14,7 +15,7 @@ export function HeaderNavLink({ href, children, mobile = false }: { href: string
         active ? "bg-river-50 text-river-800 shadow-nav-active" : "hover:bg-river-50"
       }`;
   return (
-    <Link href={href} className={classes} aria-current={active ? "page" : undefined}>
+    documentNavigation ? <BlogLink href={href} className={classes} aria-current={active ? "page" : undefined}>{children}</BlogLink> : <Link href={href} className={classes} aria-current={active ? "page" : undefined}>
       {children}
     </Link>
   );

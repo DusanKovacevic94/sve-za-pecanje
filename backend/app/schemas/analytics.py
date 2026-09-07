@@ -1,29 +1,31 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class SearchEventProperties(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     query: str | None = Field(default=None, max_length=160)
     result_count: int | None = Field(default=None, ge=0, le=1_000_000)
     filter_count: int = Field(default=0, ge=0, le=100)
     page: int = Field(default=1, ge=1, le=10_000)
     query_length: int | None = Field(default=None, ge=0, le=160)
-    suggestion_types: list[
-        Literal["category", "brand", "common_query", "listing"]
-    ] = Field(default_factory=list, max_length=4)
+    suggestion_types: list[Literal["category", "brand", "common_query", "listing"]] = Field(
+        default_factory=list, max_length=4
+    )
     suggestion_count: int | None = Field(default=None, ge=0, le=12)
-    suggestion_type: Literal[
-        "category", "brand", "common_query", "listing"
-    ] | None = None
+    suggestion_type: Literal["category", "brand", "common_query", "listing"] | None = None
     position: int | None = Field(default=None, ge=0, le=11)
-    recovery_action: Literal[
-        "spelling",
-        "remove_filter",
-        "related_category",
-        "recent_listing",
-        "save_search",
-    ] | None = None
+    recovery_action: (
+        Literal[
+            "spelling",
+            "remove_filter",
+            "related_category",
+            "recent_listing",
+            "save_search",
+        ]
+        | None
+    ) = None
     removed_filter: str | None = Field(default=None, max_length=80)
 
     @field_validator("query")
@@ -33,30 +35,50 @@ class SearchEventProperties(BaseModel):
         return normalized or None
 
 
+class BlogEventProperties(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    post_id: str = Field(pattern=r"^[1-9][0-9]{0,17}$")
+    view_id: str = Field(min_length=36, max_length=36, pattern=r"^[a-f0-9-]+$")
+    target_id: str | None = Field(
+        default=None, min_length=1, max_length=36, pattern=r"^[A-Za-z0-9_-]+$"
+    )
+
+
 class PublicAnalyticsEventCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     client_event_id: str = Field(min_length=16, max_length=80, pattern=r"^[A-Za-z0-9_-]+$")
     event_name: Literal[
         "search_performed",
         "suggestion_impression",
         "suggestion_selected",
         "zero_result_recovery",
+        "blog_viewed",
+        "blog_category_clicked",
+        "blog_listing_clicked",
     ]
     anonymous_id: str = Field(min_length=16, max_length=100, pattern=r"^[A-Za-z0-9_-]+$")
     category_id: str | None = Field(default=None, max_length=36)
-    properties: SearchEventProperties
+    properties: SearchEventProperties | BlogEventProperties
 
     @model_validator(mode="after")
     def validate_event_properties(self) -> "PublicAnalyticsEventCreate":
+        if self.event_name.startswith("blog_"):
+            if not isinstance(self.properties, BlogEventProperties):
+                raise ValueError("Blog properties are required.")
+            click = self.event_name != "blog_viewed"
+            if click != (self.properties.target_id is not None):
+                raise ValueError("Only blog clicks require a target ID.")
+            if self.category_id is not None:
+                raise ValueError("Blog targets belong in target_id.")
+            return self
+        if not isinstance(self.properties, SearchEventProperties):
+            raise ValueError("Search properties are required.")
         if self.event_name == "search_performed" and self.properties.result_count is None:
             raise ValueError("Broj rezultata je obavezan za praćenje pretrage.")
         if self.event_name == "suggestion_selected" and (
-            self.properties.suggestion_type is None
-            or self.properties.position is None
+            self.properties.suggestion_type is None or self.properties.position is None
         ):
             raise ValueError("Tip i pozicija predloga su obavezni.")
-        if (
-            self.event_name == "zero_result_recovery"
-            and self.properties.recovery_action is None
-        ):
+        if self.event_name == "zero_result_recovery" and self.properties.recovery_action is None:
             raise ValueError("Akcija oporavka je obavezna.")
         return self

@@ -38,7 +38,8 @@ SERVER_EVENT_NAMES = frozenset(
         "saved_search_created",
     }
 )
-PUBLIC_EVENT_NAMES = frozenset(
+BLOG_EVENT_NAMES = frozenset({"blog_viewed", "blog_category_clicked", "blog_listing_clicked"})
+SEARCH_EVENT_NAMES = frozenset(
     {
         "search_performed",
         "suggestion_impression",
@@ -46,6 +47,7 @@ PUBLIC_EVENT_NAMES = frozenset(
         "zero_result_recovery",
     }
 )
+PUBLIC_EVENT_NAMES = SEARCH_EVENT_NAMES | BLOG_EVENT_NAMES
 EVENT_NAMES = SERVER_EVENT_NAMES | PUBLIC_EVENT_NAMES
 
 _EMAIL_PATTERN = re.compile(r"\b[^@\s]+@[^@\s]+\.[^@\s]+\b")
@@ -110,14 +112,12 @@ class AnalyticsService:
         user_agent: str | None,
     ) -> bool:
         if self.db.scalar(
-            select(AnalyticsEvent.id).where(
-                AnalyticsEvent.client_event_id == client_event_id
-            )
+            select(AnalyticsEvent.id).where(AnalyticsEvent.client_event_id == client_event_id)
         ):
             return False
         if category_id and not self.db.get(Category, category_id):
             category_id = None
-        if event_name not in PUBLIC_EVENT_NAMES:
+        if event_name not in SEARCH_EVENT_NAMES:
             raise ValueError(f"Unsupported public analytics event: {event_name}")
         if event_name == "search_performed":
             safe_properties = {
@@ -129,9 +129,9 @@ class AnalyticsService:
         elif event_name == "suggestion_impression":
             safe_properties = {
                 "query_length": int(properties.get("query_length") or 0),
-                "suggestion_types": list(
-                    dict.fromkeys(properties.get("suggestion_types") or [])
-                )[:4],
+                "suggestion_types": list(dict.fromkeys(properties.get("suggestion_types") or []))[
+                    :4
+                ],
                 "suggestion_count": int(properties.get("suggestion_count") or 0),
             }
         elif event_name == "suggestion_selected":
@@ -143,8 +143,7 @@ class AnalyticsService:
         else:
             safe_properties = {
                 "recovery_action": properties.get("recovery_action"),
-                "removed_filter": (properties.get("removed_filter") or "")[:80]
-                or None,
+                "removed_filter": (properties.get("removed_filter") or "")[:80] or None,
             }
         event = AnalyticsEvent(
             client_event_id=client_event_id,
@@ -163,6 +162,95 @@ class AnalyticsService:
             self.db.rollback()
             return False
         return True
+
+    def track_public_blog(self, *, event_name: str, properties: dict, ip_address: str) -> bool:
+        if event_name not in BLOG_EVENT_NAMES:
+            raise ValueError("Unsupported blog event")
+        post_id, view_id = properties["post_id"], properties["view_id"]
+        # A destination is counted once per document view, even if the caller retries
+        # with a fresh client_event_id. No cross-page/browser identity or user join.
+        event_id = "blog_" + _hash_identifier(
+            f"{event_name}:{post_id}:{view_id}:{properties.get('target_id') or ''}"
+        )
+        self.db.add(
+            AnalyticsEvent(
+                client_event_id=event_id,
+                event_name=event_name,
+                entity_type="blog_post",
+                entity_id=post_id,
+                anonymous_id=_hash_identifier(view_id),
+                ip_address_hash=_hash_identifier(ip_address),
+                properties={
+                    "view_id": _hash_identifier(view_id),
+                    **(
+                        {"target_id": properties["target_id"]}
+                        if properties.get("target_id")
+                        else {}
+                    ),
+                },
+            )
+        )
+        try:
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            return False
+        return True
+
+
+def blog_report(db: Session, *, days: int) -> dict[str, Any]:
+    today = datetime.now(REPORTING_TIMEZONE).date()
+    first = today - timedelta(days=days - 1)
+    start, _ = reporting_day_bounds(first)
+    _, end = reporting_day_bounds(today)
+    view_key = AnalyticsEvent.properties["view_id"].as_string()
+    rows = db.execute(
+        select(
+            AnalyticsEvent.entity_id,
+            view_key,
+            AnalyticsEvent.event_name,
+            func.count(AnalyticsEvent.id),
+        )
+        .where(
+            AnalyticsEvent.event_name.in_(BLOG_EVENT_NAMES),
+            AnalyticsEvent.entity_type == "blog_post",
+            AnalyticsEvent.created_at >= start,
+            AnalyticsEvent.created_at < end,
+        )
+        .group_by(AnalyticsEvent.entity_id, view_key, AnalyticsEvent.event_name)
+    ).all()
+    posts: dict[str, dict] = {}
+    for post_id, view_id, name, count in rows:
+        row = posts.setdefault(
+            post_id,
+            {
+                "post_id": post_id,
+                "views": set(),
+                "clicked": set(),
+                "category_clicks": 0,
+                "listing_clicks": 0,
+            },
+        )
+        if name == "blog_viewed":
+            row["views"].add(view_id)
+        else:
+            row["clicked"].add(view_id)
+            row["category_clicks" if name == "blog_category_clicked" else "listing_clicks"] += count
+    result = []
+    for row in posts.values():
+        views, clicked = row.pop("views"), row.pop("clicked")
+        result.append(
+            {
+                **row,
+                "article_views": len(views),
+                "clicked_views": len(views & clicked),
+                "click_through_rate": _rate(len(views & clicked), len(views)),
+            }
+        )
+    return {
+        "period": {"from": first.isoformat(), "to": today.isoformat(), "days": days},
+        "posts": sorted(result, key=lambda row: (-row["article_views"], row["post_id"])),
+    }
 
 
 def _empty_metrics() -> dict[str, Any]:
@@ -246,13 +334,9 @@ def build_marketplace_metrics_for_day(db: Session, metric_date: date) -> int:
     start, end = reporting_day_bounds(metric_date)
     metrics: defaultdict[str, dict[str, Any]] = defaultdict(_empty_metrics)
     metrics[ALL_CATEGORIES]
-    parent_by_category = dict(
-        db.execute(select(Category.id, Category.parent_id)).all()
-    )
+    parent_by_category = dict(db.execute(select(Category.id, Category.parent_id)).all())
 
-    for listing_id, category_id, seller_id, image_count in _active_listing_rows(
-        db, start, end
-    ):
+    for listing_id, category_id, seller_id, image_count in _active_listing_rows(db, start, end):
         _add_to_dimensions(
             metrics,
             category_id,
@@ -304,9 +388,7 @@ def build_marketplace_metrics_for_day(db: Session, metric_date: date) -> int:
     ).all()
     for event_name, entity_id, category_id, properties in events:
         if event_name == "search_performed":
-            _add_to_dimensions(
-                metrics, category_id, "searches", 1, parent_by_category
-            )
+            _add_to_dimensions(metrics, category_id, "searches", 1, parent_by_category)
             if int((properties or {}).get("result_count", 0)) == 0:
                 _add_to_dimensions(
                     metrics,
@@ -316,9 +398,7 @@ def build_marketplace_metrics_for_day(db: Session, metric_date: date) -> int:
                     parent_by_category,
                 )
         elif event_name == "listing_viewed":
-            _add_to_dimensions(
-                metrics, category_id, "listing_views", 1, parent_by_category
-            )
+            _add_to_dimensions(metrics, category_id, "listing_views", 1, parent_by_category)
 
     conversations = db.execute(
         select(Conversation.id, Listing.category_id)
@@ -405,9 +485,7 @@ def build_marketplace_metrics_for_day(db: Session, metric_date: date) -> int:
                 sold_listings=len(values["sold_listing_ids"]),
                 sold_within_30_days=values["sold_within_30_days"],
                 median_days_to_sale=(
-                    Decimal(str(round(float(median(sale_days)), 2)))
-                    if sale_days
-                    else None
+                    Decimal(str(round(float(median(sale_days)), 2))) if sale_days else None
                 ),
                 reports=len(values["report_ids"]),
             )
@@ -416,9 +494,7 @@ def build_marketplace_metrics_for_day(db: Session, metric_date: date) -> int:
     return len(metrics)
 
 
-def build_marketplace_metrics_range(
-    db: Session, start_date: date, end_date: date
-) -> int:
+def build_marketplace_metrics_range(db: Session, start_date: date, end_date: date) -> int:
     if end_date < start_date:
         raise ValueError("end_date must be on or after start_date")
     total = 0
@@ -442,31 +518,21 @@ def _serialize_daily(row: MarketplaceMetricDaily) -> dict[str, Any]:
         "new_approved_listings": row.new_approved_listings,
         "unique_active_sellers": row.unique_active_sellers,
         "listings_with_three_images": row.listings_with_three_images,
-        "photo_quality_rate": _rate(
-            row.listings_with_three_images, row.active_listings
-        ),
+        "photo_quality_rate": _rate(row.listings_with_three_images, row.active_listings),
         "searches": row.searches,
         "zero_result_searches": row.zero_result_searches,
         "zero_result_rate": _rate(row.zero_result_searches, row.searches),
         "listing_views": row.listing_views,
         "conversations_started": row.conversations_started,
-        "contact_conversion_rate": _rate(
-            row.conversations_started, row.listing_views
-        ),
+        "contact_conversion_rate": _rate(row.conversations_started, row.listing_views),
         "sold_listings": row.sold_listings,
         "sold_within_30_days": row.sold_within_30_days,
-        "sold_within_30_days_rate": _rate(
-            row.sold_within_30_days, row.sold_listings
-        ),
+        "sold_within_30_days_rate": _rate(row.sold_within_30_days, row.sold_listings),
         "median_days_to_sale": (
-            float(row.median_days_to_sale)
-            if row.median_days_to_sale is not None
-            else None
+            float(row.median_days_to_sale) if row.median_days_to_sale is not None else None
         ),
         "reports": row.reports,
-        "report_rate_per_1000_views": _rate(
-            row.reports, row.listing_views, multiplier=1000
-        ),
+        "report_rate_per_1000_views": _rate(row.reports, row.listing_views, multiplier=1000),
     }
 
 
@@ -491,9 +557,7 @@ def _summary(rows: list[MarketplaceMetricDaily]) -> dict[str, Any] | None:
         "active_listings": latest.active_listings,
         "new_approved_listings": sum(row.new_approved_listings for row in rows),
         "unique_active_sellers": latest.unique_active_sellers,
-        "photo_quality_rate": _rate(
-            latest.listings_with_three_images, latest.active_listings
-        ),
+        "photo_quality_rate": _rate(latest.listings_with_three_images, latest.active_listings),
         "searches": searches,
         "zero_result_rate": _rate(zero_results, searches),
         "listing_views": views,
@@ -501,9 +565,7 @@ def _summary(rows: list[MarketplaceMetricDaily]) -> dict[str, Any] | None:
         "contact_conversion_rate": _rate(conversations, views),
         "sold_listings": sold,
         "sold_within_30_days_rate": _rate(sold_30, sold),
-        "median_days_to_sale": round(float(median(sale_days)), 2)
-        if sale_days
-        else None,
+        "median_days_to_sale": round(float(median(sale_days)), 2) if sale_days else None,
         "reports": reports,
         "report_rate_per_1000_views": _rate(reports, views, multiplier=1000),
     }
@@ -521,9 +583,7 @@ def _changes(
             result[key] = None
         else:
             result[key] = round(
-                (float(current_value) - float(previous_value))
-                / abs(float(previous_value))
-                * 100,
+                (float(current_value) - float(previous_value)) / abs(float(previous_value)) * 100,
                 2,
             )
     return result

@@ -1,6 +1,6 @@
 # Marketplace health metrics
 
-Last updated: 2026-07-18
+Last updated: 2026-09-07
 
 This document defines the task 047 event and reporting contract. Product decisions should
 use these definitions consistently rather than recreating similar counts in individual
@@ -36,11 +36,80 @@ pages.
 Server events are written in the same transaction as the business action. They do not
 depend on Umami or frontend tracking.
 
-The public endpoint accepts only `search_performed`. It requires a unique client event ID,
-an anonymous browser ID, result count, filter count, and page. IDs and IP addresses are
+The public endpoint accepts `search_performed`, `suggestion_impression`,
+`suggestion_selected`, `zero_result_recovery`, and the three blog events below.
+Search ingestion requires a unique client event ID,
+an anonymous browser ID, result count, filter count, and page. Anonymous browser IDs and IP addresses are
 keyed hashes before storage. Queries are normalized to Unicode NFKC, lower-cased, whitespace
 collapsed, and omitted when they resemble an email address or phone number. Unknown
 properties and unknown event names are rejected by schema validation.
+
+## Blog discovery (task 077)
+
+Blog collection uses the same rate-limited `POST /api/v1/analytics/events` endpoint,
+but a separate, strict properties schema and reporting path, independent of Umami.
+Existing event JSON/entity columns hold the data; no new database or migration is
+needed. Blog events never enter search, conversation, or sales counts.
+
+| Event | Meaning | Allowed properties |
+|---|---|---|
+| `blog_viewed` | A published article document becomes visible | `post_id`, `view_id` |
+| `blog_category_clicked` | The reader activates the resolved category link | `post_id`, `view_id`, `target_id` (category ID) |
+| `blog_listing_clicked` | The reader activates a related listing link | `post_id`, `view_id`, `target_id` (listing ID) |
+
+`post_id` is the stable numeric Payload post ID, not a title/slug. `view_id` is a
+random UUID kept only in the mounted page's memory. The envelope still requires
+`client_event_id` and `anonymous_id`; the sender sets the latter to the view UUID.
+Blog ingestion ignores both for identity/deduplication, deriving a unique event key
+from event name, post ID, view UUID, and target ID. Retries with different client IDs
+cannot count the same destination twice within a view. Image/title links on one card
+share a target. Reloading creates a new view; multiple tabs are separate views.
+This is **not** a unique-reader measure.
+
+Only the resolved category and up to three current related listings are tracked,
+including body links to those same destinations. External links, seller profiles,
+favorites, navigation, and arbitrary unvalidated body destinations are not included.
+Keyboard activation and middle clicks count; right clicks do not. Browser delivery is
+best-effort (`keepalive`), never blocks navigation, and has no offline queue.
+
+`GET /api/v1/analytics/blog?days=30` requires marketplace admin/super-admin access.
+`days` accepts 1–90 (default 30), using inclusive Europe/Belgrade calendar dates.
+The response's `posts` rows contain `post_id`, `article_views`, `category_clicks`,
+`listing_clicks`, `clicked_views`, and `click_through_rate`.
+
+CTR = views with at least one category/listing click / article views × 100, or `null`
+without views. Multiple destinations cannot inflate CTR beyond 100%. Clicks whose
+view was lost or fell outside the reporting range remain in click counts, but not
+the CTR numerator. An empty report returns `posts: []`.
+
+The endpoint reports raw retained events only (90 days), not a 730-day blog aggregate.
+The existing worker deletes old blog events with all other raw events; marketplace
+730-day rollups and search reporting are unchanged. No new admin dashboard UI is
+included in v1; the authenticated JSON endpoint is the report.
+
+### Exclusions and privacy
+
+- Frontend `BLOG_ANALYTICS_ENABLED` must explicitly equal `true`; leave it off in
+  development, staging, normal fixtures, and release smoke checks. The isolated
+  integration test enables it only with locally intercepted requests.
+- CMS previews never mount the collector. `/blog/preview` paths are also defensively
+  excluded in the client.
+- Fixture slug namespace `probni-` and comma-separated stable IDs in frontend
+  `BLOG_ANALYTICS_EXCLUDED_POST_IDS` have collection disabled by the server.
+  Add any manually created test article IDs before enabling live collection.
+- Do Not Track, Global Privacy Control, and `navigator.webdriver` suppress collection.
+  Backend ingestion also excludes recognized crawler user agents.
+- No new cookies/localStorage, cross-page identity, referrer, URL, title, search text,
+  or contact details are collected. Requests omit credentials and referrers. View UUIDs
+  and IP addresses are keyed hashes; blog rows store neither user ID nor user-agent text.
+- This is client-reported engagement, not audited traffic: blockers can undercount and
+  a malicious caller can fabricate public events/post IDs. No CMS authentication or
+  database join implies stronger provenance. Do not use these counts for billing.
+
+**A click is not a seller contact, conversation, or sale.** Downstream attribution is
+deferred: it needs a separately approved attribution window, consent/storage model,
+cross-page identity rules, and tests. Do not join per-view IDs to conversations.
+Enable live collection only after the release/privacy disclosure review in 079.
 
 ## Daily supply metrics
 
@@ -100,7 +169,8 @@ distinguishes missing comparison data from a measured zero.
 
 ## Interfaces
 
-- `POST /api/v1/analytics/events` — rate-limited public search event ingestion.
+- `POST /api/v1/analytics/events` — rate-limited public search/discovery/blog ingestion.
+- `GET /api/v1/analytics/blog?days=1..90` — authorized per-post blog engagement report.
 - `GET /api/v1/admin/analytics/marketplace?days=7|30|90&category_id=...` — authorized
   dashboard data.
 - `GET /api/v1/admin/analytics/marketplace.csv?days=7|30|90&category_id=...` — authorized

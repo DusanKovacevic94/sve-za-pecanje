@@ -23,7 +23,7 @@ async function bootstrap() {
     await lock.query("SELECT pg_advisory_lock(hashtext('szp-cms-bootstrap'))")
     const existing = await payload.count({ collection: 'users', overrideAccess: true })
     if (existing.totalDocs !== 0) throw new Error('Bootstrap refused: a CMS account already exists.')
-    await payload.create({ collection: 'users', data: { email, password }, context: { bootstrapAdmin: true }, overrideAccess: true })
+    await payload.create({ collection: 'users', data: { email, password, role: 'admin' }, context: { bootstrapAdmin: true }, overrideAccess: true })
     console.log('Initial CMS administrator created. Bootstrap credentials can now be removed.')
   } finally {
     await lock.end()

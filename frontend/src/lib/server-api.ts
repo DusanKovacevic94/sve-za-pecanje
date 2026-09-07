@@ -33,13 +33,20 @@ export async function serverApiFetch<T>(
   init?: RequestInit & { next?: { revalidate?: number } },
 ): Promise<ApiResponse<T>> {
   const cookieStore = await cookies();
+  // Editorial capabilities belong to the frontend/CMS boundary, never to the
+  // marketplace API. This also protects local development where ports share a
+  // cookie host even though production uses separate CMS/site hostnames.
+  const marketplaceCookies = cookieStore.getAll()
+    .filter(({ name }) => name !== "szp-blog-preview" && !name.startsWith("szp-cms-"))
+    .map(({ name, value }) => `${name}=${encodeURIComponent(value)}`)
+    .join("; ");
   const cacheOptions = init?.cache || init?.next ? {} : { cache: "no-store" as RequestCache };
   const { signal, cleanup } = createTimeoutSignal(init?.signal);
   try {
     const response = await fetch(`${serverApiUrl}${path}`, {
       ...init,
       ...cacheOptions,
-      headers: mergeHeaders(init?.headers, cookieStore.toString()),
+      headers: mergeHeaders(init?.headers, marketplaceCookies),
       signal,
     });
     const json = await response.json().catch(() => null);

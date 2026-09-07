@@ -1,5 +1,13 @@
 # Applied only under an isolated project name by the foundation rehearsal.
 services:
+  minio:
+    ports: !override
+      - "127.0.0.1::9000"
+      - "127.0.0.1::9001"
+  mailpit:
+    ports: !override
+      - "127.0.0.1::1025"
+      - "127.0.0.1::8025"
   postgres:
     ports: !override
       - "127.0.0.1::5432"

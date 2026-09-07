@@ -1,3 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- Next config is CommonJS.
+const { cmsImagePattern } = require('./config/cms-images.cjs');
+
 function remotePatternFromUrl(value) {
   if (!value) return null;
   try {
@@ -31,11 +34,20 @@ const remotePatterns = Array.from(
       .map((pattern) => [`${pattern.protocol}:${pattern.hostname}:${pattern.port ?? ""}`, pattern])
   ).values()
 );
+const cmsPattern = cmsImagePattern(process.env.CMS_S3_PUBLIC_URL);
+if (cmsPattern) remotePatterns.push(cmsPattern);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typedRoutes: false,
   output: "standalone",
+  async headers() {
+    return [{ source: "/blog/preview/:path*", headers: [
+      { key: "Cache-Control", value: "private, no-store, max-age=0" },
+      { key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" },
+      { key: "Referrer-Policy", value: "no-referrer" },
+    ] }];
+  },
   images: {
     remotePatterns
   },

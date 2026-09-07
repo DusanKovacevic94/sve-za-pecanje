@@ -16,6 +16,10 @@ RUN chown -R 1000:1000 /app/node_modules /app/package.json /app/pnpm-lock.yaml
 FROM deps AS builder
 
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_APP_URL=https://svezapecanje.rs
+ARG CMS_S3_PUBLIC_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV CMS_S3_PUBLIC_URL=$CMS_S3_PUBLIC_URL
 ARG NEXT_PUBLIC_ANALYTICS_URL
 ARG NEXT_PUBLIC_ANALYTICS_WEBSITE_ID
 ARG NEXT_PUBLIC_TURNSTILE_SITE_KEY
@@ -30,6 +34,7 @@ RUN pnpm build
 FROM base AS runner
 
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
 
 RUN addgroup -S nextjs && adduser -S nextjs -G nextjs
 

@@ -19,7 +19,7 @@ export async function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-sand-200 bg-sand-50/95 shadow-header backdrop-blur">
       <div className="h-0.5 bg-reed-500" aria-hidden="true" />
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3 sm:gap-4">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-4 py-3 sm:gap-4">
         <Link
           href="/"
           aria-label="Sve Za Pecanje — početna"
@@ -27,10 +27,11 @@ export async function Header() {
         >
           <BrandLogo alt="" className="h-9 w-auto max-w-32 sm:h-10 sm:max-w-none md:h-9 xl:h-10" priority />
         </Link>
-        <nav aria-label="Glavna navigacija" className="hidden items-center gap-1 lg:flex">
+        <nav aria-label="Glavna navigacija" className="hidden flex-wrap items-center gap-1 lg:flex">
           <HeaderNavLink href="/oglasi">Oglasi</HeaderNavLink>
           <HeaderNavLink href="/prodavnice">Prodavnice</HeaderNavLink>
           <HeaderNavLink href="/kategorije">Kategorije</HeaderNavLink>
+          <HeaderNavLink href="/blog" documentNavigation>Blog</HeaderNavLink>
           <HeaderNavLink href="/saveti-za-bezbednost">Bezbednost</HeaderNavLink>
         </nav>
         <div className="flex items-center gap-2">
@@ -65,6 +66,7 @@ export async function Header() {
         <HeaderNavLink href="/oglasi" mobile>Oglasi</HeaderNavLink>
         <HeaderNavLink href="/prodavnice" mobile>Prodavnice</HeaderNavLink>
         <HeaderNavLink href="/kategorije" mobile>Kategorije</HeaderNavLink>
+        <HeaderNavLink href="/blog" mobile documentNavigation>Blog</HeaderNavLink>
         <HeaderNavLink href="/saveti-za-bezbednost" mobile>Bezbednost</HeaderNavLink>
         <Link className="focus-ring shrink-0 rounded-xl bg-river-50 px-3 py-2 text-sm font-semibold text-ink hover:bg-river-100" href="/nalog/omiljeni">
           <FavoriteIcon size={14} className="inline" /> Omiljeni

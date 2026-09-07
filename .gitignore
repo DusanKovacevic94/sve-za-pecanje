@@ -57,3 +57,7 @@ backend/uploads/
 # Docker/local runtime files
 *.pid
 *.seed
+
+# Generated blog verification evidence (recreated by the local test suites)
+frontend/test-results/blog/
+frontend/playwright-report/blog-regression/

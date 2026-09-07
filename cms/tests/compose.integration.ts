@@ -14,6 +14,7 @@ const env = {
   POSTGRES_PASSWORD: randomBytes(24).toString('hex'),
   CMS_DATABASE_PASSWORD: randomBytes(24).toString('hex'),
   CMS_SECRET: randomBytes(32).toString('hex'),
+  CMS_S3_ACCESS_KEY_ID: 'szp-cms', CMS_S3_SECRET_ACCESS_KEY: randomBytes(24).toString('hex'),
   CMS_BOOTSTRAP_EMAIL: 'compose-editor@example.test',
   CMS_BOOTSTRAP_PASSWORD: randomBytes(24).toString('hex'),
 }
@@ -37,6 +38,7 @@ try {
   // Repeat the documented provisioning/migration path against the existing volume.
   await compose(['run', '--rm', '--no-deps', 'cms-provision'])
   await compose(['run', '--rm', '--no-deps', 'cms-migrate'])
+  await compose(['run', '--rm', '--no-deps', 'cms-storage-provision'])
   const login = await fetch(`http://${address}/api/users/login`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', Origin: 'http://localhost:3002' },
     body: JSON.stringify({ email: env.CMS_BOOTSTRAP_EMAIL, password: env.CMS_BOOTSTRAP_PASSWORD }),

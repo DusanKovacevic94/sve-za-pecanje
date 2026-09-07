@@ -52,7 +52,7 @@ export async function apiFetch<T>(path: string, init?: ApiFetchInit): Promise<Ap
     const response = await fetch(`${baseUrl}${path}`, {
       ...requestInit,
       ...cacheOptions,
-      credentials: "include",
+      credentials: requestInit?.credentials ?? "include",
       headers,
       signal
     });

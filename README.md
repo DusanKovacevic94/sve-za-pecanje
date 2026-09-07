@@ -20,10 +20,16 @@ Services:
 ## Optional blog CMS
 
 The Payload foundation lives in `cms/` with a separate database on the existing
-PostgreSQL instance. Configure `CMS_DATABASE_PASSWORD` and `CMS_SECRET` in the root
+PostgreSQL instance. Configure `CMS_DATABASE_PASSWORD`, `CMS_SECRET`, and
+`CMS_S3_SECRET_ACCESS_KEY` in the root
 `.env`, then run `make cms-dev` (CMS only) or `make dev-with-cms` (complete stack).
 Bootstrap the administrator as described in [cms/README.md](cms/README.md), then open
-http://localhost:3002/admin. Article editing and public blog pages follow in tasks 073–079.
+http://localhost:3002/admin. Article editing, editor roles, drafts, and local email
+recovery are available; see [the content API guide](cms/CONTENT_API.md). Image uploads
+use a dedicated S3/MinIO bucket with responsive variants and protected deletion;
+see [CMS media setup](cms/MEDIA_STORAGE.md). The public blog lives at `/blog`.
+Configure the two independent preview/revalidation signing secrets in both services
+to enable editor previews; see [blog setup and publishing](docs/blog-publishing.md).
 
 ## Local Commands
 

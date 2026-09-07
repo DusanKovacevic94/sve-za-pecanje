@@ -6,6 +6,10 @@ import { createServer } from 'node:net'
 import pg from 'pg'
 import { databaseURL } from '../src/environment'
 import { provision } from '../scripts/provision'
+import { editorialChecks } from './editorial'
+import { prepareStorage } from './storage-harness'
+import { mediaChecks } from './media.integration'
+import { createBlogHarness } from './blog.integration'
 
 // Every database/container is synthetic and owned by this run. No external DB URL
 // is accepted, and cleanup uses only IDs returned by our successful Docker calls.
@@ -44,9 +48,12 @@ const password = randomBytes(24).toString('hex')
 const originalEnv = { ...process.env }
 let databaseContainer = ''
 let imageContainer = ''
+let mailContainer = ''
+let minioContainer = ''
 let network = ''
 let server: ChildProcess | undefined
 let serverLog = ''
+let blogHarness: Awaited<ReturnType<typeof createBlogHarness>> | undefined
 const clients: pg.Client[] = []
 
 try {
@@ -67,6 +74,17 @@ try {
     CMS_BOOTSTRAP_PASSWORD: randomBytes(24).toString('hex'),
   })
   delete process.env.CMS_BUILD
+  const storagePassword = randomBytes(24).toString('hex')
+  minioContainer = await command('docker', ['run', '--detach', '--rm', '--network', network,
+    '--network-alias', 'minio', '--publish', '127.0.0.1::9000', '--env', 'MINIO_ROOT_USER', '--env', 'MINIO_ROOT_PASSWORD',
+    'minio/minio:latest', 'server', '/data'], { ...process.env, MINIO_ROOT_USER: 'minioadmin', MINIO_ROOT_PASSWORD: storagePassword })
+  await prepareStorage(command, network, minioContainer, storagePassword)
+  // Capture recovery mail in an isolated local SMTP inbox; no external delivery.
+  mailContainer = await command('docker', ['run', '--detach', '--rm', '--network', network,
+    '--network-alias', 'mailpit', '--publish', '127.0.0.1::1025', '--publish', '127.0.0.1::8025', 'axllent/mailpit:v1.27'])
+  process.env.CMS_SMTP_HOST = '127.0.0.1'
+  process.env.CMS_SMTP_PORT = (await command('docker', ['port', mailContainer, '1025/tcp'])).split(':').at(-1)!
+  const mailURL = `http://${await command('docker', ['port', mailContainer, '8025/tcp'])}`
   const adminURL = new URL(`postgresql://postgres@127.0.0.1:${port}/postgres`)
   adminURL.password = password
   // pg_isready inside the container can see initdb's temporary Unix-socket server
@@ -117,6 +135,16 @@ try {
   assert.ok(migrationCount.rows[0].count > 0)
   await command('pnpm', ['migrate'])
   assert.deepEqual((await cms.query('SELECT count(*)::integer AS count FROM payload_migrations')).rows, migrationCount.rows)
+  // Emulate a foundation deployment followed by the editorial deployment. Payload
+  // rolls back a whole batch, not a single file; this synthetic ledger splits them.
+  await cms.query("UPDATE payload_migrations SET batch = 2 WHERE name <> '20260907_091809_initial'")
+  await command('pnpm', ['exec', 'payload', 'migrate:down'])
+  assert.equal((await cms.query("SELECT to_regclass('public.posts') AS posts")).rows[0].posts, null)
+  await cms.query("INSERT INTO users (email) VALUES ('legacy-admin@example.test')")
+  await command('pnpm', ['migrate'])
+  assert.equal((await cms.query("SELECT role FROM users WHERE email = 'legacy-admin@example.test'")).rows[0].role, 'admin')
+  await cms.query("DELETE FROM users WHERE email = 'legacy-admin@example.test'")
+  await command('pnpm', ['exec', 'payload', 'migrate:down'])
   await command('pnpm', ['exec', 'payload', 'migrate:down'])
   assert.equal((await cms.query("SELECT to_regclass('public.users') AS users")).rows[0].users, null)
   await command('pnpm', ['migrate'])
@@ -126,12 +154,16 @@ try {
   const httpPort = await availablePort()
   const baseURL = `http://127.0.0.1:${httpPort}`
   process.env.CMS_PUBLIC_URL = baseURL
+  // Cross-application tests run against the production-mode standalone CMS on
+  // loopback. The image variant retains its isolated Docker-network media/API
+  // checks and does not expose host test relays outside loopback.
+  if (!process.env.CMS_TEST_IMAGE) blogHarness = await createBlogHarness(baseURL)
   if (process.env.CMS_TEST_IMAGE) {
-    const imageEnv = { ...process.env, CMS_DATABASE_HOST: 'postgres', CMS_DATABASE_PORT: '5432' }
+    const imageEnv = { ...process.env, CMS_DATABASE_HOST: 'postgres', CMS_DATABASE_PORT: '5432', CMS_SMTP_HOST: 'mailpit', CMS_SMTP_PORT: '1025', CMS_S3_ENDPOINT: 'http://minio:9000' }
     imageContainer = await command('docker', [
       'run', '--detach', '--rm', '--network', network,
       '--publish', `127.0.0.1:${httpPort}:3002`,
-      ...['CMS_ENV', 'CMS_DATABASE_HOST', 'CMS_DATABASE_PORT', 'CMS_DATABASE_PASSWORD', 'CMS_SECRET', 'CMS_PUBLIC_URL'].flatMap(key => ['--env', key]),
+      ...['CMS_ENV', 'CMS_DATABASE_HOST', 'CMS_DATABASE_PORT', 'CMS_DATABASE_PASSWORD', 'CMS_SECRET', 'CMS_PUBLIC_URL', 'CMS_SMTP_HOST', 'CMS_SMTP_PORT', 'CMS_S3_ENDPOINT', 'CMS_S3_PUBLIC_URL', 'CMS_S3_REGION', 'CMS_S3_BUCKET', 'CMS_S3_FORCE_PATH_STYLE', 'CMS_S3_ACCESS_KEY_ID', 'CMS_S3_SECRET_ACCESS_KEY'].flatMap(key => ['--env', key]),
       process.env.CMS_TEST_IMAGE,
     ], imageEnv)
     assert.notEqual(await command('docker', ['exec', imageContainer, 'id', '-u']), '0')
@@ -168,6 +200,39 @@ try {
   assert.equal((await fetch(new URL(asset[1].replaceAll('&amp;', '&'), baseURL))).status, 200)
   assert.match(adminPage.headers.get('x-robots-tag') || '', /noindex/)
   console.log('PASS: public bootstrap denied, explicit bootstrap works once, admin login and compiled assets work')
+  await command('pnpm', ['seed'])
+  await command('pnpm', ['seed'])
+  assert.equal((await cms.query('SELECT count(*)::integer AS count FROM posts')).rows[0].count, 1)
+  assert.equal((await (await fetch(`${baseURL}/api/posts?draft=true`)).json()).totalDocs, 0)
+  for (const collection of ['posts', 'authors', 'media']) {
+    const records = (await (await fetch(`${baseURL}/api/${collection}?draft=true`, { headers: { Cookie: cookie.split(';')[0], Origin: baseURL } })).json()).docs
+    assert.equal(records.length, 1, `one seeded ${collection} record`)
+    const response = await fetch(`${baseURL}/api/${collection}/${records[0].id}`, { method: 'DELETE', headers: { Cookie: cookie.split(';')[0], Origin: baseURL } })
+    assert.equal(response.status, 200)
+  }
+  console.log('PASS: local fixture is repeatable and creates only a private draft/metadata')
+  if (process.env.CMS_TEST_SCOPE !== 'blog') {
+    await editorialChecks(baseURL, cookie.split(';')[0], mailURL)
+    const imageURLs = await mediaChecks(baseURL, cookie.split(';')[0], async () => {
+      if (imageContainer) {
+        await command('docker', ['restart', imageContainer])
+      } else {
+        server!.kill('SIGTERM')
+        await once(server!, 'exit')
+        server = spawn(process.execPath, ['.next/standalone/server.js'], {
+          env: { ...process.env, NODE_ENV: 'production', HOSTNAME: '127.0.0.1', PORT: String(httpPort) }, stdio: ['ignore', 'pipe', 'pipe'],
+        })
+        server.stdout!.on('data', data => { serverLog += data })
+        server.stderr!.on('data', data => { serverLog += data })
+      }
+      await waitUntil(async () => (await fetch(`${baseURL}/health/ready`)).ok, 'restarted CMS')
+    })
+    await command('node', ['../frontend/scripts/check-cms-image-render.mjs'], {
+      ...process.env, CMS_TEST_MOBILE_IMAGE_URL: imageURLs.mobile, CMS_TEST_DESKTOP_IMAGE_URL: imageURLs.desktop,
+    })
+    console.log('PASS: real CMS images render through the marketplace frontend at mobile/desktop widths')
+  }
+  await blogHarness?.run(cookie.split(';')[0])
 
   const after = await command('docker', ['exec', databaseContainer, 'pg_dump', '-U', 'postgres', '--schema-only', '--no-owner', 'fishing_marketplace'])
   // Newer pg_dump embeds random restriction tokens; ignore only those lines.
@@ -176,17 +241,20 @@ try {
   assert.deepEqual((await marketplace.query('SELECT * FROM marketplace_sentinel')).rows, [{ id: 1, value: 'preserve-existing-data' }])
   await marketplace.end()
   await cms.end()
-  console.log('PASS: marketplace schema/data unchanged; foundation integration checks passed')
+  console.log('PASS: marketplace schema/data unchanged; CMS integration checks passed')
 } catch (error) {
   if (imageContainer) serverLog = await command('docker', ['logs', imageContainer]).catch(() => '')
-  console.error(serverLog)
+  console.error(serverLog.split('\n').slice(-60).join('\n'))
   throw error
 } finally {
+  await blogHarness?.close()
   if (server && server.exitCode === null) {
     server.kill('SIGTERM')
     await once(server, 'exit')
   }
   if (imageContainer) await command('docker', ['rm', '--force', imageContainer])
+  if (mailContainer) await command('docker', ['rm', '--force', mailContainer])
+  if (minioContainer) await command('docker', ['rm', '--force', minioContainer])
   await Promise.all(clients.map(client => client.end()))
   if (databaseContainer) await command('docker', ['rm', '--force', databaseContainer])
   if (network) await command('docker', ['network', 'rm', network])

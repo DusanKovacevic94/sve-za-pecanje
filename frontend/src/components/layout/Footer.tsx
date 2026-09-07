@@ -1,3 +1,4 @@
+import { BlogLink } from "@/components/blog/BlogLink";
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/brand/BrandLogo";
@@ -11,7 +12,7 @@ import {
 export function Footer() {
   const year = new Date().getFullYear();
   return (
-    <footer className="relative mt-16 overflow-hidden bg-river-900 text-white">
+    <footer className="relative mt-16 overflow-hidden bg-river-900 text-white [overflow-wrap:anywhere]">
       <BrandWaterline className="pointer-events-none absolute -right-20 -top-8 w-[42rem] text-reed-500 opacity-20" />
       <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-[1.2fr_0.9fr_0.9fr_1fr]">
         <div>
@@ -25,6 +26,7 @@ export function Footer() {
           <div className="mt-3 grid gap-2 text-sm text-ink-400">
             <Link href="/oglasi" className="hover:text-white">Oglasi</Link>
             <Link href="/kategorije" className="hover:text-white">Kategorije</Link>
+            <BlogLink href="/blog" className="focus-ring rounded-xl hover:text-white">Blog</BlogLink>
             <Link href="/postavi-oglas" className="hover:text-white">Postavi oglas</Link>
           </div>
         </div>

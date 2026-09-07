@@ -12,6 +12,7 @@ COPY --chown=node:node package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS tools
+COPY --from=minio/mc:RELEASE.2025-08-13T08-35-41Z /usr/bin/mc /usr/local/bin/mc
 COPY --chown=node:node . .
 USER node
 RUN mkdir -p .next

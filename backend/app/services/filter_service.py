@@ -67,6 +67,12 @@ def apply_listing_filters(
     filters: Mapping[str, Any],
 ) -> tuple[Select, Any | None]:
     rank = None
+    # Optional public discovery filter. Keep the default browse semantics intact.
+    if filters.get("availability") == "available":
+        statement = statement.where(
+            Listing.status == "active",
+            or_(Listing.expires_at.is_(None), Listing.expires_at > datetime.now(UTC)),
+        )
     query = str(filters.get("q") or "").strip()
     if query:
         dialect = db.bind.dialect.name if db.bind is not None else "sqlite"

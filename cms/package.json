@@ -19,11 +19,19 @@
     "migrate:create": "payload migrate:create",
     "migrate:status": "payload migrate:status",
     "db:provision": "tsx scripts/provision.ts",
-    "bootstrap": "tsx scripts/bootstrap.ts"
+    "bootstrap": "tsx scripts/bootstrap.ts",
+    "seed": "tsx scripts/seed.ts",
+    "storage:provision": "tsx scripts/provision-storage.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "3.1127.0",
     "@payloadcms/db-postgres": "3.88.0",
+    "@payloadcms/email-nodemailer": "3.88.0",
+    "@payloadcms/email-resend": "3.88.0",
     "@payloadcms/next": "3.88.0",
+    "@payloadcms/richtext-lexical": "3.88.0",
+    "@payloadcms/storage-s3": "3.88.0",
+    "sharp": "0.35.4",
     "graphql": "16.11.0",
     "next": "16.3.4",
     "payload": "3.88.0",

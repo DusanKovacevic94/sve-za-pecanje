@@ -1,6 +1,20 @@
 # 079 — Blog release gate and editor handoff
 
 Status: todo
+
+## Known release blockers recorded during 075–076
+
+- The existing critical marketplace browser journey times out on `/nalog/oglasi`:
+  the footer overlaps the `Rezerviši` button. The listing/card layout was not edited
+  in the blog tasks; regression origin is not yet established. Diagnose, fix and
+  rerun before release. Local evidence: `frontend/playwright-report/blog-regression/`.
+- The asset-release validator reports raw-byte hash drift for five unchanged icon
+  TypeScript files. All five match after CRLF→LF normalization and have no Git diff.
+  Resolve checkout/receipt line-ending handling without changing approved logos.
+- Review intentional site-wide visual baseline changes for the added Blog navigation;
+  the blog integration captures are reviewed evidence, not automatically blessed baselines.
+
+[Scoped blog review](../../sve-za-pecanje-brand-manager/work/reviews/2026-09-07-blog-pages-preview.md).
 Priority: P1
 
 ## Goal
@@ -21,6 +35,9 @@ Prove the complete editorial journey and document everyday operation before roll
   use, and image behavior. Add reviewed deterministic visual baselines where useful.
 - [ ] Write an editor guide for images/credits/alt text, public draft-image visibility,
   author details, SEO fields, immutable slugs, revisions, publishing, and withdrawal.
+- [ ] Review privacy disclosures and 077 analytics configuration before enabling live
+  collection. Keep staging/smoke tests disabled, record excluded fixture IDs, and verify
+  the admin-only blog report without presenting clicks as seller contacts or sales.
 - [ ] Record final brand review in the Brand Manager and link its verdict in release
   evidence. Document a first real article checklist without publishing test content.
 - [ ] Update README/architecture/deployment docs and the task index after checks pass.
