@@ -41,7 +41,7 @@ export function Footer() {
         <div>
           <h2 className="text-sm font-extrabold uppercase tracking-[0.16em] text-river-100">Kontakt</h2>
           <div className="mt-3 grid gap-3 text-sm text-ink-400">
-            <span className="inline-flex items-center gap-2"><MailIcon size={16} /> kontakt@svezapecanje.rs</span>
+            <span className="inline-flex items-center gap-2"><MailIcon size={16} /> info@svezapecanje.rs</span>
             <span className="inline-flex items-center gap-2"><LocationIcon size={16} /> Srbija</span>
             <span className="inline-flex items-center gap-2"><TrustShieldIcon size={16} /> Moderisani oglasi</span>
           </div>

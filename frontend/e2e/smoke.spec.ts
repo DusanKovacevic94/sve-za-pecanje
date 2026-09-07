@@ -7,6 +7,8 @@ test("home, listings search, and privacy pages render", async ({ page }) => {
   await expect(homeLinks.first().locator("img")).toHaveAttribute("src", "/brand/logo.svg");
   await expect(page.locator("footer img[src='/brand/logo-inverse.svg']")).toBeVisible();
   await expect(homeLinks.last().locator("img")).toHaveAttribute("src", "/brand/logo-inverse.svg");
+  await expect(page.locator("footer")).toContainText("info@svezapecanje.rs");
+  await expect(page.locator("footer")).not.toContainText(/(?:contact|kontakt)@svezapecanje\.rs/);
 
   await page.goto("/oglasi?q=stap");
   await expect(page.getByRole("heading", { name: /Oglasi/ })).toBeVisible();
