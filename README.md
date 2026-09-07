@@ -17,6 +17,14 @@ Services:
 - Mailpit: http://localhost:8025
 - MinIO: http://localhost:9001
 
+## Optional blog CMS
+
+The Payload foundation lives in `cms/` with a separate database on the existing
+PostgreSQL instance. Configure `CMS_DATABASE_PASSWORD` and `CMS_SECRET` in the root
+`.env`, then run `make cms-dev` (CMS only) or `make dev-with-cms` (complete stack).
+Bootstrap the administrator as described in [cms/README.md](cms/README.md), then open
+http://localhost:3002/admin. Article editing and public blog pages follow in tasks 073–079.
+
 ## Local Commands
 
 ```bash

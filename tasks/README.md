@@ -165,3 +165,31 @@ system, then refine supporting identity surfaces and automated governance.
 - [x] [069 — Homepage marketplace proof and hero refinement](069-homepage-marketplace-proof.md)
 - [x] [070 — Editorial and supporting-page system](070-editorial-supporting-pages.md)
 - [x] [071 — Brand visual regression and governance gate](071-brand-visual-regression-gate.md)
+
+---
+
+# Round 8 — Payload blog and editorial publishing (2026-09-07)
+
+Plan: [docs/blog-implementation-plan.md](../docs/blog-implementation-plan.md).
+
+Self-host Payload as a separate `cms/` service. Public articles live at `/blog`;
+editors use `cms.svezapecanje.rs/admin`. Reuse the PostgreSQL instance with a separate
+CMS database and reuse the object-storage provider with dedicated CMS media storage.
+Start with 072; dependencies and release boundaries are documented in the plan.
+
+## P1 — CMS foundation and public publishing
+
+- [x] [072 — Payload CMS foundation and database isolation](072-payload-cms-foundation.md)
+- [ ] [073 — Blog content model and editor access](073-blog-content-editor-access.md)
+- [ ] [074 — CMS media library and object storage](074-cms-media-storage.md)
+- [ ] [075 — Public blog pages and SEO](075-public-blog-pages-seo.md)
+- [ ] [076 — Secure draft preview and publishing cache updates](076-blog-preview-publishing-cache.md)
+
+## P2 — Marketplace discovery and measurement
+
+- [ ] [077 — Blog discovery links and marketplace engagement metrics](077-blog-marketplace-discovery-metrics.md)
+
+## P1 — Release preparation and handoff
+
+- [ ] [078 — CMS production configuration, hostname, and backups](078-cms-deployment-backups.md)
+- [ ] [079 — Blog release gate and editor handoff](079-blog-release-gate-editor-handoff.md)

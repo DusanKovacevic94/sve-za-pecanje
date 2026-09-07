@@ -1,6 +1,37 @@
 .PHONY: dev migrate migration-gate-postgres seed test test-storage-minio create-admin validate-prod brand-assets-check brand-assets-sync brand-release-check
+.DEFAULT_GOAL := dev
 
 BRAND_MANAGER_DIR ?= ../sve-za-pecanje-brand-manager
+CMS_COMPOSE = docker compose -f docker-compose.yml -f docker-compose.cms.yml
+
+.PHONY: cms-dev dev-with-cms cms-provision cms-migrate cms-bootstrap cms-check cms-test-integration cms-test-compose cms-image-check
+
+cms-dev:
+	$(CMS_COMPOSE) up --build cms
+
+dev-with-cms:
+	$(CMS_COMPOSE) up --build
+
+cms-provision:
+	$(CMS_COMPOSE) run --build --rm cms-provision
+
+cms-migrate:
+	$(CMS_COMPOSE) run --build --rm cms-migrate
+
+cms-bootstrap:
+	$(CMS_COMPOSE) run --rm --no-deps -e CMS_BOOTSTRAP_EMAIL -e CMS_BOOTSTRAP_PASSWORD cms pnpm bootstrap
+
+cms-check:
+	cd cms && pnpm lint && pnpm typecheck && pnpm test && pnpm build
+
+cms-test-integration:
+	cd cms && pnpm test:integration
+
+cms-test-compose:
+	cd cms && pnpm test:compose
+
+cms-image-check:
+	docker build --target runner -t szp-cms:local ./cms
 
 dev:
 	docker compose up --build
