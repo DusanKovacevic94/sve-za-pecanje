@@ -1,0 +1,61 @@
+# Optional development overlay. Production CMS routing/deployment is task 078.
+# docker compose -f docker-compose.yml -f docker-compose.cms.yml up --build cms
+x-cms-environment: &cms-environment
+  CMS_ENV: development
+  CMS_PUBLIC_URL: http://localhost:3002
+  CMS_DATABASE_HOST: postgres
+  CMS_DATABASE_PORT: "5432"
+  CMS_DATABASE_PASSWORD: ${CMS_DATABASE_PASSWORD:-}
+  CMS_SECRET: ${CMS_SECRET:-}
+
+services:
+  cms-provision:
+    build:
+      context: ./cms
+      target: tools
+    environment:
+      <<: *cms-environment
+      CMS_PROVISION_USER: ${POSTGRES_USER:-postgres}
+      CMS_PROVISION_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["pnpm", "db:provision"]
+    restart: "no"
+
+  cms-migrate:
+    build:
+      context: ./cms
+      target: tools
+    environment: *cms-environment
+    depends_on:
+      cms-provision:
+        condition: service_completed_successfully
+    command: ["pnpm", "migrate"]
+    restart: "no"
+
+  cms:
+    build:
+      context: ./cms
+      target: tools
+    environment: *cms-environment
+    ports:
+      - "127.0.0.1:3002:3002"
+    volumes:
+      - ./cms:/app
+      - cms_node_modules:/app/node_modules
+      - cms_next:/app/.next
+    depends_on:
+      cms-migrate:
+        condition: service_completed_successfully
+    command: ["sh", "-c", "CI=true pnpm install --frozen-lockfile && pnpm dev"]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3002/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      start_period: 60s
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  cms_node_modules:
+  cms_next:

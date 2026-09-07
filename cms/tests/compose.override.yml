@@ -1,0 +1,8 @@
+# Applied only under an isolated project name by the foundation rehearsal.
+services:
+  postgres:
+    ports: !override
+      - "127.0.0.1::5432"
+  cms:
+    ports: !override
+      - "127.0.0.1::3002"
