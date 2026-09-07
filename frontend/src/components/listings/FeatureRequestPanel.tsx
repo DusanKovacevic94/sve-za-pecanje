@@ -57,7 +57,7 @@ export function FeatureRequestPanel({
   return (
     <div className="rounded-xl border border-river-100 bg-river-50 p-3 text-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex-1">
+        <div className="min-w-0 flex-1">
           <p className="font-extrabold text-river-800">Promoviši oglas</p>
           {activeRequest ? (
             <p className="mt-1 text-river-700">
@@ -67,6 +67,7 @@ export function FeatureRequestPanel({
           ) : (
             <>
               <select
+                aria-label="Paket promocije"
                 className="focus-ring mt-2 min-h-10 w-full rounded-xl border border-river-200 bg-white px-3"
                 value={selected?.option_id ?? ""}
                 onChange={(event) => setOptionId(event.target.value)}

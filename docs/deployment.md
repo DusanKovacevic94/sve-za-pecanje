@@ -7,7 +7,8 @@ backup service. Follow [CMS operations and recovery](cms-operations.md) **before
 the new CMS service**: provision its restricted role/database, take an upgrade backup,
 apply migrations, then start it. Do not combine the development CMS overlay with production.
 Task 078's local rehearsal is configuration/recovery evidence, not production authorization;
-079's release gate and a separately approved rollout remain required.
+[079's release gate and editor handoff](blog-release-checklist.md) and a separately approved
+rollout remain required. Keep blog analytics off until its privacy/configuration approval.
 
 ## Hetzner VPS Production
 

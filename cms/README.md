@@ -125,6 +125,10 @@ Never mix these with backend Alembic migrations. The initial schema is included 
 
 ## Validation
 
+Editors can follow the [browser-based editor guide](../docs/blog-editor-guide.md).
+The [release checklist](../docs/blog-release-checklist.md) maps the complete CI gate,
+synthetic fixtures, privacy review and later authorized rollout steps.
+
 ```bash
 make cms-check
 make cms-test-integration

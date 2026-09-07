@@ -18,7 +18,7 @@ export default async function MyListingsPage() {
   const publishedListings = listings.data.filter((listing) => listing.status !== "draft");
   return (
     <div>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl font-extrabold">Moji oglasi</h1>
         <Button href="/postavi-oglas">Postavi oglas</Button>
       </div>
@@ -45,10 +45,12 @@ export default async function MyListingsPage() {
       {publishedListings.length ? (
         <section className="mt-8">
           {drafts.length ? <h2 className="text-2xl font-extrabold">Objavljeni oglasi</h2> : null}
-        <div className="mt-6 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
           {publishedListings.map((listing) => (
-            <div key={listing.id} className="space-y-3">
-              <ListingCard listing={listing} />
+            <div key={listing.id} className="min-w-0 space-y-3">
+              <div className="min-w-0">
+                <ListingCard listing={listing} />
+              </div>
               <div className="grid grid-cols-3 gap-2 rounded-xl border border-sand-200 bg-white p-3 text-center text-xs font-semibold text-ink-600 shadow-soft">
                 <span>{listing.view_count ?? 0} pregleda</span>
                 <span>{listing.favorite_count ?? 0} omiljenih</span>

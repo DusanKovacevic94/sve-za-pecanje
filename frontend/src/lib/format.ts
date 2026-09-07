@@ -39,7 +39,7 @@ export const listingStatusLabels: Record<string, string> = {
 export function formatPrice(amount: string | number | null, currency: string) {
   if (amount === null) return "Cena nije navedena";
   const numeric = Number(amount);
-  const value = new Intl.NumberFormat("sr-RS", { maximumFractionDigits: 0 }).format(numeric);
+  const value = new Intl.NumberFormat("sr-Latn-RS", { maximumFractionDigits: 0 }).format(numeric);
   return currency === "EUR" ? `${value} €` : `${value} RSD`;
 }
 
@@ -54,7 +54,7 @@ export function formatListingPrice(
 }
 
 export function formatDate(date: string) {
-  return new Intl.DateTimeFormat("sr-RS", {
+  return new Intl.DateTimeFormat("sr-Latn-RS", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric"
@@ -63,7 +63,7 @@ export function formatDate(date: string) {
 
 export function formatMonthYear(date?: string | null) {
   if (!date) return "Nije navedeno";
-  return new Intl.DateTimeFormat("sr-RS", {
+  return new Intl.DateTimeFormat("sr-Latn-RS", {
     month: "long",
     year: "numeric"
   }).format(new Date(date));
@@ -73,7 +73,7 @@ export function formatRelativeDate(date: string) {
   const then = new Date(date).getTime();
   const now = Date.now();
   const diffDays = Math.round((then - now) / 86_400_000);
-  const rtf = new Intl.RelativeTimeFormat("sr-RS", { numeric: "auto" });
+  const rtf = new Intl.RelativeTimeFormat("sr-Latn-RS", { numeric: "auto" });
   if (Math.abs(diffDays) < 1) return "danas";
   if (Math.abs(diffDays) < 31) return rtf.format(diffDays, "day");
   const diffMonths = Math.round(diffDays / 30);

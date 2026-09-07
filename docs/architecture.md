@@ -59,5 +59,9 @@ or export storage. Files and variants are public even in drafts; metadata is ano
 only when referenced by currently published content. Referenced files cannot be deleted
 while any article or retained version needs them. See [CMS media storage](../cms/MEDIA_STORAGE.md).
 
-See [CMS setup and validation](../cms/README.md) and the
+The CMS release gate runs isolated PostgreSQL/MinIO/Mailpit, actual editor browser actions,
+production-build publishing/privacy checks and a separate TLS/recovery rehearsal. It is
+required alongside the marketplace and raw-hash brand gates, not a replacement for them.
+See [release coverage and evidence](blog-release-checklist.md),
+[CMS setup and validation](../cms/README.md) and the
 [blog implementation plan](blog-implementation-plan.md).

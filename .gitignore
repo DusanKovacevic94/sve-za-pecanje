@@ -60,4 +60,6 @@ backend/uploads/
 
 # Generated blog verification evidence (recreated by the local test suites)
 frontend/test-results/blog/
+frontend/test-results/blog-editor/
+frontend/test-results/marketplace/
 frontend/playwright-report/blog-regression/

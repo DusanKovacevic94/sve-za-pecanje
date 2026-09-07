@@ -33,7 +33,7 @@ export function AccountSidebar({ username }: { username: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className="lg:sticky lg:top-24 lg:self-start">
+    <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
       <div className="surface p-4">
         <div className="border-b border-sand-200 pb-4">
           <p className="text-xs font-semibold uppercase tracking-normal text-ink-500">Moj nalog</p>

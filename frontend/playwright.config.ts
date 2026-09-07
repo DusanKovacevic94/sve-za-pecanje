@@ -5,6 +5,8 @@ const frontendPort = 3011;
 
 export default defineConfig({
   testDir: "./e2e",
+  // CMS browser evidence lives alongside this directory; do not erase it on startup.
+  outputDir: "./test-results/marketplace",
   fullyParallel: true,
   timeout: 90_000,
   expect: { timeout: 10_000 },

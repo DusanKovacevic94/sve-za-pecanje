@@ -21,6 +21,11 @@ async function command(file: string, args: string[], env = process.env) {
   child.stderr.on('data', data => { output += data })
   const [code] = await once(child, 'exit')
   if (code !== 0) throw new Error(`${file} ${args.join(' ')} failed:\n${output}`)
+  if (file === 'docker' && args[0] === 'run' && args.includes('--detach')) {
+    const container = output.split('\n').find(line => /^[a-f0-9]{64}$/.test(line))
+    assert.ok(container, 'Docker must return a concrete owned container ID, even on first image pull')
+    return container
+  }
   return output.trim()
 }
 
@@ -230,7 +235,7 @@ try {
     assert.equal(response.status, 200)
   }
   console.log('PASS: local fixture is repeatable and creates only a private draft/metadata')
-  if (!['blog', 'production'].includes(process.env.CMS_TEST_SCOPE || '')) {
+  if (!['blog', 'editor', 'production'].includes(process.env.CMS_TEST_SCOPE || '')) {
     await editorialChecks(baseURL, cookie.split(';')[0], mailURL)
     const imageURLs = await mediaChecks(baseURL, cookie.split(';')[0], async () => {
       if (imageContainer) {

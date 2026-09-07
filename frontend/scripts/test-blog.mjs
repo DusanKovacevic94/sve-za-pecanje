@@ -3,6 +3,12 @@ import { test } from 'node:test';
 import { mapBody, mapPost, safeBlogLink, jsonLD } from '../src/lib/blog-content.ts';
 import { CMSUnavailable, cmsRead } from '../src/lib/cms-http.ts';
 import { blogAnalyticsEnabled } from '../src/lib/blog-analytics-policy.ts';
+import { formatMonthYear, formatRelativeDate } from '../src/lib/format.ts';
+
+test('related marketplace cards preserve Serbian Latin date labels', () => {
+  assert.equal(formatRelativeDate(new Date(Date.now() - 6 * 86400000).toISOString()), 'pre 6 dana');
+  assert.doesNotMatch(formatMonthYear('2026-09-07T12:00:00Z'), /[\u0400-\u04ff]/u);
+});
 
 test('blog collection needs explicit enablement and excludes fixture slugs and IDs', () => {
   const post = { id: '12', slug: 'vodic' };

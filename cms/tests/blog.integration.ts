@@ -15,6 +15,7 @@ import { signPreview, signature, verifyHook } from '../src/blog-signing'
 import { blogPreviewURL } from '../src/hooks/blog'
 import type { PayloadRequest } from 'payload'
 import { uploadMedia } from './media-upload'
+import { editorBrowserChecks } from './editor-browser'
 
 const requireFrontend = createRequire(
   new URL('../../frontend/package.json', import.meta.url),
@@ -105,6 +106,37 @@ export async function createBlogHarness(cmsURL: string) {
       res
         .writeHead(response.status, { 'Content-Type': 'application/json' })
         .end(await response.text())
+      return
+    }
+    // The editor browser follows an actual marketplace category document.
+    // These fixtures model its read-only FastAPI contracts, not a second taxonomy.
+    if (req.url === '/api/v1/seo/landing/stapovi') {
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify({ data: {
+        category,
+        brand: null,
+        title: 'Štapovi',
+        meta_description: 'Probna ponuda štapova',
+        intro_copy: 'Lokalna provera ponude.',
+        canonical_path: '/kategorije/stapovi',
+        is_indexable: false,
+        active_listing_count: 3,
+      } }))
+      return
+    }
+    if (req.url === '/api/v1/categories') {
+      res.end(JSON.stringify({ data: [{
+        ...category, parent_id: null, active_count: 3, children: [], attributes: [],
+      }] }))
+      return
+    }
+    if (
+      req.url?.startsWith('/api/v1/listings?') &&
+      !new URL(req.url, 'http://localhost').searchParams.has('availability')
+    ) {
+      res.end(JSON.stringify({
+        data: listings, meta: { total: 3, page: 1, page_size: 24, total_pages: 1 },
+      }))
       return
     }
     if (req.url?.includes('/auth/me')) {
@@ -260,6 +292,11 @@ export async function createBlogHarness(cmsURL: string) {
         await new Promise((resolve) => setTimeout(resolve, 500))
       }
       forwardHooks = true
+      await editorBrowserChecks(cmsURL, frontendURL, cookie).catch((error) => {
+        console.error('Frontend editor journey log:', log)
+        throw error
+      })
+      if (process.env.CMS_TEST_SCOPE === 'editor') return
       const read = async (path: string, init?: RequestInit) => {
         const response = await fetch(`${frontendURL}${path}`, init)
         return { response, html: await response.text() }

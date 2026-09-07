@@ -192,4 +192,4 @@ Start with 072; dependencies and release boundaries are documented in the plan.
 ## P1 — Release preparation and handoff
 
 - [x] [078 — CMS production configuration, hostname, and backups](078-cms-deployment-backups.md)
-- [ ] [079 — Blog release gate and editor handoff](079-blog-release-gate-editor-handoff.md)
+- [x] [079 — Blog release gate and editor handoff](079-blog-release-gate-editor-handoff.md)

@@ -6,7 +6,9 @@ test("brand catalog exposes the vector identity without layout overflow", async 
 
   await expect(page.getByRole("heading", { name: "Sve Za Pecanje brand system" })).toBeVisible();
   await expect(page.locator("[data-brand-swatch]")).toHaveCount(5);
-  await expect(page.locator("svg[data-brand-motif]")).toBeVisible();
+  // The logo panel and shared footer also use this motif. Check the catalogue sample.
+  const motifSample = page.getByText("SVG motif", { exact: true }).locator("..");
+  await expect(motifSample.locator("svg[data-brand-motif]")).toBeVisible();
   await expect(page.locator("main img[src='/brand/logo.svg']")).toBeVisible();
   await expect(page.locator("main img[src='/brand/logo-inverse.svg']")).toBeVisible();
 

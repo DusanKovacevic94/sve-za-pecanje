@@ -52,6 +52,25 @@ export default function PrivacyPage() {
         </p>
       </EditorialSection>
 
+      <EditorialSection id="analitika-bloga" title="Čitanje bloga i povezani oglasi">
+        <p>
+          Kada je merenje bloga uključeno, beležimo prikaze objavljenih članaka i klikove na
+          povezane kategorije i oglase. Koristimo oznaku članka, oznaku odredišta klika i
+          nasumičnu oznaku tog prikaza stranice, bez povezivanja sa korisničkim nalogom.
+        </p>
+        <p>
+          Za ovo merenje ne postavljamo kolačiće niti čuvamo oznaku u pregledaču za naredne
+          posete. Ne beležimo naslov članka, sadržaj poruka ili adresu prethodne stranice.
+          IP adresa se pre čuvanja pretvara u zaštićeni heš. Pojedinačne događaje čuvamo
+          do 90 dana; izveštaju pristupaju samo administratori.
+        </p>
+        <p>
+          Merenje bloga se ne pokreće kada pregledač šalje Do Not Track ili Global Privacy
+          Control signal, niti u uredničkom pregledu nacrta. Klik na oglas ne znači da je
+          čitalac kontaktirao prodavca ili obavio kupovinu.
+        </p>
+      </EditorialSection>
+
       <EditorialCallout title="Sesija i brisanje naloga" Icon={LockIcon}>
         Koristimo kolačiće za prijavu i sesiju. Zahtev za brisanje naloga možete poslati preko
         kontakt stranice.

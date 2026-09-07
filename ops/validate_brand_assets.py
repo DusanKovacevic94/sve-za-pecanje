@@ -69,6 +69,9 @@ def validate(manifest_path: Path = MANIFEST_PATH, root: Path = ROOT) -> list[str
             continue
         actual = file_sha256(path)
         if actual != expected:
+            if hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest() == expected:
+                errors.append(f"Managed brand asset has CRLF checkout drift: {destination}; restore canonical LF copies with brand-assets-sync, not a new receipt")
+                continue
             errors.append(
                 f"Managed brand asset drifted: {destination} (expected {expected}, found {actual})"
             )

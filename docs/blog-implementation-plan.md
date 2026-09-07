@@ -1,7 +1,7 @@
 # Blog implementation plan
 
 Date: 2026-09-07
-Status: planned
+Status: implementation complete (072–079); authorized rollout pending
 
 ## Objective
 
@@ -43,9 +43,10 @@ do not assume the CMS and public frontend can share dependency versions.
 | [078](../tasks/078-cms-deployment-backups.md) | Production configuration, CMS hostname, backup/restore | 072, 074, 076 |
 | [079](../tasks/079-blog-release-gate-editor-handoff.md) | Integrated release evidence and editor handoff | 072–078 |
 
-Start with 072. Each task remains `todo` until its acceptance criteria and relevant
-checks pass; update its checklist and the task index together. Feature work must add
-focused verification as it lands; task 079 assembles the final integrated gate.
+Tasks 072–079 have completed their local implementation and verification. The
+[release checklist](blog-release-checklist.md) records the final gates and editor handoff.
+Hosted CI, production access/deployment, analytics enablement and first publication
+remain separately authorized operational steps; task completion does not perform them.
 
 ## First-release boundaries
 

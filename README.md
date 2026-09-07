@@ -34,6 +34,8 @@ to enable editor previews; see [blog setup and publishing](docs/blog-publishing.
 Production configuration for `cms.svezapecanje.rs`, guarded maintenance and isolated
 backup/restore rehearsal are documented in [CMS operations](docs/cms-operations.md).
 Run `make cms-production-rehearsal` locally; it does not deploy or change live DNS.
+Editors: [everyday editing and first-article guide](docs/blog-editor-guide.md).
+Release reviewers: [079 checks, evidence and rollout handoff](docs/blog-release-checklist.md).
 
 ## Local Commands
 

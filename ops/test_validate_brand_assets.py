@@ -44,6 +44,11 @@ class BrandAssetReleaseValidationTests(unittest.TestCase):
             )
 
             self.assertEqual([], VALIDATOR.validate(manifest, root))
+            asset.write_bytes(b"<svg/>\r\n")
+            data = json.loads(manifest.read_text())
+            data["assets"][0]["sha256"] = hashlib.sha256(b"<svg/>\n").hexdigest()
+            manifest.write_text(json.dumps(data))
+            self.assertIn("CRLF checkout drift", VALIDATOR.validate(manifest, root)[0])
             asset.write_text("drift", encoding="utf-8")
             self.assertIn("drifted", VALIDATOR.validate(manifest, root)[0])
 

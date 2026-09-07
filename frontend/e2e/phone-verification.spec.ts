@@ -28,8 +28,7 @@ test("user verifies a private phone and changing it clears trust", async ({
   await expect(page.getByText("Telefon je potvrđen")).toBeVisible();
 
   await page.goto(`/prodavci/${accounts.seller.username}`);
-  await expect(page.getByText("Telefon potvrđen")).toBeVisible();
-  await expect(page.getByText("Email potvrđen")).toBeVisible();
+  await expect(page.getByText("Email i telefon potvrđeni", { exact: true })).toBeVisible();
   await expect(page.locator("body")).not.toContainText("064 123 4567");
   await expect(page.locator("body")).not.toContainText("+381641234567");
   await expect(

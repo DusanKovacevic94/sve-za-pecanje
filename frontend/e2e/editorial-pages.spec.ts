@@ -46,4 +46,7 @@ test("legal rewrites retain the existing policy statements", async ({ page }) =>
   await expect(page.getByText(/Email adrese se ne prikazuju javno/)).toBeVisible();
   await expect(page.getByText(/Umami analitiku bez kolačića/)).toBeVisible();
   await expect(page.getByText(/Zahtev za brisanje naloga/)).toBeVisible();
+  await expect(page.locator('#analitika-bloga')).toContainText('do 90 dana');
+  await expect(page.locator('#analitika-bloga')).toContainText('Do Not Track');
+  await expect(page.locator('#analitika-bloga')).toContainText('Klik na oglas ne znači');
 });
