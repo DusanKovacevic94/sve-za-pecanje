@@ -20,9 +20,9 @@ export function EditorialIntro({
   Icon,
   actions,
 }: {
-  eyebrow: string;
+  eyebrow?: string;
   title: string;
-  summary: string;
+  summary?: string;
   Icon?: IconComponent;
   actions?: ReactNode;
 }) {
@@ -37,9 +37,9 @@ export function EditorialIntro({
           <Icon size={24} aria-hidden />
         </div>
       ) : null}
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-river-700">{eyebrow}</p>
-      <PageTitle className="mt-2 max-w-3xl">{title}</PageTitle>
-      <SupportingCopy className="mt-4 max-w-3xl text-base sm:text-lg">{summary}</SupportingCopy>
+      {eyebrow ? <p className="text-xs font-bold uppercase tracking-[0.14em] text-river-700">{eyebrow}</p> : null}
+      <PageTitle className={eyebrow ? "mt-2 max-w-3xl" : "max-w-3xl"}>{title}</PageTitle>
+      {summary ? <SupportingCopy className="mt-4 max-w-3xl text-base sm:text-lg">{summary}</SupportingCopy> : null}
       {actions ? <ActionRow className="mt-6">{actions}</ActionRow> : null}
     </header>
   );

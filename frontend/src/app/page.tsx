@@ -90,10 +90,10 @@ export default async function HomePage() {
               Specijalizovani oglasi za ribolovce
             </p>
             <h1 className="mt-3 max-w-2xl text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-              Pronađi pravu ribolovnu opremu
+              Sve za pecanje na jednom mestu.
             </h1>
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-river-50 sm:text-xl">
-              Pretraži štapove, mašinice, varalice i drugu opremu uz detalje koji su ribolovcima važni.
+              Pretraži štapove, mašinice, varalice i drugu opremu.
             </p>
             <form action="/oglasi" className="mt-8 flex max-w-2xl flex-col gap-3 rounded-2xl border border-white/20 bg-white p-2 shadow-lift sm:flex-row">
               <label className="sr-only" htmlFor="homepage-search">Pretraga</label>

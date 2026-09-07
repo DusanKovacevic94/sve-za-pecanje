@@ -301,6 +301,10 @@ export async function createBlogHarness(cmsURL: string) {
         const response = await fetch(`${frontendURL}${path}`, init)
         return { response, html: await response.text() }
       }
+      const emptyIndex = (await read('/blog')).html
+      assert.match(emptyIndex, /<title>Blog \| Sve Za Pecanje<\/title>/)
+      assert.match(emptyIndex, /Još nema objavljenih članaka\. U međuvremenu,/)
+      assert.doesNotMatch(emptyIndex, /saveti za ribolovce|Praktični vodiči|pripremamo vodiče/i)
       const author = (
         await api('/authors', 'POST', {
           ...authorFixture,
@@ -491,6 +495,7 @@ export async function createBlogHarness(cmsURL: string) {
       const html = (await read('/blog/blog-provera')).html
       assert.match(html, /application\/ld\+json/)
       assert.match(html, /BlogPosting/)
+      assert.doesNotMatch(html, /Blog · Saveti za ribolovce/)
       assert.match(html, /BreadcrumbList/)
       assert.match(html, /č ć ž š đ/)
       assert.match(
@@ -710,6 +715,8 @@ export async function createBlogHarness(cmsURL: string) {
           })
           await page.goto(`${frontendURL}/blog`)
           await page.locator('main article h1').waitFor()
+          assert.equal(await page.locator('main article h1').innerText(), 'Blog')
+          assert.equal(await page.locator('main article > header p').count(), 0, 'blog intro has no advice-only eyebrow or summary')
           assert.ok(
             await page.evaluate(
               () => document.documentElement.scrollWidth <= window.innerWidth,

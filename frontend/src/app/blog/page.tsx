@@ -37,9 +37,9 @@ async function load({ searchParams }: Props) {
 }
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { page, canonical } = await load(props);
-  const title = `Blog — saveti za ribolovce${page > 1 ? ` · Strana ${page}` : ""} | Sve Za Pecanje`;
+  const title = `Blog${page > 1 ? ` · Strana ${page}` : ""} | Sve Za Pecanje`;
   const description =
-    "Praktični vodiči za izbor, korišćenje i održavanje ribolovačke opreme.";
+    "Članci o ribolovu i ribolovačkoj opremi na blogu Sve Za Pecanje.";
   return {
     title,
     description,
@@ -53,11 +53,7 @@ export default async function BlogIndex(props: Props) {
   const { posts, page, totalPages } = await load(props);
   return (
     <EditorialPage>
-      <EditorialIntro
-        eyebrow="Blog"
-        title="Saveti za ribolovce"
-        summary="Praktični vodiči za izbor, korišćenje i održavanje ribolovačke opreme."
-      />
+      <EditorialIntro title="Blog" />
       {posts.length ? (
         <div className="mt-8 grid gap-6 sm:grid-cols-2">
           {posts.map((post) => (
@@ -93,7 +89,7 @@ export default async function BlogIndex(props: Props) {
         </div>
       ) : (
         <p className="my-10 text-ink-600">
-          Još nema objavljenih članaka. Dok pripremamo vodiče,{" "}
+          Još nema objavljenih članaka. U međuvremenu,{" "}
           <BlogLink
             href="/oglasi"
             className="focus-ring rounded-xl text-river-700 underline"

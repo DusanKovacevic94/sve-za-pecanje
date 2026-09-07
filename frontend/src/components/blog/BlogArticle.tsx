@@ -154,7 +154,7 @@ export function BlogArticle({
           </aside>
         ) : null}
         <EditorialIntro
-          eyebrow="Blog · Saveti za ribolovce"
+          eyebrow="Blog"
           title={post.title}
           summary={post.excerpt}
         />

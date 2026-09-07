@@ -5,7 +5,8 @@ test("homepage hero leads with customer value and real marketplace proof", async
   await page.goto("/");
 
   const hero = page.locator("[data-home-hero]");
-  await expect(hero.getByRole("heading", { level: 1, name: "Pronađi pravu ribolovnu opremu" })).toBeVisible();
+  await expect(hero.getByRole("heading", { level: 1, name: "Sve za pecanje na jednom mestu.", exact: true })).toBeVisible();
+  await expect(hero.getByText("Pretraži štapove, mašinice, varalice i drugu opremu.", { exact: true })).toBeVisible();
   await expect(page.locator("main h1")).toHaveCount(1);
   await expect(hero.locator("img")).toHaveCount(0);
   await expect(page.locator("header img[src='/brand/logo.svg']")).toBeVisible();

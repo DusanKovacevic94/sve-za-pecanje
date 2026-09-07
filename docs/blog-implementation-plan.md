@@ -5,7 +5,7 @@ Status: implementation complete (072–079); authorized rollout pending
 
 ## Objective
 
-Let editors publish useful Serbian fishing guides through a browser editor, attract
+Let editors publish Serbian articles about fishing through a browser editor, attract
 readers to relevant marketplace listings, and measure that transition.
 
 ## Agreed architecture
