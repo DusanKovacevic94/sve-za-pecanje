@@ -1,12 +1,12 @@
 import { loadEnvFile } from 'node:process'
 import { existsSync } from 'node:fs'
 import pg from 'pg'
-import { CMS_DATABASE, CMS_DATABASE_USER, databaseURL, requireLocalMaintenance } from '../src/environment'
+import { CMS_DATABASE, CMS_DATABASE_USER, databaseURL, requireOperatorMaintenance } from '../src/environment'
 
 if (existsSync('.env')) loadEnvFile('.env')
 
 export async function provision() {
-  requireLocalMaintenance()
+  requireOperatorMaintenance()
   const cmsURL = new URL(databaseURL())
   const adminURL = new URL(cmsURL)
   adminURL.pathname = '/postgres'

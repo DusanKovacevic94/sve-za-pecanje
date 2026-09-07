@@ -1,3 +1,39 @@
+x-cms-production: &cms-production
+  CMS_ENV: production
+  CMS_PUBLIC_URL: https://cms.${APP_DOMAIN}
+  CMS_DATABASE_HOST: postgres
+  CMS_DATABASE_PORT: "5432"
+  CMS_DATABASE_PASSWORD: ${CMS_DATABASE_PASSWORD}
+  CMS_SECRET: ${CMS_SECRET}
+  CMS_FRONTEND_URL: https://${APP_DOMAIN}
+  CMS_PREVIEW_SECRET: ${CMS_PREVIEW_SECRET}
+  CMS_REVALIDATE_SECRET: ${CMS_REVALIDATE_SECRET}
+  CMS_REVALIDATE_URL: http://frontend:3000/api/blog/revalidate
+  CMS_MARKETPLACE_API_URL: http://backend:8000/api/v1
+  CMS_RESEND_API_KEY: ${CMS_RESEND_API_KEY}
+  CMS_EMAIL_FROM: ${CMS_EMAIL_FROM}
+  CMS_S3_ENDPOINT: ${CMS_S3_ENDPOINT}
+  CMS_S3_REGION: ${CMS_S3_REGION}
+  CMS_S3_BUCKET: ${CMS_S3_BUCKET}
+  CMS_S3_FORCE_PATH_STYLE: ${CMS_S3_FORCE_PATH_STYLE:-false}
+  CMS_S3_PUBLIC_URL: ${CMS_S3_PUBLIC_URL}
+  CMS_S3_ACCESS_KEY_ID: ${CMS_S3_ACCESS_KEY_ID}
+  CMS_S3_SECRET_ACCESS_KEY: ${CMS_S3_SECRET_ACCESS_KEY}
+
+# Base backend/worker env_file contains the deployment file; never forward new CMS
+# credentials across that boundary. Frontend receives only the two signing purposes.
+x-hide-cms-secrets: &hide-cms-secrets
+  CMS_DATABASE_PASSWORD: ""
+  CMS_SECRET: ""
+  CMS_PREVIEW_SECRET: ""
+  CMS_REVALIDATE_SECRET: ""
+  CMS_RESEND_API_KEY: ""
+  CMS_S3_ACCESS_KEY_ID: ""
+  CMS_S3_SECRET_ACCESS_KEY: ""
+  CMS_BOOTSTRAP_PASSWORD: ""
+  CMS_PROVISION_PASSWORD: ""
+  CMS_MAINTENANCE_CONFIRM: ""
+
 services:
   caddy:
     image: caddy:2.8-alpine
@@ -7,6 +43,7 @@ services:
     depends_on:
       - frontend
       - backend
+    networks: [default, cms_private]
     ports:
       - "80:80"
       - "443:443"
@@ -30,9 +67,11 @@ services:
       - "3000"
 
   backend:
+    networks: [default, cms_private]
     command: gunicorn app.main:app -k uvicorn.workers.UvicornWorker -w 3 -b 0.0.0.0:8000
     restart: unless-stopped
     environment:
+      <<: *hide-cms-secrets
       SMTP_HOST: ""
     ports: !reset []
     volumes: !reset []
@@ -49,6 +88,8 @@ services:
       context: ./frontend
       target: runner
       args:
+        NEXT_PUBLIC_APP_URL: https://${APP_DOMAIN}
+        CMS_S3_PUBLIC_URL: ${CMS_S3_PUBLIC_URL}
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://${APP_DOMAIN}/api/v1}
         NEXT_PUBLIC_ANALYTICS_URL: ${NEXT_PUBLIC_ANALYTICS_URL:-}
         NEXT_PUBLIC_ANALYTICS_WEBSITE_ID: ${NEXT_PUBLIC_ANALYTICS_WEBSITE_ID:-}
@@ -59,7 +100,15 @@ services:
       NEXT_PUBLIC_ANALYTICS_WEBSITE_ID: ${NEXT_PUBLIC_ANALYTICS_WEBSITE_ID:-}
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${NEXT_PUBLIC_TURNSTILE_SITE_KEY:-}
       INTERNAL_API_URL: http://backend:8000/api/v1
+      NEXT_PUBLIC_APP_URL: https://${APP_DOMAIN}
+      CMS_INTERNAL_URL: http://cms:3002
+      CMS_S3_PUBLIC_URL: ${CMS_S3_PUBLIC_URL}
+      CMS_PREVIEW_SECRET: ${CMS_PREVIEW_SECRET}
+      CMS_REVALIDATE_SECRET: ${CMS_REVALIDATE_SECRET}
+      BLOG_ANALYTICS_ENABLED: ${BLOG_ANALYTICS_ENABLED:-false}
+      BLOG_ANALYTICS_EXCLUDED_POST_IDS: ${BLOG_ANALYTICS_EXCLUDED_POST_IDS:-}
     user: nextjs
+    networks: [default, cms_private]
     command: node server.js
     restart: unless-stopped
     ports: !reset []
@@ -68,6 +117,7 @@ services:
       - "3000"
 
   postgres:
+    networks: [default, cms_private]
     restart: unless-stopped
     ports: !reset []
 
@@ -81,26 +131,91 @@ services:
 
   worker:
     environment:
+      <<: *hide-cms-secrets
       SMTP_HOST: ""
     volumes: !reset []
 
-  backup:
-    image: postgres:16-alpine
-    env_file: ${APP_ENV_FILE:-.env}
+  cms:
+    build:
+      context: ./cms
+      target: runner
+    environment: *cms-production
+    user: node
+    command: [node, server.js]
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp, /app/.next/cache]
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    networks: [cms_private, cms_egress]
+    expose: ["3002"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3002/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+
+  # Explicit operator command only; never migrate as part of web startup.
+  cms-maintenance:
+    profiles: [maintenance]
+    build:
+      context: ./cms
+      target: tools
+    environment: *cms-production
+    user: node
+    restart: "no"
+    networks: [cms_private, cms_egress]
+    command: [pnpm, migrate:status]
+
+  backup: &database-backup
+    build:
+      context: .
+      dockerfile: ops/backup/Dockerfile
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       BACKUP_ROOT: /backups
+      DATABASE_URL: ${DATABASE_URL}
+      BACKUP_DATABASE: ${POSTGRES_DB:-fishing_marketplace}
+      RCLONE_CONFIG: /etc/rclone/rclone.conf
       BACKUP_REMOTE: ${BACKUP_REMOTE:-}
       BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
       SMTP_HOST: ""
     volumes:
-      - ./backend/scripts/backup_db.sh:/scripts/backup_db.sh:ro
       - postgres_backups:/backups
+      - ${BACKUP_RCLONE_CONFIG:-./ops/backup/rclone.conf.example}:/etc/rclone/rclone.conf:ro
     entrypoint: /bin/sh
-    command: -c "apk add --no-cache rclone >/dev/null && while true; do sh /scripts/backup_db.sh; sleep $${BACKUP_INTERVAL_SECONDS}; done"
+    healthcheck:
+      test: [CMD, sh, /scripts/check_backup.sh]
+      interval: 60s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+    command: -c "while true; do sh /scripts/backup_db.sh || echo 'DATABASE BACKUP FAILED' >&2; sleep $${BACKUP_INTERVAL_SECONDS}; done"
+
+  cms-backup:
+    <<: *database-backup
+    networks: [cms_private, cms_egress]
+    environment:
+      PGHOST: postgres
+      PGUSER: szp_cms
+      PGPASSWORD: ${CMS_DATABASE_PASSWORD}
+      BACKUP_DATABASE: svezapecanje_cms
+      BACKUP_ROOT: /backups
+      BACKUP_REMOTE: ${BACKUP_REMOTE:-}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      RCLONE_CONFIG: /etc/rclone/rclone.conf
+
+networks:
+  cms_private:
+    internal: true
+  cms_egress: {}
 
 volumes:
   caddy_data:

@@ -1,6 +1,11 @@
 {$APP_DOMAIN} {
 	encode zstd gzip
 
+	# The signed publishing hook belongs to Next, not FastAPI.
+	handle /api/blog/revalidate {
+		reverse_proxy frontend:3000
+	}
+
 	handle /api/* {
 		reverse_proxy backend:8000
 	}
@@ -22,4 +27,11 @@
 stats.{$APP_DOMAIN} {
 	encode zstd gzip
 	reverse_proxy umami:3000
+}
+
+cms.{$APP_DOMAIN} {
+	encode zstd gzip
+	header X-Robots-Tag "noindex, nofollow"
+	header Referrer-Policy "no-referrer"
+	reverse_proxy cms:3002
 }

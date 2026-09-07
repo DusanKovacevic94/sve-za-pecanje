@@ -1,0 +1,11 @@
+{
+	local_certs
+	admin off
+}
+
+# Exercise the actual production routes; no ACME or external DNS is used.
+import /etc/caddy/production.Caddyfile
+
+storage.fixture.test {
+	reverse_proxy minio:9000
+}

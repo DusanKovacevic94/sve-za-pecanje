@@ -1,5 +1,14 @@
 # Deployment
 
+## CMS-enabled releases
+
+The production overlay now includes the blog CMS, isolated maintenance tools and its own
+backup service. Follow [CMS operations and recovery](cms-operations.md) **before starting
+the new CMS service**: provision its restricted role/database, take an upgrade backup,
+apply migrations, then start it. Do not combine the development CMS overlay with production.
+Task 078's local rehearsal is configuration/recovery evidence, not production authorization;
+079's release gate and a separately approved rollout remain required.
+
 ## Hetzner VPS Production
 
 This deployment uses Docker Compose on one VPS with Caddy as the public reverse proxy.
@@ -165,9 +174,10 @@ heartbeats for more than five minutes, readiness returns `503`.
 
 ## Backups
 
-The production overlay starts a `backup` service. It runs `backend/scripts/backup_db.sh`
-inside a `postgres:16-alpine` container, keeps seven daily dumps and four weekly dumps
-in the `postgres_backups` volume, and copies them off-site when `BACKUP_REMOTE` points
+The production overlay starts `backup` and `cms-backup` services. They run `backend/scripts/backup_db.sh`
+inside the PostgreSQL 16 backup image (with rclone), keeps seven daily dumps and four weekly dumps
+per database under `/backups/<database>/{daily,weekly}` in the `postgres_backups` volume,
+and copy them off-site when `BACKUP_REMOTE` points
 to an `rclone` remote.
 
 Example env:
@@ -180,26 +190,26 @@ BACKUP_INTERVAL_SECONDS=86400
 Create a manual dump when needed:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backup sh /scripts/backup_db.sh
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backup /scripts/backup_db.sh
 ```
 
 List local backup files:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backup find /backups -type f -name '*.dump'
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint find backup /backups -type f -name '*.dump'
 ```
 
 Restore a dump into a fresh database to verify it:
 
 ```bash
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres createdb -U postgres fishing_marketplace_restore
-docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm backup pg_restore \
+# Supply PGPASSWORD for the restore operator from a secret store; fresh target only.
+docker compose -f docker-compose.yml -f docker-compose.prod.yml run --rm --entrypoint pg_restore -e PGPASSWORD backup \
   -h postgres \
   -U "${POSTGRES_USER:-postgres}" \
   -d fishing_marketplace_restore \
-  --clean \
-  --if-exists \
-  /backups/daily/<backup-file>.dump
+  --exit-on-error --no-owner --no-acl \
+  /backups/fishing_marketplace/daily/<backup-file>.dump
 ```
 
 Drop the verification database after checking row counts:
@@ -211,6 +221,12 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T postgres
 Do not rely only on the same VPS disk. Configure and test the `rclone` remote before
 launch, then run the manual backup command and restore one dump into
 `fishing_marketplace_restore`.
+
+Mount its operator-owned config using `BACKUP_RCLONE_CONFIG`; backup credentials are not
+read from the application env file automatically. Old flat backup directories are preserved.
+For the CMS, restore a paired database/media snapshot into a separate isolated server and
+bucket using [the CMS restore procedure](cms-operations.md#paired-media-snapshots-and-restore).
+The backup health checks flag missing/overdue successful copies; connect these to alerting.
 
 ## Database Credentials
 

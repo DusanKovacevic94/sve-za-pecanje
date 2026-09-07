@@ -32,8 +32,11 @@ From the application repository:
 
 The optional `docker-compose.cms.yml` overlay starts database provisioning/migrations
 and a separate local storage provisioner before the CMS. The regular development and
-production Compose commands do not include this overlay and do not start the CMS. The public production editor URL
-will be `https://cms.svezapecanje.rs/admin` once task 078 and an authorized rollout land.
+production Compose commands do not include this development overlay. The production
+overlay now contains a separate hardened CMS service and profile-gated maintenance tool.
+See [CMS operations](../docs/cms-operations.md) for ordered provisioning, migrations,
+`https://cms.svezapecanje.rs/admin`, and recovery rehearsal. An actual rollout still
+requires the release gate and explicit production authorization.
 
 CMS source files are mounted for development; dependencies and Next.js output use
 dedicated volumes. After collection/config changes, create a migration, rebuild the

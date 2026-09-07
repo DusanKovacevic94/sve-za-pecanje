@@ -10,6 +10,7 @@ import { editorialChecks } from './editorial'
 import { prepareStorage } from './storage-harness'
 import { mediaChecks } from './media.integration'
 import { createBlogHarness } from './blog.integration'
+import { productionChecks } from './production.integration'
 
 // Every database/container is synthetic and owned by this run. No external DB URL
 // is accepted, and cleanup uses only IDs returned by our successful Docker calls.
@@ -72,6 +73,9 @@ try {
     CMS_PROVISION_USER: 'postgres', CMS_PROVISION_PASSWORD: password,
     CMS_BOOTSTRAP_EMAIL: 'editor@example.test',
     CMS_BOOTSTRAP_PASSWORD: randomBytes(24).toString('hex'),
+    CMS_PREVIEW_SECRET: randomBytes(32).toString('hex'),
+    CMS_REVALIDATE_SECRET: randomBytes(32).toString('hex'),
+    CMS_REVALIDATE_URL: '',
   })
   delete process.env.CMS_BUILD
   const storagePassword = randomBytes(24).toString('hex')
@@ -157,7 +161,7 @@ try {
   // Cross-application tests run against the production-mode standalone CMS on
   // loopback. The image variant retains its isolated Docker-network media/API
   // checks and does not expose host test relays outside loopback.
-  if (!process.env.CMS_TEST_IMAGE) blogHarness = await createBlogHarness(baseURL)
+  if (!process.env.CMS_TEST_IMAGE && process.env.CMS_TEST_SCOPE !== 'production') blogHarness = await createBlogHarness(baseURL)
   if (process.env.CMS_TEST_IMAGE) {
     const imageEnv = { ...process.env, CMS_DATABASE_HOST: 'postgres', CMS_DATABASE_PORT: '5432', CMS_SMTP_HOST: 'mailpit', CMS_SMTP_PORT: '1025', CMS_S3_ENDPOINT: 'http://minio:9000' }
     imageContainer = await command('docker', [
@@ -204,6 +208,21 @@ try {
   await command('pnpm', ['seed'])
   assert.equal((await cms.query('SELECT count(*)::integer AS count FROM posts')).rows[0].count, 1)
   assert.equal((await (await fetch(`${baseURL}/api/posts?draft=true`)).json()).totalDocs, 0)
+  if (process.env.CMS_TEST_SCOPE === 'production') {
+    for (const collection of ['authors', 'media']) {
+      const fixture = (await cms.query(`SELECT id FROM ${collection} LIMIT 1`)).rows[0].id
+      assert.equal((await fetch(`${baseURL}/api/${collection}/${fixture}`, {
+        method: 'PATCH', headers: { Cookie: cookie.split(';')[0], Origin: baseURL, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublic: true }),
+      })).status, 200)
+    }
+    const fixtureID = (await cms.query('SELECT id FROM posts LIMIT 1')).rows[0].id
+    assert.equal((await fetch(`${baseURL}/api/posts/${fixtureID}`, {
+      method: 'PATCH', headers: { Cookie: cookie.split(';')[0], Origin: baseURL, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _status: 'published' }),
+    })).status, 200)
+    await productionChecks(command, network)
+  }
   for (const collection of ['posts', 'authors', 'media']) {
     const records = (await (await fetch(`${baseURL}/api/${collection}?draft=true`, { headers: { Cookie: cookie.split(';')[0], Origin: baseURL } })).json()).docs
     assert.equal(records.length, 1, `one seeded ${collection} record`)
@@ -211,7 +230,7 @@ try {
     assert.equal(response.status, 200)
   }
   console.log('PASS: local fixture is repeatable and creates only a private draft/metadata')
-  if (process.env.CMS_TEST_SCOPE !== 'blog') {
+  if (!['blog', 'production'].includes(process.env.CMS_TEST_SCOPE || '')) {
     await editorialChecks(baseURL, cookie.split(';')[0], mailURL)
     const imageURLs = await mediaChecks(baseURL, cookie.split(';')[0], async () => {
       if (imageContainer) {

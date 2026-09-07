@@ -31,6 +31,10 @@ see [CMS media setup](cms/MEDIA_STORAGE.md). The public blog lives at `/blog`.
 Configure the two independent preview/revalidation signing secrets in both services
 to enable editor previews; see [blog setup and publishing](docs/blog-publishing.md).
 
+Production configuration for `cms.svezapecanje.rs`, guarded maintenance and isolated
+backup/restore rehearsal are documented in [CMS operations](docs/cms-operations.md).
+Run `make cms-production-rehearsal` locally; it does not deploy or change live DNS.
+
 ## Local Commands
 
 ```bash

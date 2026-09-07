@@ -60,3 +60,11 @@ export function requireLocalMaintenance(env: Environment = process.env) {
     throw new Error('Local maintenance requires a loopback or local Compose PostgreSQL host.')
   }
 }
+
+// Never place this confirmation in the runtime Compose environment.
+export function requireOperatorMaintenance(env: Environment = process.env) {
+  if (env.CMS_ENV !== 'production') return requireLocalMaintenance(env)
+  if (env.CMS_MAINTENANCE_CONFIRM !== 'svezapecanje_cms' || env.CMS_DATABASE_HOST !== 'postgres') {
+    throw new Error('Production maintenance requires explicit svezapecanje_cms confirmation and the private Compose database host.')
+  }
+}

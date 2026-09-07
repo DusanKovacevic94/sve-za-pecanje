@@ -1,14 +1,14 @@
 import { existsSync } from 'node:fs'
 import { loadEnvFile } from 'node:process'
 import pg from 'pg'
-import { databaseURL, requireLocalMaintenance } from '../src/environment'
+import { databaseURL, requireOperatorMaintenance } from '../src/environment'
 
 if (existsSync('.env')) loadEnvFile('.env')
 // A one-shot CLI must not open Payload's development hot-reload WebSocket.
 process.env.DISABLE_PAYLOAD_HMR = 'true'
 
 async function bootstrap() {
-  requireLocalMaintenance()
+  requireOperatorMaintenance()
   const email = process.env.CMS_BOOTSTRAP_EMAIL
   const password = process.env.CMS_BOOTSTRAP_PASSWORD
   if (!email || !password || password.length < 16) {

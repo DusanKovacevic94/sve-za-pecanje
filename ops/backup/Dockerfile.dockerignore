@@ -1,0 +1,9 @@
+**
+!backend
+!backend/scripts
+!backend/scripts/backup_db.sh
+!ops
+!ops/backup
+!ops/backup/Dockerfile
+!ops/backup/check_backup.sh
+!ops/backup/pg_command.py

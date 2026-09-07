@@ -33,6 +33,16 @@ cms-test-compose:
 cms-image-check:
 	docker build --target runner -t szp-cms:local ./cms
 
+.PHONY: cms-production-rehearsal
+cms-production-rehearsal:
+	python3 ops/validate_production_compose.py
+	python3 -m unittest discover -s ops -p test_validate_production_compose.py
+	python3 -m unittest discover -s ops -p test_backup_db.py
+	docker build -f ops/backup/Dockerfile -t szp-backup:078-rehearsal .
+	docker build --target tools -t szp-cms:078-tools ./cms
+	docker build --target runner -t szp-cms:078-rehearsal ./cms
+	cd cms && pnpm build && pnpm test:production
+
 dev:
 	docker compose up --build
 

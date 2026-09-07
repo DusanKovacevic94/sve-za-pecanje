@@ -5,7 +5,7 @@ Sve Za Pecanje is a monorepo with:
 - `backend`: FastAPI REST API, SQLAlchemy models, Alembic migrations, seed/admin scripts
 - `frontend`: Next.js app router UI in Serbian Latin
 - `cms`: independent Payload/Next.js application for blog administration, versioned
-  articles, and media uploads (tasks 072–074; public routes follow in 075)
+  articles, and media uploads; the marketplace frontend renders public blog pages
 - `postgres`: primary database
 - `redis`: future background/rate-limit support
 - `minio`: S3-compatible image storage target for local development
@@ -39,16 +39,21 @@ not CMS login cookies or marketplace authentication. Blog sitemap failures are
 isolated from the marketplace sitemap. See [publishing and preview](blog-publishing.md).
 
 The optional `docker-compose.cms.yml` development overlay runs Payload at
-`http://localhost:3002/admin`. The planned production editor is
-`https://cms.svezapecanje.rs/admin`; public articles will live in the existing
-frontend at `/blog` and `/blog/[slug]`.
+`http://localhost:3002/admin`. Production configuration routes
+`https://cms.svezapecanje.rs/admin` through Caddy to a non-root, read-only CMS runner
+without host ports. Public articles use the existing frontend at `/blog` and
+`/blog/[slug]`. The private CMS network carries database, API and publishing-hook
+traffic; a separate egress network permits object storage and email. See the
+[CMS operations runbook](cms-operations.md) for later authorized rollout steps,
+independent database retention, paired media snapshots and isolated recovery.
 
 The PostgreSQL instance is shared, but Payload uses the dedicated `svezapecanje_cms`
 database and restricted `szp_cms` role. Its generated migrations and user accounts
 are independent of FastAPI/Alembic and marketplace sessions. Provisioning is an
-explicit repeatable local operation, including for existing database volumes.
-The CMS does not read or mutate marketplace tables. Future inventory references
-will use the FastAPI interface. Media uploads use a dedicated bucket and restricted
+explicit repeatable operation, including for existing database volumes; production
+provisioning/bootstrap require the operator-only maintenance confirmation.
+The CMS does not read or mutate marketplace tables. Inventory references
+use the FastAPI interface. Media uploads use a dedicated bucket and restricted
 credentials at the existing object-storage provider, never marketplace upload records
 or export storage. Files and variants are public even in drafts; metadata is anonymous
 only when referenced by currently published content. Referenced files cannot be deleted

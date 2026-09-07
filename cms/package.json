@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "test:integration": "tsx tests/integration.ts",
+    "test:production": "CMS_TEST_SCOPE=production tsx tests/integration.ts",
     "test:compose": "tsx tests/compose.integration.ts",
     "generate": "payload generate:types && payload generate:importmap",
     "migrate": "payload migrate",
