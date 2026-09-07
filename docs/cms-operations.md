@@ -7,6 +7,14 @@ production commands below. Do not publish the `probni-` fixtures.
 
 ## Topology and credentials
 
+An operator may explicitly choose to reuse marketplace storage and email credentials.
+Set `CMS_ALLOW_SHARED_STORAGE=true` to permit the shared bucket and populate the CMS
+storage/email variables with those existing values. CMS objects still use the `media/`
+prefix, which must not overlap listing or private-export keys. This option shares the
+credentials' access scope; it does not provide the default separate storage identity.
+The CMS database and signing secrets remain independent. The production owner selected
+this option for the 2026-09-07 deployment.
+
 Use `docker-compose.yml` + `docker-compose.prod.yml` only. Do not layer the development
 `docker-compose.cms.yml` into production. Compose must support `!reset` and `!override`.
 

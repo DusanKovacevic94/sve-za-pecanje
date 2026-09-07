@@ -25,6 +25,14 @@ class ProductionComposeTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertTrue(validate(config))
 
+    def test_shared_storage_requires_explicit_configuration(self):
+        config = copy.deepcopy(self.config)
+        cms = config["services"]["cms"]["environment"]
+        config["services"]["backend"]["environment"]["HETZNER_STORAGE_BUCKET"] = cms["CMS_S3_BUCKET"]
+        self.assertTrue(validate(config))
+        cms["CMS_ALLOW_SHARED_STORAGE"] = "true"
+        self.assertEqual(validate(config), [])
+
     def test_rejects_secret_routing_and_backup_regressions(self):
         for key, value in [("CMS_BUILD", "true"), ("CMS_PROVISION_PASSWORD", "secret"),
                            ("CMS_ENV", "test"), ("CMS_PUBLIC_URL", "http://localhost:3002"),

@@ -9,6 +9,8 @@ test('storage settings require separate credentials and support path/virtual-hos
   assert.equal(storageEnvironment(env).config.forcePathStyle, false)
   assert.throws(() => storageEnvironment({}), /credentials|CMS_S3_ACCESS_KEY_ID/)
   assert.throws(() => storageEnvironment({ ...env, CMS_S3_BUCKET: 'fishing-marketplace' }), /dedicated/)
+  assert.equal(storageEnvironment({ ...env, CMS_S3_BUCKET: 'fishing-marketplace', CMS_ALLOW_SHARED_STORAGE: 'true' }).bucket, 'fishing-marketplace')
+  assert.throws(() => storageEnvironment({ ...env, CMS_S3_BUCKET: '../listings', CMS_ALLOW_SHARED_STORAGE: 'true' }), /valid CMS bucket/)
   assert.throws(() => storageEnvironment({ ...env, CMS_S3_PUBLIC_URL: 'http://example.test' }), /HTTPS/)
   assert.equal(new URL(String(storageEnvironment({ CMS_BUILD: 'true' }).config.endpoint)).port, '1')
   assert.equal(mediaURL('https://images.example.test', 'abc-640x360.webp'), 'https://images.example.test/media/abc-640x360.webp')

@@ -105,7 +105,7 @@ def validate(config: dict) -> list[str]:
     for key in ["CMS_S3_ENDPOINT", "CMS_S3_PUBLIC_URL"]:
         require(cms_env.get(key, "").startswith("https://"), f"{key} must use HTTPS")
     require(bool(cms_env.get("CMS_RESEND_API_KEY")) and bool(cms_env.get("CMS_EMAIL_FROM")), "CMS password recovery email must be configured")
-    require(cms_env.get("CMS_S3_BUCKET") != backend.get("environment", {}).get("HETZNER_STORAGE_BUCKET"), "CMS and marketplace buckets must differ")
+    require(cms_env.get("CMS_ALLOW_SHARED_STORAGE") == "true" or cms_env.get("CMS_S3_BUCKET") != backend.get("environment", {}).get("HETZNER_STORAGE_BUCKET"), "CMS and marketplace buckets must differ unless CMS_ALLOW_SHARED_STORAGE=true")
     require(frontend.get("build", {}).get("args", {}).get("CMS_S3_PUBLIC_URL") == cms_env.get("CMS_S3_PUBLIC_URL"), "Frontend image allowlist must match CMS public storage")
     forbidden = {"POSTGRES_PASSWORD", "CMS_PROVISION_PASSWORD", "CMS_BOOTSTRAP_PASSWORD", "CMS_MAINTENANCE_CONFIRM", "DATABASE_URL", "CMS_BUILD"}
     require(not forbidden.intersection(cms_env), "CMS runtime must not receive admin/bootstrap/build credentials")

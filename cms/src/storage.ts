@@ -14,7 +14,10 @@ export function storageEnvironment(env: Record<string, string | undefined> = pro
   }
   if (endpoint.pathname !== '/') throw new Error('CMS_S3_ENDPOINT must be an origin.')
   const bucket = env.CMS_S3_BUCKET || CMS_MEDIA_BUCKET
-  if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket) || bucket === 'fishing-marketplace' || bucket === env.S3_BUCKET || bucket === env.HETZNER_STORAGE_BUCKET) {
+  if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(bucket)) {
+    throw new Error('Use a valid CMS bucket name.')
+  }
+  if (env.CMS_ALLOW_SHARED_STORAGE !== 'true' && (bucket === 'fishing-marketplace' || bucket === env.S3_BUCKET || bucket === env.HETZNER_STORAGE_BUCKET)) {
     throw new Error('Use a dedicated CMS bucket, never the marketplace bucket.')
   }
   const accessKeyId = build ? 'cms-build-only' : env.CMS_S3_ACCESS_KEY_ID

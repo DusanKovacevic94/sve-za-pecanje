@@ -43,12 +43,16 @@ export function FilterDrawer({
   resetHref?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
   const close = useCallback(() => setOpen(false), []);
+
+  // The server-rendered trigger cannot open the drawer until its handler is attached.
+  useEffect(() => setHydrated(true), []);
 
   useEffect(() => {
     if (!open) return;
@@ -98,6 +102,7 @@ export function FilterDrawer({
       <button
         ref={triggerRef}
         type="button"
+        disabled={!hydrated}
         aria-expanded={open}
         aria-controls="mobile-filter-drawer"
         onClick={() => setOpen(true)}
