@@ -297,6 +297,8 @@ export async function createBlogHarness(cmsURL: string) {
         throw error
       })
       if (process.env.CMS_TEST_SCOPE === 'editor') return
+      const publicPosts = await (await fetch(`${cmsURL}/api/posts?limit=1`)).json()
+      assert.equal(publicPosts.totalDocs, 0, 'previous checks must leave no published article fixtures')
       const read = async (path: string, init?: RequestInit) => {
         const response = await fetch(`${frontendURL}${path}`, init)
         return { response, html: await response.text() }

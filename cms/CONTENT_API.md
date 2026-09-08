@@ -32,6 +32,9 @@ also requires a reference from a currently published canonical post. Actual imag
 are publicly addressable even in drafts: never upload confidential material.
 `internalNotes` is editor-only in all three content collections, including relationship
 expansion and field selection. No account credentials belong in public metadata/body.
+Post `socialTitle` and `socialDescription` are also editor/admin-only for reading,
+creation and updates. They are excluded from public responses, including explicit
+field selection; they do not replace public article or SEO fields.
 
 ## Collections and public fields
 
@@ -69,6 +72,19 @@ and account reads reject anonymous callers regardless of query flags.
 Drafts may be incomplete. Autosave runs every 1.5 seconds; retention is explicitly
 50 versions per article. Old versions are pruned by Payload, so versions do not replace
 backups. Editors can reopen and restore versions from the standard admin interface.
+
+Optional `socialTitle` (100 characters) and `socialDescription` (180 characters) are
+saved with drafts, autosaves, and versions. Values are NFC-normalized, trimmed, and
+whitespace-collapsed; blank values become `null`. Override type/length checks also run
+on draft saves. Clearing one override does not clear the other. Existing records and
+versions receive nullable columns; no copy is backfilled.
+
+`resolveSocialCardCopy` in `src/social-card/copy.ts` resolves blank overrides to the
+current article title/excerpt independently. It neither persists fallback text nor
+truncates it. Fallback copy can exceed renderer limits, and unsupported glyphs/line
+overflow can make a card unavailable, **without preventing article publication**.
+Actual rendering is separate from field validation. No social preview endpoint or
+public/social publishing hook is introduced by task 082.
 
 ```text
 POST  /posts?draft=true                          create an incomplete draft

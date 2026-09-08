@@ -5,6 +5,8 @@ import { articleEditor } from '../editor'
 import { lockPostMedia } from '../media-references'
 import { blogChanged, blogDeleted, blogPreviewURL } from '../hooks/blog'
 import { validateMarketplaceCategory } from '../marketplace'
+import { normalizeSocialOverride } from '../social-card/copy'
+import socialLayout from '../../assets/social/blog-card-layout.json'
 
 const protectPublication: CollectionBeforeChangeHook = async ({ data, originalDoc, req, context }) => {
   const merged = { ...originalDoc, ...data }
@@ -84,6 +86,20 @@ export const Posts: CollectionConfig = {
     { name: 'coverImage', type: 'relationship', relationTo: 'media' },
     { name: 'seoTitle', type: 'text', maxLength: 70 },
     { name: 'seoDescription', type: 'textarea', maxLength: 180 },
+    {
+      name: 'socialTitle', type: 'text', label: 'Naslov za društvene mreže',
+      maxLength: socialLayout.title.maxCharacters,
+      access: { read: editorField, create: editorField, update: editorField },
+      hooks: { beforeValidate: [({ value }) => normalizeSocialOverride(value, 'title')] },
+      admin: { description: 'Opciono, do 100 znakova. Prazno polje koristi naslov članka. Za sliku može biti potreban kraći naslov; naslov članka se ne menja.' },
+    },
+    {
+      name: 'socialDescription', type: 'textarea', label: 'Opis za društvene mreže',
+      maxLength: socialLayout.description.maxCharacters,
+      access: { read: editorField, create: editorField, update: editorField },
+      hooks: { beforeValidate: [({ value }) => normalizeSocialOverride(value, 'description')] },
+      admin: { description: 'Opciono, do 180 znakova. Prazno polje koristi uvod članka (Excerpt). Tekst za sliku je vidljiv samo urednicima. Pregled i preuzimanje slike stižu u narednom koraku.' },
+    },
     { name: 'firstPublishedAt', type: 'date', admin: { readOnly: true } },
     { name: 'substantiveUpdatedAt', type: 'date', admin: { description: 'Set only for a meaningful editorial update, not a typo or autosave.' } },
     { name: 'marketplaceCategorySlug', type: 'text', maxLength: 180, admin: { description: 'Optional: copy the slug after /kategorije/ in a marketplace category URL. FastAPI checks it at publication; drafts remain saveable during outages. Clear it to omit related equipment.' }, validate: (value: unknown) => !value || (typeof value === 'string' && slugPattern.test(value)) || 'Use a marketplace category slug.' },

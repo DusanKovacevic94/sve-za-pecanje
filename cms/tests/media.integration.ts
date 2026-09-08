@@ -78,6 +78,9 @@ export async function mediaChecks(baseURL: string, cookie: string, restart: () =
   assert.ok(withImage)
   await ok(`/posts/versions/${withImage.id}?draft=true`, 'POST')
   assert.equal((await fetch(inline.url)).status, 200, 'version recovery keeps the image')
+  // Recovery can restore a published version. Remove this owned article so the
+  // subsequent blog harness starts empty; keep its images for the render check.
+  await ok(`/posts/${post.id}`, 'DELETE')
   const racing = await uploadMedia(baseURL, cookie)
   const [save, remove] = await Promise.all([
     api('/posts?draft=true', 'POST', { title: 'Concurrent reference test', slug: 'concurrent-image-reference', coverImage: racing.id }),

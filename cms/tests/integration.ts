@@ -144,6 +144,17 @@ try {
   assert.ok(migrationCount.rows[0].count > 0)
   await command('pnpm', ['migrate'])
   assert.deepEqual((await cms.query('SELECT count(*)::integer AS count FROM payload_migrations')).rows, migrationCount.rows)
+  // Rehearse 082 independently over existing canonical and version rows.
+  await cms.query("UPDATE payload_migrations SET batch = 2 WHERE name = '20260908_105018_social_copy_fields'")
+  await command('pnpm', ['exec', 'payload', 'migrate:down'])
+  const legacyPost = (await cms.query("INSERT INTO posts (title, slug) VALUES ('Legacy social fixture', 'probni-legacy-social') RETURNING id")).rows[0].id
+  await cms.query("INSERT INTO _posts_v (parent_id, version_title) VALUES ($1, 'Legacy social fixture')", [legacyPost])
+  await command('pnpm', ['migrate'])
+  assert.deepEqual((await cms.query('SELECT title, social_title, social_description FROM posts WHERE id = $1', [legacyPost])).rows[0], { title: 'Legacy social fixture', social_title: null, social_description: null })
+  assert.deepEqual((await cms.query('SELECT version_social_title, version_social_description FROM _posts_v WHERE parent_id = $1', [legacyPost])).rows[0], { version_social_title: null, version_social_description: null })
+  await cms.query('DELETE FROM _posts_v WHERE parent_id = $1', [legacyPost])
+  await cms.query('DELETE FROM posts WHERE id = $1', [legacyPost])
+  console.log('PASS: social-copy migration preserves legacy canonical/version content with optional null fields')
   // Emulate a foundation deployment followed by the editorial deployment. Payload
   // rolls back a whole batch, not a single file; this synthetic ledger splits them.
   await cms.query("UPDATE payload_migrations SET batch = 2 WHERE name <> '20260907_091809_initial'")

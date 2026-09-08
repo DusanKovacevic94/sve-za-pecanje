@@ -59,11 +59,23 @@ Open **Posts → Create New**. Prepare these fields:
 | Cover Image | A saved image with approved metadata and meaningful alt text. |
 | Seo Title | Search-result title; maximum 70 characters. |
 | Seo Description | Accurate summary; maximum 180 characters. No unsupported promises. |
+| Naslov za društvene mreže | Optional shorter title for social artwork; maximum 100 characters. Blank uses Title without changing it. |
+| Opis za društvene mreže | Optional shorter description for social artwork; maximum 180 characters. Blank uses Excerpt without changing it. |
 | Marketplace Category Slug | Optional slug from an existing `/kategorije/<slug>` URL, not the full URL. Leave blank if unrelated. |
 | Substantive Updated At | Only a meaningful update after publication; not a typo, future date or SEO freshness trick. |
 
 **First Published At** is set by the CMS. Do not attempt to edit it. **Internal Notes**
 are for editorial coordination and are excluded from public article data.
+
+The two social-copy fields are visible only to CMS editors/admins, including after
+publication. They participate in autosave and version recovery. Clear a field to restore
+its fallback; clearing one does not affect the other. Whitespace-only values count as
+blank. Social copy does not change article text, SEO metadata, or the article URL.
+
+Character limits are field limits, not a guarantee that copy fits the image: wide words
+or long lines may require shorter social copy later. An article can still be published
+with no social overrides or with fallback text too long for a card. Image preview and
+download are the next implementation step; these fields do not publish to social accounts.
 
 Save the initial draft before leaving the screen. Autosave runs while editing an existing
 article, but is not a promise that an offline or interrupted edit reached the server.

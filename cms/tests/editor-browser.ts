@@ -98,6 +98,10 @@ export async function editorBrowserChecks(
     postID = draft.id
     await page.goto(`${cmsURL}/admin/collections/posts/${postID}`)
     await page.locator('#field-title').fill('Probni urednički vodič')
+    await page.getByLabel('Naslov za društvene mreže', { exact: true }).fill('Kraći naslov za mreže')
+    await page.getByLabel('Opis za društvene mreže', { exact: true }).fill('Privatan opis za sliku: č ć ž š đ.')
+    await expect.poll(async () => (await api(`/posts/${postID}?draft=true`)).socialTitle).toBe('Kraći naslov za mreže')
+    await expect.poll(async () => (await api(`/posts/${postID}?draft=true`)).socialDescription).toBe('Privatan opis za sliku: č ć ž š đ.')
     await page
       .locator('[contenteditable=true]')
       .first()
@@ -109,6 +113,11 @@ export async function editorBrowserChecks(
       .poll(async () => JSON.stringify((await api(`/posts/${postID}?draft=true`)).body))
       .toContain('Proverite stanje štapa i mašinice pre kupovine.')
     await page.reload()
+    await expect(page.getByLabel('Naslov za društvene mreže', { exact: true })).toHaveValue('Kraći naslov za mreže')
+    await expect(page.getByLabel('Opis za društvene mreže', { exact: true })).toHaveValue('Privatan opis za sliku: č ć ž š đ.')
+    await page.getByLabel('Naslov za društvene mreže', { exact: true }).focus()
+    await expect(page.getByLabel('Naslov za društvene mreže', { exact: true })).toBeFocused()
+    await page.screenshot({ path: new URL('social-copy-fields.png', artifacts).pathname, fullPage: true })
     await expect(page.locator('#field-title')).toHaveValue(
       'Probni urednički vodič',
     )
@@ -148,6 +157,7 @@ export async function editorBrowserChecks(
       .toBe(200)
     const publicPage = await context.newPage()
     await publicPage.goto(`${frontendURL}/blog/probni-urednicki-vodic`)
+    assert.doesNotMatch(await publicPage.content(), /Kraći naslov za mreže|Privatan opis za sliku|socialTitle|socialDescription/)
     const category = publicPage.locator(
       '[data-blog-marketplace] a[href="/kategorije/stapovi"]',
     )

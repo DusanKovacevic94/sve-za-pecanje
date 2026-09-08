@@ -248,6 +248,14 @@ export interface Post {
   coverImage?: (number | null) | Media;
   seoTitle?: string | null;
   seoDescription?: string | null;
+  /**
+   * Opciono, do 100 znakova. Prazno polje koristi naslov članka. Za sliku može biti potreban kraći naslov; naslov članka se ne menja.
+   */
+  socialTitle?: string | null;
+  /**
+   * Opciono, do 180 znakova. Prazno polje koristi uvod članka (Excerpt). Tekst za sliku je vidljiv samo urednicima. Pregled i preuzimanje slike stižu u narednom koraku.
+   */
+  socialDescription?: string | null;
   firstPublishedAt?: string | null;
   /**
    * Set only for a meaningful editorial update, not a typo or autosave.
@@ -459,6 +467,8 @@ export interface PostsSelect<T extends boolean = true> {
   coverImage?: T;
   seoTitle?: T;
   seoDescription?: T;
+  socialTitle?: T;
+  socialDescription?: T;
   firstPublishedAt?: T;
   substantiveUpdatedAt?: T;
   marketplaceCategorySlug?: T;

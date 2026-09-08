@@ -112,6 +112,12 @@ administrators and its downgrade removes editorial tables and the role field. Pa
 rollbacks apply to the whole latest migration batch; do not use them casually against
 valuable data. Back up before release migrations (production procedures are task 078).
 
+Task 082 adds `20260908_105018_social_copy_fields`: two nullable override columns on
+posts and corresponding columns on retained versions. It does not change public article
+fields or backfill copy. Apply it before deploying the matching CMS build. Downgrading
+removes those social overrides from posts/versions, so back up before rollback; the
+existing article title, excerpt, body, and SEO fields are preserved.
+
 Local password recovery goes to Mailpit at `http://localhost:8025`; `make cms-dev`
 starts it as a dependency. Direct local commands use `CMS_SMTP_HOST=127.0.0.1` and
 `CMS_SMTP_PORT=1025`. Production requires separate CMS configuration for the existing

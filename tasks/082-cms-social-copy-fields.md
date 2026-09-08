@@ -1,6 +1,6 @@
 # 082 — CMS social copy fields and draft access
 
-Status: todo
+Status: done
 Priority: P2
 
 ## Goal
@@ -10,16 +10,16 @@ title, excerpt, SEO metadata, or publication workflow.
 
 ## Work
 
-- [ ] Add optional `socialTitle` and `socialDescription` fields to Posts, with limits
+- [x] Add optional `socialTitle` and `socialDescription` fields to Posts, with limits
   and editor guidance derived from 080. Reuse existing CMS role/access conventions.
-- [ ] Default effective card copy to the article title and excerpt when overrides are
+- [x] Default effective card copy to the article title and excerpt when overrides are
   blank. Explain that an article's longer text may need a shorter social override.
-- [ ] Keep fields in normal drafts, autosaves, versions, and recovery. Social fields
+- [x] Keep fields in normal drafts, autosaves, versions, and recovery. Social fields
   remain editor-only and are excluded from anonymous/public content responses.
-- [ ] Distinguish field validation from card readiness: missing/overlong fallback copy
+- [x] Distinguish field validation from card readiness: missing/overlong fallback copy
   can prevent generating a card but must not introduce a social-readiness requirement
   for saving or publishing an otherwise valid article.
-- [ ] Add an explicit migration, generated Payload types/schema snapshots, and focused
+- [x] Add an explicit migration, generated Payload types/schema snapshots, and focused
   access/version tests using the repository's existing migration workflow.
 
 ## Acceptance criteria
@@ -38,3 +38,25 @@ title, excerpt, SEO metadata, or publication workflow.
 ## Dependencies
 
 080; existing editorial access/version model from 073 and 076.
+
+## Implementation and verification — 2026-09-08
+
+- Added editor/admin-only optional fields with 100/180-character limits, Serbian
+  guidance, NFC/whitespace normalization, and independent title/excerpt fallbacks.
+  Render readiness is not part of article publication; no render endpoint is added.
+- Migration `20260908_105018_social_copy_fields` adds nullable canonical and version
+  columns without a backfill. Apply it before deploying the updated CMS. Rollback
+  drops only social overrides; see `cms/README.md` for the data-loss caveat.
+- CMS lint, typecheck, production build and all 19 unit tests passed. Full isolated
+  PostgreSQL/MinIO/Mailpit integration passed: legacy-row upgrade, rollback/re-upgrade,
+  private REST/version access, override recovery/clearing, publication with long
+  fallback copy, real editor browser, public HTML/SEO, inventory and analytics.
+- Fixed media-test fixture cleanup: restoring a published version had left a live
+  test post behind before the blog empty-state check. The harness now also asserts
+  that earlier checks leave no published posts.
+- Public blog unit tests (4), managed brand release checks and Brand Manager
+  validation passed. No deployment, Meta integration or production access occurred.
+- Brand review and synthetic editor screenshot:
+  `../sve-za-pecanje-brand-manager/work/reviews/2026-09-08-cms-social-copy-fields.md`.
+
+Next: 083 — private CMS social preview and download.

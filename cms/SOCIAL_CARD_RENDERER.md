@@ -1,7 +1,7 @@
 # Social card renderer — task 081
 
-Server-only rendering is ready; CMS fields, authorization/endpoints, and preview/download
-UI remain tasks 082–084. Nothing here saves a draft, uploads an image, publishes an article,
+Server-only rendering and optional CMS social-copy fields are ready; authorization/endpoints
+and preview/download UI remain tasks 083–084. Nothing in the renderer saves a draft, uploads an image, publishes an article,
 or contacts Meta. Do not expose the internal rendering modules directly as a public route.
 
 ## API
@@ -26,6 +26,10 @@ escaped text, never executable markup. Additional fields, getters, non-string va
 empty copy, overlong input, invisible formatting/controls, invalid surrogates, and
 missing font glyphs are rejected. NFC normalization precedes code-point counting;
 whitespace collapses. No raw input or underlying error is logged by the renderer.
+
+Resolve a CMS post's overrides with `resolveSocialCardCopy` from `src/social-card/copy.ts`
+before calling this API. Blank overrides fall back independently to title/excerpt.
+The resolver does not render or enforce card readiness when the article is saved.
 
 `SocialCardError.code` is one of `invalid_input`, `overflow`, `unsupported_glyph`,
 `busy`, `timeout`, `cancelled`, or `unavailable`. `field` optionally identifies title
