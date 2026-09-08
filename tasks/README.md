@@ -193,3 +193,23 @@ Start with 072; dependencies and release boundaries are documented in the plan.
 
 - [x] [078 — CMS production configuration, hostname, and backups](078-cms-deployment-backups.md)
 - [x] [079 — Blog release gate and editor handoff](079-blog-release-gate-editor-handoff.md)
+
+---
+
+# Round 9 — Social post template and CMS preview (2026-09-08)
+
+Prepare branded blog artwork for Instagram and Facebook inside the CMS. This phase
+ends at private preview and JPEG download: no Meta integration, public asset upload,
+social scheduling, or automatic publishing. Existing blog publication stays unchanged.
+
+Brand brief: [Social blog cards](../../sve-za-pecanje-brand-manager/work/briefs/2026-09-08-social-blog-cards.md).
+Start with 080; 081 and 082 can be implemented independently after its layout/content
+contract is approved, then complete 083 and 084. Deployment requires separate authorization.
+
+## P2 — Editorial growth tools
+
+- [x] [080 — Branded social card template and review](080-social-card-brand-template.md)
+- [ ] [081 — Deterministic SVG-to-JPEG social card renderer](081-social-card-renderer.md)
+- [ ] [082 — CMS social copy fields and draft access](082-cms-social-copy-fields.md)
+- [ ] [083 — Private CMS social preview and download](083-cms-social-preview-download.md)
+- [ ] [084 — Social preview validation and editor handoff](084-social-preview-release-handoff.md)

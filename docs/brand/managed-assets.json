@@ -3,6 +3,26 @@
   "generated_by": "sve-za-pecanje-brand-manager/scripts/sync_assets.py",
   "assets": [
     {
+      "name": "Blog social card template",
+      "destination": "cms/assets/social/blog-card.svg",
+      "sha256": "31885a5a4b13a81b33e1c2eb805632a6df1003bc1cf5b24ca106b8977f195028"
+    },
+    {
+      "name": "Blog social card layout contract",
+      "destination": "cms/assets/social/blog-card-layout.json",
+      "sha256": "0db38d9f225677aaf646b214ad66b896fb5cca120788039e47d15501a1614164"
+    },
+    {
+      "name": "Social card Manrope font",
+      "destination": "cms/assets/social/Manrope-variable.ttf",
+      "sha256": "d0639be45d0af36e798172419d7bd173c4bd4f29e2b76cbb69db1d11bf8b0a40"
+    },
+    {
+      "name": "Social card font license",
+      "destination": "cms/assets/social/OFL.txt",
+      "sha256": "f612090fb72b6dca3e807e66fa0d2b5def163cef86f1a3209b5c897cba5ee4b7"
+    },
+    {
       "name": "Primary logo",
       "destination": "frontend/public/brand/logo.svg",
       "sha256": "af4c020a16bd43d0e8336daead3604fd09037ea40e7b8d5c683c2bce619376b2"

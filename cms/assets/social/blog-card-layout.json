@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "width": 1080,
+  "height": 1350,
+  "safeMargin": 96,
+  "fontFamily": "Manrope",
+  "title": { "maxCharacters": 100, "maxLines": 4, "fontSize": 76, "fontWeight": 800, "lineHeight": 92, "maxWidth": 888, "centerBaseline": 530 },
+  "description": { "maxCharacters": 180, "maxLines": 4, "fontSize": 34, "fontWeight": 400, "lineHeight": 49, "maxWidth": 820, "firstBaseline": 812 },
+  "cta": "Pročitaj ceo tekst na svezapecanje.rs",
+  "overflow": "reject-with-shorter-copy-guidance",
+  "normalization": "NFC, trim, collapse whitespace; reject controls, unsupported glyphs and invisible formatting",
+  "jpeg": { "quality": 90, "maxBytes": 1000000 }
+}

@@ -3,4 +3,6 @@ frontend/src/app/*.svg text eol=lf
 frontend/src/assets/*.svg text eol=lf
 frontend/src/components/brand/BrandWaterline.tsx text eol=lf
 frontend/src/components/icons/*.tsx text eol=lf
-
+cms/assets/social/*.svg text eol=lf
+cms/assets/social/*.json text eol=lf
+cms/assets/social/*.txt text eol=lf
