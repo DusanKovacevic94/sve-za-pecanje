@@ -134,6 +134,8 @@ jobs:
           pnpm exec playwright install --with-deps chromium
       - name: CMS lint, types, units and standalone build
         run: make cms-check
+      - name: Private social rendering in the production CMS image (offline, read-only)
+        run: cd cms && pnpm test:social:production
       - name: Public blog parser and analytics policy units
         run: node frontend/scripts/test-blog.mjs
       - name: Isolated PostgreSQL, MinIO, email, editor browser and publishing journey
@@ -148,6 +150,7 @@ jobs:
           path: |
             frontend/test-results/blog
             frontend/test-results/blog-editor
+            cms/test-results/social-card
           if-no-files-found: ignore
           retention-days: 14
 

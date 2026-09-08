@@ -6,12 +6,15 @@
   "packageManager": "pnpm@10.33.0",
   "engines": { "node": ">=22.20.0 <23" },
   "scripts": {
-    "dev": "next dev --hostname 0.0.0.0 --port 3002",
+    "dev": "node scripts/build-social-card.mjs && next dev --hostname 0.0.0.0 --port 3002",
+    "build:social": "node scripts/build-social-card.mjs",
+    "test:social": "pnpm build:social && tsx --test tests/social-card.test.ts",
+    "test:social:production": "tsx tests/social-card.production.ts",
     "build": "node scripts/build.mjs",
     "start": "node scripts/start.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/*.test.ts",
+    "test": "pnpm build:social && tsx --test tests/*.test.ts",
     "test:integration": "tsx tests/integration.ts",
     "test:production": "CMS_TEST_SCOPE=production tsx tests/integration.ts",
     "test:compose": "tsx tests/compose.integration.ts",
@@ -25,6 +28,7 @@
     "storage:provision": "tsx scripts/provision-storage.ts"
   },
   "dependencies": {
+    "fontkit": "2.0.4",
     "@aws-sdk/client-s3": "3.1127.0",
     "@payloadcms/db-postgres": "3.88.0",
     "@payloadcms/email-nodemailer": "3.88.0",
@@ -41,6 +45,8 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@types/fontkit": "2.0.9",
+    "esbuild": "0.28.2",
     "@types/node": "22.19.21",
     "@types/pg": "8.20.0",
     "@types/react": "19.2.18",

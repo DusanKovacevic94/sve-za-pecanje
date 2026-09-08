@@ -63,3 +63,4 @@ frontend/test-results/blog/
 frontend/test-results/blog-editor/
 frontend/test-results/marketplace/
 frontend/playwright-report/blog-regression/
+cms/test-results/social-card/

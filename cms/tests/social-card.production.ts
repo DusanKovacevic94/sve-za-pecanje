@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict'
+import { spawn } from 'node:child_process'
+import { randomUUID } from 'node:crypto'
+import { mkdir, writeFile } from 'node:fs/promises'
+import sharp from 'sharp'
+
+async function command(args: string[]) {
+  return new Promise<string>((resolve, reject) => {
+    const child = spawn('docker', args, { stdio: ['ignore', 'pipe', 'pipe'] })
+    let output = ''
+    let errors = ''
+    child.stdout.on('data', chunk => { output += chunk })
+    child.stderr.on('data', chunk => { errors += chunk; if (args[0] === 'build') process.stderr.write(chunk) })
+    child.once('error', reject)
+    child.once('close', code => code === 0 ? resolve(output.trim()) : reject(Error(`Docker ${args[0]} failed: ${errors.slice(-5000)}`)))
+  })
+}
+
+// Build the real runner image, then override its command. No CMS/DB/Meta secrets or services.
+const image = `szp-social-render-test:${randomUUID()}`
+let built = false
+try {
+  await command(['build', '--target', 'runner', '--tag', image, '.'])
+  built = true
+  const probe = `
+    const assert = require('node:assert/strict');
+    const crypto = require('node:crypto');
+    const {renderSocialCard} = require('./dist/social-card/index.cjs');
+    (async () => {
+      assert.notEqual(process.getuid(), 0);
+      const cases = [
+        {title:'Kako izabrati prvu mašinicu?',description:'Veličina, prenos i kočnica: šta je važno pri izboru opreme za tvoj način ribolova.'},
+        {title:'Čuvar reke: đaci čiste obalu',description:'Č ć ž š đ — Đorđe kaže: „Sačuvajmo reku.” O ljudima, druženju i događajima koji povezuju ribolovce.'},
+        {title:'Štapovi, mašinice i varalice: priprema za izlazak na vodu',description:'Proveri spojeve, očisti opremu i izdvoji ono što nosiš. Kratak pregled pripreme, od štapa i mašinice do sitnog pribora koji se lako zaboravi.'}
+      ];
+      const results=[];
+      for(const input of cases){
+        const a=await renderSocialCard(input), b=await renderSocialCard(input);
+        assert.deepEqual(a.jpeg,b.jpeg);
+        results.push({jpeg:a.jpeg.toString('base64'),lines:a.lines,sha256:crypto.createHash('sha256').update(a.jpeg).digest('hex')});
+      }
+      await assert.rejects(renderSocialCard({title:'🎣',description:'Test'}),e=>e.code==='unsupported_glyph');
+      await renderSocialCard(cases[0]);
+      console.log(JSON.stringify(results));
+    })().catch(e=>{console.error(e);process.exitCode=1});
+  `
+  const output = await command(['run', '--rm', '--network', 'none', '--read-only', '--memory', '512m', '--cpus', '2', '--pids-limit', '64', image, 'node', '-e', probe])
+  const results = JSON.parse(output) as Array<{ jpeg: string; lines: unknown; sha256: string }>
+  assert.equal(results.length, 3)
+  await mkdir('test-results/social-card', { recursive: true })
+  for (const [index, result] of results.entries()) {
+    const jpeg = Buffer.from(result.jpeg, 'base64')
+    const metadata = await sharp(jpeg).metadata()
+    assert.equal(metadata.format, 'jpeg')
+    assert.equal(metadata.width, 1080)
+    assert.equal(metadata.height, 1350)
+    assert.ok(jpeg.length < 1_000_000)
+    await writeFile(`test-results/social-card/production-${index + 1}.jpg`, jpeg)
+    await sharp(jpeg).resize({ width: 390 }).png().toFile(`test-results/social-card/production-${index + 1}-phone.png`)
+  }
+  await writeFile('test-results/social-card/production.json', JSON.stringify(results.map(({ lines, sha256 }) => ({ lines, sha256 })), null, 2) + '\n')
+  console.log('PASS: actual non-root CMS runner image; network disabled; read-only filesystem; 512 MB / 2 CPU / 64 PID limits; three deterministic render cases and failure recovery.')
+} finally {
+  if (built) await command(['image', 'rm', image])
+}
