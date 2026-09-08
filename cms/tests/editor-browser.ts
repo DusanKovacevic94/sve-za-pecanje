@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { randomBytes } from 'node:crypto'
 import { createRequire } from 'node:module'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, readFile } from 'node:fs/promises'
 import { authorFixture, fixtureImage, postFixture } from '../src/fixtures'
 
 const { chromium, expect } = createRequire(
@@ -128,6 +128,82 @@ export async function editorBrowserChecks(
       path: new URL('saved-draft.png', artifacts).pathname,
       fullPage: true,
     })
+    const social = page.getByRole('region', { name: 'Slika za Instagram i Facebook' })
+    const generate = social.getByRole('button', { name: 'Pripremi sliku', exact: true })
+    const endpoint = `${cmsURL}/api/social-preview/${postID}`
+    await generate.click()
+    const download = social.getByRole('link', { name: 'Preuzmi sliku', exact: true })
+    await expect(download).toBeVisible()
+    const imageURL = await social.locator('img').getAttribute('src')
+    assert.equal(await download.getAttribute('href'), imageURL, 'display and download use exactly one blob')
+    const previewBytes = await page.evaluate(async (url: string) => Array.from(new Uint8Array(await (await fetch(url)).arrayBuffer())), imageURL)
+    const downloadEvent = page.waitForEvent('download')
+    await download.focus()
+    await page.keyboard.press('Enter')
+    const downloaded = await downloadEvent
+    assert.deepEqual(await readFile(await downloaded.path()), Buffer.from(previewBytes))
+    assert.match(downloaded.suggestedFilename(), /^svezapecanje-blog-\d+\.jpg$/)
+    assert.equal((await api(`/posts/${postID}?draft=true`))._status, 'draft')
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.screenshot({ path: new URL('social-preview-desktop.png', artifacts).pathname, fullPage: true })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.screenshot({ path: new URL('social-preview-mobile.png', artifacts).pathname, fullPage: true })
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), 'social panel has no mobile overflow')
+    await page.setViewportSize({ width: 1440, height: 1000 })
+
+    // Freeze autosaves so the server still holds the old copy when rendering the form.
+    const postRoute = `**/api/posts/${postID}?*`
+    await page.route(postRoute, (route: { request: () => { method: () => string }; abort: () => Promise<void>; continue: () => Promise<void> }) =>
+      route.request().method() === 'PATCH' ? route.abort() : route.continue())
+    await page.getByLabel('Naslov za društvene mreže', { exact: true }).fill('Nesačuvan naslov')
+    await expect(social.getByRole('button', { name: 'Preuzmi sliku', exact: true })).toBeDisabled()
+    assert.equal(await page.evaluate(async (url: string) => { try { await fetch(url); return false } catch { return true } }, imageURL), true, 'stale blob is revoked')
+    const unsavedRequest = page.waitForRequest(endpoint)
+    await generate.click()
+    assert.equal((await unsavedRequest).postDataJSON().title, 'Nesačuvan naslov')
+    await expect(download).toBeVisible()
+    assert.equal((await api(`/posts/${postID}?draft=true`)).socialTitle, 'Kraći naslov za mreže')
+    await page.unroute(postRoute)
+
+    // Hold an older response, edit again, and prove it cannot replace a newer image.
+    let releaseOld!: () => void
+    let oldStarted!: () => void
+    let oldFinished!: () => void
+    const started = new Promise<void>(resolve => { oldStarted = resolve })
+    const finished = new Promise<void>(resolve => { oldFinished = resolve })
+    const release = new Promise<void>(resolve => { releaseOld = resolve })
+    await page.route(endpoint, async (route: { fulfill: (response: object) => Promise<void> }) => {
+      oldStarted()
+      await release
+      await route.fulfill({ status: 200, contentType: 'image/jpeg', body: Buffer.from(previewBytes) }).catch(() => undefined)
+      oldFinished()
+    }, { times: 1 })
+    await generate.click()
+    await started
+    await expect(social.getByRole('status')).toHaveText('Priprema slike…')
+    await page.getByLabel('Naslov za društvene mreže', { exact: true }).fill('Novi naslov')
+    await generate.click()
+    await expect(download).toBeVisible()
+    const newest = await download.getAttribute('href')
+    releaseOld()
+    await finished
+    await expect(download).toHaveAttribute('href', newest)
+    await expect(social.locator('img')).toHaveAttribute('alt', /Novi naslov/)
+
+    await page.getByLabel('Naslov za društvene mreže', { exact: true }).fill('W'.repeat(100))
+    await generate.click()
+    await expect(social.getByRole('alert')).toContainText('Skrati naslov ili opis')
+    await expect(social.getByRole('button', { name: 'Preuzmi sliku', exact: true })).toBeDisabled()
+    await page.getByLabel('Naslov za društvene mreže', { exact: true }).fill('Kraći naslov za mreže')
+    await page.route(endpoint, (route: { fulfill: (response: object) => Promise<void> }) => route.fulfill({
+      status: 503, contentType: 'application/json', body: JSON.stringify({ message: 'Slika trenutno ne može da se pripremi. Pokušaj ponovo.' }),
+    }), { times: 1 })
+    await generate.click()
+    await expect(social.getByRole('alert')).toContainText('Pokušaj ponovo')
+    await generate.click()
+    await expect(download).toBeVisible()
+    console.log('PASS: social preview/download identical bytes, unsaved form copy, stale blob cleanup, race protection, overflow/retry and mobile/keyboard controls')
     const popup = page.waitForEvent('popup')
     await page.getByRole('link', { name: 'Preview', exact: true }).click()
     const preview = await popup

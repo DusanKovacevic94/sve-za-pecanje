@@ -7,7 +7,7 @@ export type { SocialCardInput, SocialCardResult, SocialCardErrorCode } from './c
 
 const run = createSocialCardRunner(path.join(process.cwd(), 'dist/social-card/worker.cjs'), process.cwd())
 
-/** Server-only API. No endpoint, storage write, or publication side effect. */
+/** Server-only renderer. The authenticated endpoint adds access checks, never storage/publication. */
 export function renderSocialCard(input: SocialCardInput, options?: { signal?: AbortSignal }) {
   return run(input, options)
 }

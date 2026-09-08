@@ -36,6 +36,7 @@
     "@payloadcms/next": "3.88.0",
     "@payloadcms/richtext-lexical": "3.88.0",
     "@payloadcms/storage-s3": "3.88.0",
+    "@payloadcms/ui": "3.88.0",
     "sharp": "0.35.4",
     "graphql": "16.11.0",
     "next": "16.3.4",

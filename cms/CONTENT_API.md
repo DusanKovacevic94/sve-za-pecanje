@@ -83,8 +83,11 @@ versions receive nullable columns; no copy is backfilled.
 current article title/excerpt independently. It neither persists fallback text nor
 truncates it. Fallback copy can exceed renderer limits, and unsupported glyphs/line
 overflow can make a card unavailable, **without preventing article publication**.
-Actual rendering is separate from field validation. No social preview endpoint or
-public/social publishing hook is introduced by task 082.
+Actual rendering is separate from field validation. Task 083 adds the editor-only
+`POST /api/social-preview/:id` endpoint, not a public/social publishing hook. It takes
+only current effective `title`/`description`, checks access to an existing post,
+and returns a private, non-cacheable JPEG without saving that text. See
+[the render contract and limits](SOCIAL_CARD_RENDERER.md#private-cms-preview).
 
 ```text
 POST  /posts?draft=true                          create an incomplete draft

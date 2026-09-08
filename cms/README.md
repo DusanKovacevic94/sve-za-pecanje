@@ -118,6 +118,12 @@ fields or backfill copy. Apply it before deploying the matching CMS build. Downg
 removes those social overrides from posts/versions, so back up before rollback; the
 existing article title, excerpt, body, and SEO fields are preserved.
 
+Task 083 adds private social-card preview/download in the post editor, with no further
+database migration. It requires the 082 migration and packaged renderer assets from
+081. See [request limits and private preview behavior](SOCIAL_CARD_RENDERER.md#private-cms-preview)
+and the [editor guide](../docs/blog-editor-guide.md#prepare-an-instagramfacebook-image).
+There are no Meta credentials, new services, or public storage writes.
+
 Local password recovery goes to Mailpit at `http://localhost:8025`; `make cms-dev`
 starts it as a dependency. Direct local commands use `CMS_SMTP_HOST=127.0.0.1` and
 `CMS_SMTP_PORT=1025`. Production requires separate CMS configuration for the existing

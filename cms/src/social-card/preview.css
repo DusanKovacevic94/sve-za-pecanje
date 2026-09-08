@@ -1,0 +1,10 @@
+.social-preview { margin-block: 1.5rem; padding: 1.25rem; border: 1px solid var(--theme-elevation-300); border-radius: 12px; color: var(--theme-text); }
+.social-preview p, .social-preview dd { max-width: 70ch; overflow-wrap: anywhere; }
+.social-preview dt { font-weight: 600; }
+.social-preview dd { margin: .25rem 0 1rem; }
+.social-preview button, .social-preview-download { display: inline-block; font: inherit; padding: .75rem 1rem; border: 1px solid #173f37; border-radius: 12px; background: #173f37; color: #fff; text-decoration: none; cursor: pointer; }
+.social-preview button:disabled { background: var(--theme-elevation-100); color: var(--theme-text); border-color: var(--theme-elevation-300); cursor: not-allowed; }
+.social-preview :is(button, a):focus-visible { outline: 3px solid var(--theme-text); outline-offset: 3px; }
+.social-preview figure { margin: 1rem 0; }
+.social-preview img { display: block; width: 100%; max-width: 432px; height: auto; }
+.social-preview figcaption { margin-block: .5rem; }

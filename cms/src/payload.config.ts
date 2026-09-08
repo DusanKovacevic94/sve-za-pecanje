@@ -13,6 +13,7 @@ import { s3Storage } from '@payloadcms/storage-s3'
 import { CMS_MEDIA_PREFIX, mediaURL, storageEnvironment } from './storage'
 import { MAX_IMAGE_BYTES } from './media-images'
 import { blogPreviewEndpoint } from './hooks/blog'
+import { socialPreviewEndpoint } from './social-card/endpoint'
 
 const dirname = path.dirname(fileURLToPath(import.meta.url))
 const env = cmsEnvironment()
@@ -26,7 +27,7 @@ export default buildConfig({
   csrf: [env.url],
   telemetry: false,
   graphQL: { disable: true },
-  endpoints: [blogPreviewEndpoint],
+  endpoints: [blogPreviewEndpoint, socialPreviewEndpoint],
   email: await cmsEmail(),
   sharp,
   upload: { limits: { fileSize: MAX_IMAGE_BYTES, files: 1 }, abortOnLimit: true },

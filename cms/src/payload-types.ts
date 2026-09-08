@@ -253,7 +253,7 @@ export interface Post {
    */
   socialTitle?: string | null;
   /**
-   * Opciono, do 180 znakova. Prazno polje koristi uvod članka (Excerpt). Tekst za sliku je vidljiv samo urednicima. Pregled i preuzimanje slike stižu u narednom koraku.
+   * Opciono, do 180 znakova. Prazno polje koristi uvod članka (Excerpt). Tekst za sliku je vidljiv samo urednicima. Proveri sliku u pregledu ispod.
    */
   socialDescription?: string | null;
   firstPublishedAt?: string | null;

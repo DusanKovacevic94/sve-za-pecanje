@@ -11,6 +11,7 @@ import { prepareStorage } from './storage-harness'
 import { mediaChecks } from './media.integration'
 import { createBlogHarness } from './blog.integration'
 import { productionChecks } from './production.integration'
+import { socialPreviewChecks } from './social-preview.integration'
 
 // Every database/container is synthetic and owned by this run. No external DB URL
 // is accepted, and cleanup uses only IDs returned by our successful Docker calls.
@@ -248,6 +249,7 @@ try {
   console.log('PASS: local fixture is repeatable and creates only a private draft/metadata')
   if (!['blog', 'editor', 'production'].includes(process.env.CMS_TEST_SCOPE || '')) {
     await editorialChecks(baseURL, cookie.split(';')[0], mailURL)
+    await socialPreviewChecks(baseURL, cookie.split(';')[0])
     const imageURLs = await mediaChecks(baseURL, cookie.split(';')[0], async () => {
       if (imageContainer) {
         await command('docker', ['restart', imageContainer])

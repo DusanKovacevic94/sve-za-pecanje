@@ -74,8 +74,27 @@ blank. Social copy does not change article text, SEO metadata, or the article UR
 
 Character limits are field limits, not a guarantee that copy fits the image: wide words
 or long lines may require shorter social copy later. An article can still be published
-with no social overrides or with fallback text too long for a card. Image preview and
-download are the next implementation step; these fields do not publish to social accounts.
+with no social overrides or with fallback text too long for a card.
+
+### Prepare an Instagram/Facebook image
+
+1. Save an initial draft. In **Slika za Instagram i Facebook**, check **Naslov na
+   slici** and **Opis na slici**. They show current form text, including unsaved edits.
+2. Select **Pripremi sliku**. If text is too long or contains unsupported characters,
+   shorten/correct the social overrides and retry. Failure does not block publishing
+   the article. A request-limit message means wait one minute before retrying.
+3. Inspect the image and choose **Preuzmi sliku**. The download is the exact displayed
+   1080 × 1350 JPEG, ready for manual editorial handoff—not an automatic post.
+
+Changing the title, excerpt or either social override removes the old image and
+disables download until you regenerate. Even reverting text requires a fresh preview.
+Preview generation does not save your form: normal autosave/save is still needed to
+retain copy. Leaving/reloading the editor discards the preview, not saved field values.
+
+Generating/downloading never publishes the article or schedules/posts to Instagram
+or Facebook. Draft images are not uploaded to public media storage. A downloaded
+file is now on your device: keep unpublished artwork private and review both the
+article and artwork before any manual publication.
 
 Save the initial draft before leaving the screen. Autosave runs while editing an existing
 article, but is not a promise that an offline or interrupted edit reached the server.

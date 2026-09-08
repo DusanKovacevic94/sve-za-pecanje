@@ -1,7 +1,7 @@
-# Social card renderer — task 081
+# Social card rendering and CMS preview — tasks 081–083
 
-Server-only rendering and optional CMS social-copy fields are ready; authorization/endpoints
-and preview/download UI remain tasks 083–084. Nothing in the renderer saves a draft, uploads an image, publishes an article,
+Server-only rendering, optional CMS social-copy fields and private preview/download are
+implemented. Final release handoff remains task 084. Nothing in the renderer saves a draft, uploads an image, publishes an article,
 or contacts Meta. Do not expose the internal rendering modules directly as a public route.
 
 ## API
@@ -14,7 +14,7 @@ const card = await renderSocialCard({
   description: 'Veličina, prenos i kočnica: šta je važno pri izboru opreme.',
 }, { signal: abortController.signal }) // signal is optional
 
-// card.jpeg: Buffer — use these identical bytes for preview and download in 083.
+// card.jpeg: Buffer — identical bytes for preview and download.
 // card.svg: string — editable, self-contained source; do not serve as inline HTML.
 // card.lines: { title: string[], description: string[] }
 // card.width: 1080; card.height: 1350; card.templateVersion: 1
@@ -34,8 +34,41 @@ The resolver does not render or enforce card readiness when the article is saved
 `SocialCardError.code` is one of `invalid_input`, `overflow`, `unsupported_glyph`,
 `busy`, `timeout`, `cancelled`, or `unavailable`. `field` optionally identifies title
 or description. Messages are safe Serbian Latin guidance, without internal paths.
-The future endpoint must authenticate editors, apply CSRF/request limits and private
-cache headers, and avoid turning social-card errors into article-publication failures.
+The endpoint authenticates editors, applies CSRF/request limits and private cache
+headers, and never turns social-card errors into article-publication failures.
+
+## Private CMS preview
+
+`POST /api/social-preview/:id` accepts exactly `{ title, description }` for an existing
+post. It checks editor/admin authentication and target-post access with
+`overrideAccess: false`. It requires the configured CMS `Origin`, same-origin Fetch
+Metadata when present, and JSON content type. Signed public article-preview handoffs
+are not accepted. Both success and handled errors use `private, no-store`, `noindex`,
+`nosniff`, `no-referrer`, and `Vary: Cookie, Origin, Authorization`.
+
+Request bodies are limited to 4096 actual bytes, including streamed/chunked input,
+with a three-second body-read deadline. Fixed one-minute budgets admit six requests
+per user and sixty total per CMS process; malformed authenticated requests also count.
+429 responses include `Retry-After: 60`. Budgets are in memory, reset on restart,
+and are **not distributed**: retain the single-instance deployment or add a shared
+gateway limiter before horizontal scaling. Renderer concurrency/deadline limits still
+apply. Do not configure proxies to log request bodies or cache these responses.
+
+The UI is a [Payload UI field](https://payloadcms.com/docs/fields/ui) using
+[current form state](https://payloadcms.com/docs/admin/react-hooks). Editors first save
+a draft, then preview current form copy, including unsaved changes. Blank overrides
+resolve locally through the shared browser-safe `effective-copy.ts`; submitted text
+is revalidated on the server and is not written back to the post.
+
+Every relevant field change remounts the panel, removing stale download links,
+aborting outstanding work and revoking the old object URL. Superseded/aborted responses
+cannot install an image. Preview and download share one JPEG blob URL, never an SVG
+or public media URL. Leaving the panel also aborts work and revokes its URL. A browser
+request deadline provides an actionable retry if the network stalls. No draft content
+is persisted in browser storage, and no analytics event is emitted.
+
+Downloading deliberately saves the image to the editor's device; it does not publish
+or schedule anything. Treat downloaded draft artwork as private editorial material.
 
 ## Design fidelity and dependencies
 
@@ -68,7 +101,7 @@ dependency upgrades require visual review and new reproducibility checks.
 ## Isolation and packaging
 
 - Maximum two active subprocesses **per CMS process**, with no waiting queue. Saturation
-  returns `busy`; a future multi-instance rate limit belongs to the endpoint/operations.
+  returns `busy`; multi-instance rate coordination remains an operations concern.
 - Each render gets a fresh process with a 128 MB JavaScript heap cap, one Sharp thread,
   disabled Sharp caches, and a ten-second parent-enforced deadline. Timeout/abort kills
   the subprocess; the slot is released only after it closes. Native memory is separate
@@ -78,7 +111,7 @@ dependency upgrades require visual review and new reproducibility checks.
   resource references are never interpreted or fetched.
 - Draft text/results exist only in process memory. Exiting drops child font caches and
   buffers; no public object storage, temporary file, or render-result cache is used.
-  Callers must release returned buffers; the future preview must revoke object URLs.
+  Callers must release returned buffers; the preview revokes its object URLs.
 - Run with the CMS root as working directory. `pnpm dev`, `pnpm test`, and `pnpm build`
   build `dist/social-card/{index,worker}.cjs`. The standalone build copies these files
   and `assets/social/` into the real runner image. Generated `dist/` and test evidence
@@ -105,3 +138,6 @@ CI runs this check and uploads only those synthetic artifacts, never real draft 
 Unit checks cover strict input, NFC/diacritics, glyph availability, escaping, width/line
 overflow, exact size limits, asset integrity, deterministic JPEG/metadata, saturation,
 timeout, cancellation, worker crash/missing files/invalid replies, and recovery.
+`pnpm test:integration` also checks endpoint authorization, real JPEGs and request
+limits, plus browser byte-identical downloads, unsaved copy, stale URL cleanup,
+out-of-order responses, errors/retry, keyboard access and mobile layout.
