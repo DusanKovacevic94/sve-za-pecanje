@@ -212,4 +212,4 @@ contract is approved, then complete 083 and 084. Deployment requires separate au
 - [x] [081 — Deterministic SVG-to-JPEG social card renderer](081-social-card-renderer.md)
 - [x] [082 — CMS social copy fields and draft access](082-cms-social-copy-fields.md)
 - [x] [083 — Private CMS social preview and download](083-cms-social-preview-download.md)
-- [ ] [084 — Social preview validation and editor handoff](084-social-preview-release-handoff.md)
+- [x] [084 — Social preview validation and editor handoff](084-social-preview-release-handoff.md)

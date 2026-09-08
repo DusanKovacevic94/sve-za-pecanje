@@ -1,7 +1,8 @@
 # Social card rendering and CMS preview — tasks 081–083
 
 Server-only rendering, optional CMS social-copy fields and private preview/download are
-implemented. Final release handoff remains task 084. Nothing in the renderer saves a draft, uploads an image, publishes an article,
+implemented. See the [release handoff](../docs/social-preview-release.md) for rollout
+requirements. Nothing in the renderer saves a draft, uploads an image, publishes an article,
 or contacts Meta. Do not expose the internal rendering modules directly as a public route.
 
 ## API
@@ -134,6 +135,13 @@ or production secrets. Three synthetic cases are rendered twice, followed by uns
 glyph rejection and recovery. It records JPEGs/phone proofs/hashes under ignored
 `test-results/social-card/`; its uniquely tagged test image is removed afterward.
 CI runs this check and uploads only those synthetic artifacts, never real draft content.
+Task 084 fixes this check to Linux/amd64 and compares all three JPEG SHA-256 hashes
+and line breaks with `tests/fixtures/social-render-baseline.json`, copied from the
+approved task-081 Brand Manager evidence at
+`work/deliverables/2026-09-08-social-card-renderer/production.json`. The test writes
+candidate evidence before comparison, never updates the baseline, and permits no
+pixel/hash tolerance. A dependency, architecture or approved-design change requires
+separate visual review before explicitly revising that baseline.
 
 Unit checks cover strict input, NFC/diacritics, glyph availability, escaping, width/line
 overflow, exact size limits, asset integrity, deterministic JPEG/metadata, saturation,

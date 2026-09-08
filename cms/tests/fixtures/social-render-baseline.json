@@ -1,0 +1,23 @@
+[
+  {
+    "lines": {
+      "title": ["Kako izabrati prvu", "mašinicu?"],
+      "description": ["Veličina, prenos i kočnica: šta je važno pri izboru", "opreme za tvoj način ribolova."]
+    },
+    "sha256": "3c678a93ce966c821b555c8bcb5c888ad6631c1f48cd7313c4810a7915bfa9d6"
+  },
+  {
+    "lines": {
+      "title": ["Čuvar reke: đaci čiste", "obalu"],
+      "description": ["Č ć ž š đ — Đorđe kaže: „Sačuvajmo reku.” O ljudima,", "druženju i događajima koji povezuju ribolovce."]
+    },
+    "sha256": "a97b470624cbb3c0116708d69e3f3a7cea7723a1f75eb89845bbb248b51a0c14"
+  },
+  {
+    "lines": {
+      "title": ["Štapovi, mašinice i", "varalice: priprema za", "izlazak na vodu"],
+      "description": ["Proveri spojeve, očisti opremu i izdvoji ono što nosiš.", "Kratak pregled pripreme, od štapa i mašinice do", "sitnog pribora koji se lako zaboravi."]
+    },
+    "sha256": "6ec4fc44a5701e686996c90768b25c1f37557c8086eac2af4701955f6d211322"
+  }
+]

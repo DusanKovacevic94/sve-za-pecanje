@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { createRequire } from 'node:module'
 import { mkdir, readFile } from 'node:fs/promises'
 import { authorFixture, fixtureImage, postFixture } from '../src/fixtures'
+import { forbiddenSocialRequest } from './social-network-policy'
 
 const { chromium, expect } = createRequire(
   new URL('../../frontend/package.json', import.meta.url),
@@ -129,8 +130,25 @@ export async function editorBrowserChecks(
       fullPage: true,
     })
     const social = page.getByRole('region', { name: 'Slika za Instagram i Facebook' })
+    // Payload coalesces successive autosaves. Create an explicit draft checkpoint
+    // fixture so the later real Versions UI tests recovery of these known overrides,
+    // not the unsupported assumption that every intermediate autosave is retained.
+    await api(`/posts/${postID}?draft=true`, 'PATCH', {
+      title: 'Probni urednički vodič', socialTitle: 'Kraći naslov za mreže',
+      socialDescription: 'Privatan opis za sliku: č ć ž š đ.',
+    })
     const generate = social.getByRole('button', { name: 'Pripremi sliku', exact: true })
     const endpoint = `${cmsURL}/api/social-preview/${postID}`
+    const forbiddenSocialRequests: string[] = []
+    const socialNetworkGuard = async (route: { request: () => { url: () => string; method: () => string }; abort: () => Promise<void>; continue: () => Promise<void> }) => {
+      const request = route.request()
+      const url = new URL(request.url())
+      if (forbiddenSocialRequest(url, request.method(), cmsURL)) {
+        forbiddenSocialRequests.push(`${request.method()} ${url.origin}${url.pathname}`)
+        await route.abort()
+      } else await route.continue()
+    }
+    await page.route('**/*', socialNetworkGuard)
     await generate.click()
     const download = social.getByRole('link', { name: 'Preuzmi sliku', exact: true })
     await expect(download).toBeVisible()
@@ -203,7 +221,19 @@ export async function editorBrowserChecks(
     await expect(social.getByRole('alert')).toContainText('Pokušaj ponovo')
     await generate.click()
     await expect(download).toBeVisible()
-    console.log('PASS: social preview/download identical bytes, unsaved form copy, stale blob cleanup, race protection, overflow/retry and mobile/keyboard controls')
+    await page.getByLabel('Naslov za društvene mreže', { exact: true }).fill('')
+    await page.getByLabel('Opis za društvene mreže', { exact: true }).fill('')
+    await expect(social.getByRole('button', { name: 'Preuzmi sliku', exact: true })).toBeDisabled()
+    await expect(social.locator('dd').nth(0)).toHaveText('Probni urednički vodič')
+    await expect(social.locator('dd').nth(1)).toHaveText(postFixture.excerpt)
+    await generate.click()
+    await expect(download).toBeVisible()
+    await expect(social.locator('img')).toHaveAttribute('alt', /Probni urednički vodič/)
+    await expect.poll(async () => (await api(`/posts/${postID}?draft=true`)).socialTitle).toBeNull()
+    await expect.poll(async () => (await api(`/posts/${postID}?draft=true`)).socialDescription).toBeNull()
+    assert.deepEqual(forbiddenSocialRequests, [], 'no public upload, analytics or external/Meta request during social preparation')
+    await page.unroute('**/*', socialNetworkGuard)
+    console.log('PASS: social preview/download identical bytes, unsaved form copy, stale blob cleanup, race protection, overflow/retry, cleared fallbacks, mobile/keyboard controls and no external/upload/analytics requests')
     const popup = page.waitForEvent('popup')
     await page.getByRole('link', { name: 'Preview', exact: true }).click()
     const preview = await popup
@@ -271,8 +301,9 @@ export async function editorBrowserChecks(
       await api(`/posts/versions?where[parent][equals]=${postID}&limit=50`)
     ).docs
     const savedVersion = versions.find(
-      (version: { id: number; version: { title: string; _status: string } }) =>
+      (version: { id: number; version: { title: string; _status: string; socialTitle?: string } }) =>
         version.version.title === 'Probni urednički vodič' &&
+        version.version.socialTitle === 'Kraći naslov za mreže' &&
         version.version._status === 'draft',
     )
     assert.ok(savedVersion, 'saved draft is present in version history')
@@ -286,6 +317,9 @@ export async function editorBrowserChecks(
     await expect(page.locator('#field-title')).toHaveValue(
       'Probni urednički vodič',
     )
+    await expect(page.getByLabel('Naslov za društvene mreže', { exact: true })).toHaveValue('Kraći naslov za mreže')
+    await expect(page.getByLabel('Opis za društvene mreže', { exact: true })).toHaveValue('Privatan opis za sliku: č ć ž š đ.')
+    await expect(social.getByRole('button', { name: 'Preuzmi sliku', exact: true })).toBeDisabled()
     assert.equal(
       (await fetch(`${frontendURL}/blog/probni-urednicki-vodic`)).status,
       404,

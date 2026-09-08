@@ -90,11 +90,21 @@ Changing the title, excerpt or either social override removes the old image and
 disables download until you regenerate. Even reverting text requires a fresh preview.
 Preview generation does not save your form: normal autosave/save is still needed to
 retain copy. Leaving/reloading the editor discards the preview, not saved field values.
+Successive autosaves can replace the latest autosave; version history is not a record
+of every intermediate edit. Restore only a version actually listed in **Versions**.
 
 Generating/downloading never publishes the article or schedules/posts to Instagram
 or Facebook. Draft images are not uploaded to public media storage. A downloaded
 file is now on your device: keep unpublished artwork private and review both the
 article and artwork before any manual publication.
+Unpublishing, deleting, or editing the article **does not revoke previously downloaded
+files or images already shared elsewhere**. Remove or replace those copies separately.
+
+Before handing off an image, confirm the title and description match the intended
+article, Serbian characters display correctly, and the entire card is readable. Check
+the article's actual public URL separately: the site CTA printed on the image is not a
+clickable link. A future social post still needs a suitable caption, destination link
+and platform alt text where supported. Do not share a draft image as published content.
 
 Save the initial draft before leaving the screen. Autosave runs while editing an existing
 article, but is not a promise that an offline or interrupted edit reached the server.

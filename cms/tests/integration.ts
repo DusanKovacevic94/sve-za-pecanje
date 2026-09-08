@@ -7,7 +7,7 @@ import pg from 'pg'
 import { databaseURL } from '../src/environment'
 import { provision } from '../scripts/provision'
 import { editorialChecks } from './editorial'
-import { prepareStorage } from './storage-harness'
+import { prepareStorage, snapshotOwnedStorage } from './storage-harness'
 import { mediaChecks } from './media.integration'
 import { createBlogHarness } from './blog.integration'
 import { productionChecks } from './production.integration'
@@ -249,7 +249,7 @@ try {
   console.log('PASS: local fixture is repeatable and creates only a private draft/metadata')
   if (!['blog', 'editor', 'production'].includes(process.env.CMS_TEST_SCOPE || '')) {
     await editorialChecks(baseURL, cookie.split(';')[0], mailURL)
-    await socialPreviewChecks(baseURL, cookie.split(';')[0])
+    await socialPreviewChecks(baseURL, cookie.split(';')[0], () => snapshotOwnedStorage(storagePassword))
     const imageURLs = await mediaChecks(baseURL, cookie.split(';')[0], async () => {
       if (imageContainer) {
         await command('docker', ['restart', imageContainer])

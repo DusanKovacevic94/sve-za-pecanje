@@ -3,6 +3,16 @@ import test from 'node:test'
 import type { PayloadRequest } from 'payload'
 import { createRenderBudget, createSocialPreviewEndpoint, readRenderBody } from '../src/social-card/endpoint'
 import { SocialCardError, type SocialCardResult } from '../src/social-card/contract'
+import { forbiddenSocialRequest } from './social-network-policy'
+
+test('browser privacy guard allows CMS collection preferences but blocks tracking, uploads and external destinations', () => {
+  for (const [path, method, forbidden] of [
+    ['/api/payload-preferences/collection-posts-9', 'GET', false], ['/api/social-preview/9', 'POST', false],
+    ['/api/media/9', 'GET', false], ['/api/media', 'POST', true], ['/api/media/9', 'PATCH', true],
+    ['/api/v1/analytics/blog', 'POST', true], ['/collect', 'POST', true], ['/track/event', 'POST', true],
+    ['/umami.js', 'GET', true], ['https://graph.facebook.com/', 'POST', true],
+  ] as const) assert.equal(forbiddenSocialRequest(new URL(path, 'http://cms.test'), method, 'http://cms.test'), forbidden)
+})
 
 const input = { title: 'Probni naslov', description: 'Kratak opis.' }
 function request(options: { user?: unknown; origin?: string; body?: string; exists?: boolean; type?: string; id?: string } = {}) {

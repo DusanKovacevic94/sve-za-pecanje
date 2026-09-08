@@ -4,6 +4,11 @@ This is local release evidence and a checklist for a later explicitly authorized
 It does not authorize production access, DNS changes, deployment or article publication.
 The CMS and marketplace remain independent applications and database migration histories.
 
+For the later social-card feature (080–084), use the scoped
+[social preview release handoff](social-preview-release.md). The historical 079
+verification record below is not fresh evidence for that feature or an authorization
+to deploy it.
+
 ## Required automated gates
 
 Run from the application root with Docker Desktop available. Install CMS/frontend
